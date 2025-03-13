@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.DataAccess", "VoterSystem.DataAccess\VoterSystem.DataAccess.csproj", "{792BF043-7D99-4FC6-8716-E50871F6D5E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.WebAPI", "VoterSystem.WebAPI\VoterSystem.WebAPI.csproj", "{027E664F-CED7-454B-A599-0831E45B92B3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A7EBAB8A-C402-4461-92EF-C710AB4C139E}"
+	ProjectSection(SolutionItems) = preProject
+		compose.yaml = compose.yaml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{792BF043-7D99-4FC6-8716-E50871F6D5E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{792BF043-7D99-4FC6-8716-E50871F6D5E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{792BF043-7D99-4FC6-8716-E50871F6D5E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{792BF043-7D99-4FC6-8716-E50871F6D5E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{027E664F-CED7-454B-A599-0831E45B92B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{027E664F-CED7-454B-A599-0831E45B92B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{027E664F-CED7-454B-A599-0831E45B92B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{027E664F-CED7-454B-A599-0831E45B92B3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

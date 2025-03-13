@@ -1,0 +1,32 @@
+## Build Folders (bin, obj)
+[Bb]in/
+[Oo]bj/
+
+## Rider
+.idea/
+*.sln.iml
+
+## Visual Studio / Visual Studio Code
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+## Package directories
+packages/
+*.nupkg
+
+## Auto-generated files
+Generated_Code/
+
+## Test Results
+TestResults/
+*.trx
+
+## Logs
+*.log
+
+## Other temporary files
+tmp/

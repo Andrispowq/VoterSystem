@@ -2,6 +2,10 @@
 [Bb]in/
 [Oo]bj/
 
+##
+*.db
+*.db*
+
 ## Rider
 .idea/
 *.sln.iml

@@ -1,59 +1,144 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using VoterSystem.DataAccess.Dto;
 using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
-using VoterSystem.DataAccess.Util;
+using VoterSystem.DataAccess.Token;
 
 namespace VoterSystem.DataAccess.Services;
 
-public class UserService(VoterSystemDbContext context) : IUserService
+public class UserService( 
+    IHttpContextAccessor httpContextAccessor,
+    UserManager<User> userManager, 
+    SignInManager<User> signInManager,
+    ITokenIssuer tokenIssuer) : IUserService
 {
-    public async Task<IReadOnlyCollection<User>> GetUsersAsync()
+    public async Task<Option<ServiceError>> AddUserAsync(User user, string password, Role? role = null)
     {
-        return await context.Users.ToListAsync();
+        user.RefreshToken = Guid.NewGuid();
+
+        var result = await userManager.CreateAsync(user, password);
+        if (!result.Succeeded)
+        {
+            return new BadRequestError($"User creation failed: {result.Errors.First().Description}");
+        }
+
+        if (role is not null)
+        {
+            result = await userManager.AddToRoleAsync(user, role.Value.ToString());
+            if (!result.Succeeded)
+            {
+                return new BadRequestError($"Adding to role failed: {result.Errors.First().Description}");
+            }
+        }
+
+        return new Option<ServiceError>.None();
     }
 
-    public async Task<Result<User, ServiceError>> GetUserAsync(long id)
+    public async Task<Result<Tokens, ServiceError>> LoginAsync(string email, string password)
     {
-        var user = await context.Users.FindAsync(id);
-        if (user is null) return new NotFoundError($"User (id: {id}) not found");
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is null) return new NotFoundError("User not found");
+        
+        var result = await signInManager.PasswordSignInAsync(user.UserName!, password, 
+            isPersistent: false, lockoutOnFailure: true);
+        if (result.IsLockedOut) return new UnauthorizedError("Too many failed attempts");
+        if (!result.Succeeded) return new UnauthorizedError("Unsuccessful login attempt");
+
+        var accessToken = await tokenIssuer.GenerateJwtTokenAsync(user, userManager);
+        
+        return new Tokens
+        {
+            AuthToken = accessToken,
+            RefreshToken = user.RefreshToken!.Value,
+            UserId = user.Id,
+        };
+    }
+
+    public async Task<Result<Tokens, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken)
+    {
+        var user = await userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+        if (user is null) return new NotFoundError("Invalid refresh token");
+
+        var accessToken = await tokenIssuer.GenerateJwtTokenAsync(user, userManager);
+        
+        return new Tokens
+        {
+            AuthToken = accessToken,
+            RefreshToken = user.RefreshToken!.Value,
+            UserId = user.Id,
+        };
+    }
+
+    public async Task<Option<ServiceError>> LogoutAsync()
+    {
+        var user = await GetCurrentUserAsync();
+        if (user.IsError) return user.GetErrorOrThrow();
+        
+        await signInManager.SignOutAsync();
+        return new Option<ServiceError>.None();
+    }
+
+    public async Task<Result<User, ServiceError>> GetCurrentUserAsync()
+    {
+        var userId = GetCurrentUserId();
+        if (userId.IsError) return userId.GetErrorOrThrow();
+
+        var user = await userManager.FindByIdAsync(userId.GetValueOrThrow().ToString());
+        if (user is null) return new NotFoundError("User not found");
+
         return user;
     }
 
-    public async Task<Result<User, ServiceError>> CreateUserAsync(CreateUserDto userDto)
+    public Result<Guid, ServiceError> GetCurrentUserId()
     {
-        var passwordGood = Utils.IsPasswordAdequate(userDto.Password);
-        if (passwordGood != Utils.PasswordErrors.Good)
-        {
-            return new BadRequestError($"Password is not valid, error: {passwordGood.ToString()}");
-        }
-            
-        string hash = Crypto.HashPassword(userDto.Password);
+        var id = httpContextAccessor.HttpContext?.User.FindFirstValue("id");
+        if (id is null) return new NotFoundError("No ID found");
 
-        var user = new User
-        {
-            Name = userDto.Name,
-            Email = userDto.Email,
-            PasswordHash = hash,
-            UserLevel = userDto.UserLevel,
-        };
+        if (Guid.TryParse(id, out Guid userId)) return userId;
+        return new BadRequestError("Invalid GUID as ID");
+    }
+
+    public async Task<Result<User, ServiceError>> GetUserByIdAsync(Guid id)
+    {
+        var user = await userManager.FindByIdAsync(id.ToString());
+        if (user is null) return new NotFoundError("User not found");
+        
+        var currentId = GetCurrentUserId();
+        if (currentId.IsError) return currentId.GetErrorOrThrow();
+        
+        if (!IsCurrentUserAdmin() && user.Id != currentId.GetValueOrThrow())
+            return new UnauthorizedError("You may now access this user");
+
+        return user;
+    }
+
+    public Result<List<Role>, ServiceError> GetCurrentUserRoles()
+    {
+        var user = httpContextAccessor.HttpContext?.User;
+        if (user is null) return new UnauthorizedError("No user found");
+        
+        var roles = user.Claims
+            .Where(c => c.Type == ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList();
 
         try
         {
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-
-            return user;
+            return roles.Select(Enum.Parse<Role>).ToList();
         }
         catch (Exception e)
         {
-            await Console.Error.WriteLineAsync(e.Message);
-            return new ConflictError($"User ({userDto}) already exists");
+            return new BadRequestError(e.Message);
         }
     }
 
-    public bool TryAccess(User user, string password)
+    public bool IsCurrentUserAdmin()
     {
-        return Crypto.VerifyPassword(password, user.PasswordHash);
+        var roles = GetCurrentUserRoles();
+        if (roles.IsError) return false;
+
+        return roles.GetValueOrThrow().Contains(Role.Admin);
     }
 }

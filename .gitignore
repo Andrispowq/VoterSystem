@@ -4,7 +4,8 @@
 
 ##
 *.db
-*.db*
+*.db-wal
+*.db-shm
 
 ## Rider
 .idea/

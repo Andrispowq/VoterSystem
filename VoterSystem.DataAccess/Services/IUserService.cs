@@ -1,4 +1,3 @@
-using VoterSystem.DataAccess.Dto;
 using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
 
@@ -6,9 +5,13 @@ namespace VoterSystem.DataAccess.Services;
 
 public interface IUserService
 {
-    Task<IReadOnlyCollection<User>> GetUsersAsync();
-    Task<Result<User, ServiceError>> GetUserAsync(long id);
-    Task<Result<User, ServiceError>> CreateUserAsync(CreateUserDto userDto);
-    
-    bool TryAccess(User user, string password);
+    Task<Option<ServiceError>> AddUserAsync(User user, string password, Role? role = null);
+    Task<Result<Tokens, ServiceError>> LoginAsync(string email, string password);
+    Task<Result<Tokens, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken);
+    Task<Option<ServiceError>> LogoutAsync();
+    Task<Result<User, ServiceError>> GetCurrentUserAsync();
+    Result<Guid, ServiceError> GetCurrentUserId();
+    Task<Result<User, ServiceError>> GetUserByIdAsync(Guid id);
+    Result<List<Role>, ServiceError> GetCurrentUserRoles();
+    bool IsCurrentUserAdmin();
 }

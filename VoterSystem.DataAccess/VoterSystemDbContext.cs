@@ -9,6 +9,7 @@ public class VoterSystemDbContext(DbContextOptions<VoterSystemDbContext> options
 {
     public DbSet<Vote> Votes { get; set; } = null!;
     public DbSet<Voting> Votings { get; set; } = null!;
+    public DbSet<VoteChoice> VoteChoices { get; set; } = null!;
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

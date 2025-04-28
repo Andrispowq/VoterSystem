@@ -1,10 +1,13 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using VoterSystem.DataAccess;
 using VoterSystem.DataAccess.Config;
+using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
 
@@ -51,9 +54,20 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAutoMapper(c =>
+builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy("AdminOnly",policy =>
+    {
+        policy.RequireClaim(ClaimTypes.Role, "Admin");
+    });
+    
+    options.AddPolicy("UserOnly",policy =>
+    {
+        policy.RequireClaim(ClaimTypes.Role, "User");
+    });
 });
+
+builder.Services.AddAutoMapper(_ => {});
 
 var app = builder.Build();
 
@@ -80,8 +94,14 @@ using (var scope = app.Services.CreateScope())
     var database = services.GetService<VoterSystemDbContext>()!;
     await database.Database.MigrateAsync();
 
-    var service = services.GetService<IUserService>()!;
-    await DbInitializer.InitialiseAsync(database, service);
+    var voteService = services.GetService<IVoteService>()!;
+    var votingService = services.GetService<IVotingService>()!;
+    var userService = services.GetService<IUserService>()!;
+    var voteChoiceService = services.GetService<IVoteChoiceService>()!;
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();
+    
+    await DbInitializer.InitialiseAsync(database, userService,
+        votingService, voteChoiceService, voteService, roleManager);
 }
 
 app.Run();

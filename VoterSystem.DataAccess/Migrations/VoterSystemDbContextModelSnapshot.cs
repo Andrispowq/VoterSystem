@@ -272,7 +272,7 @@ namespace VoterSystem.DataAccess.Migrations
                     b.HasIndex("VotingId", "Name")
                         .IsUnique();
 
-                    b.ToTable("VoteChoice");
+                    b.ToTable("VoteChoices");
                 });
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.Voting", b =>

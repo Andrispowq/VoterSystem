@@ -14,6 +14,12 @@ public class UserService(
     SignInManager<User> signInManager,
     ITokenIssuer tokenIssuer) : IUserService
 {
+    public async Task<bool> AnyAdmins()
+    {
+        var list = await userManager.GetUsersInRoleAsync("Admin");
+        return list.Count > 0;
+    }
+
     public async Task<Option<ServiceError>> AddUserAsync(User user, string password, Role? role = null)
     {
         user.RefreshToken = Guid.NewGuid();
@@ -132,6 +138,27 @@ public class UserService(
         {
             return new BadRequestError(e.Message);
         }
+    }
+
+    public async Task<Option<ServiceError>> SetUserRoleAsync(Guid userId, Role role)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null) return new NotFoundError("User not found");
+        
+        var prevRoles = await userManager.GetRolesAsync(user);
+        var result = await userManager.RemoveFromRolesAsync(user, prevRoles);
+        if (!result.Succeeded)
+        {
+            return new BadRequestError($"Failed to remove previous roles: {result.Errors.First().Description}");
+        }
+        
+        result = await userManager.AddToRoleAsync(user, role.ToString());
+        if (!result.Succeeded)
+        {
+            return new BadRequestError($"Failed to add to role: {result.Errors.First().Description}");
+        }
+        
+        return new Option<ServiceError>.None();
     }
 
     public bool IsCurrentUserAdmin()

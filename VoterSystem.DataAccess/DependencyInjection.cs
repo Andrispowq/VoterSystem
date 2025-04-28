@@ -45,6 +45,9 @@ public static class DependencyInjection
         // Services
         services.AddScoped<ITokenIssuer, TokenIssuer>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IVoteService, VoteService>();
+        services.AddScoped<IVotingService, VotingService>();
+        services.AddScoped<IVoteChoiceService, VoteChoiceService>();
 
         //services.AddSingleton<IEmailService, SmtpEmailService>();
 

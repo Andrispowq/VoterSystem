@@ -29,12 +29,12 @@ public class VoteService(VoterSystemDbContext dbContext) : IVoteService
         }
     }
 
-    public async Task<Option<ServiceError>> CastVote(User user, Voting voting, VoteChoice voteChoice)
+    public async Task<Option<ServiceError>> CastVote(User user, VoteChoice voteChoice)
     {
         var vote = new Vote
         {
             UserId = user.Id,
-            VotingId = voting.VotingId,
+            VotingId = voteChoice.VotingId,
             ChoiceId = voteChoice.ChoiceId,
         };
 

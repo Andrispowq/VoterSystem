@@ -13,6 +13,14 @@ public class VoteChoiceService(VoterSystemDbContext dbContext) : IVoteChoiceServ
             .ToListAsync();
     }
 
+    public async Task<Result<VoteChoice, ServiceError>> GetChoiceById(Guid choiceId)
+    {
+        var choice = await dbContext.VoteChoices.FindAsync(choiceId);
+        if (choice is null) return new NotFoundError("Choice not found");
+        
+        return choice;
+    }
+
     public async Task<Option<ServiceError>> AddVotingChoice(Voting voting, VoteChoice choice, bool commit = true)
     {
         try

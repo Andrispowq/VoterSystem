@@ -43,6 +43,23 @@ public class UserController(IUserService userService) : ControllerBase
     public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequestDto request)
     {
         var result = await userService.LoginAsync(request.Email, request.Password);
+        if (result.IsError) return result.ToHttpResult();
+        
+        var tokens = result.GetValueOrThrow();
+        Response.Cookies.Append(TokenIssuer.CookieTokenName, tokens.AuthToken);
+        
+        return result.ToHttpResult();
+    }
+    
+    [Authorize]
+    [HttpPost("refresh-token")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Tokens))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> LoginAsync([FromBody] Guid refreshToken)
+    {
+        var result = await userService.RedeemRefreshTokenAsync(refreshToken);
+        if (result.IsError) return result.ToHttpResult();
         
         var tokens = result.GetValueOrThrow();
         Response.Cookies.Append(TokenIssuer.CookieTokenName, tokens.AuthToken);

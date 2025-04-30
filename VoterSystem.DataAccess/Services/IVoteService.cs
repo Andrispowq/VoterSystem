@@ -10,5 +10,5 @@ public interface IVoteService
 {
     Task<List<Vote>> GetAllVotes(Voting? voting = null, User? user = null);
     Task<Option<ServiceError>> CastVote(Vote vote);
-    Task<Option<ServiceError>> CastVote(User user, Voting voting, VoteChoice voteChoice);
+    Task<Option<ServiceError>> CastVote(User user, VoteChoice voteChoice);
 }

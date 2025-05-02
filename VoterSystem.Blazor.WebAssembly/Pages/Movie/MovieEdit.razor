@@ -1,0 +1,104 @@
+﻿@page "/movies/edit/{Id:int}"
+@using ELTE.Cinema.Blazor.WebAssembly.Config
+@using ELTE.Cinema.Blazor.WebAssembly.Services
+@using ELTE.Cinema.Blazor.WebAssembly.ViewModels
+@inject IMovieService MovieService
+@inject NavigationManager NavigationManager
+@inject AppConfig AppConfig
+
+<h1>Edit Movie</h1>
+
+@if (_movie != null)
+{
+    <EditForm Model="_movie" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="title">Title</label>
+            <InputText id="title" class="form-control" @bind-Value="_movie.Title" />
+        </div>
+        <div class="form-group">
+            <label for="year">Year</label>
+            <InputNumber id="year" class="form-control" @bind-Value="_movie.Year" />
+        </div>
+        <div class="form-group">
+            <label for="director">Director</label>
+            <InputText id="director" class="form-control" @bind-Value="_movie.Director" />
+        </div>
+        <div class="form-group">
+            <label for="synopsis">Synopsis</label>
+            <InputTextArea id="synopsis" class="form-control" @bind-Value="_movie.Synopsis" />
+        </div>
+        <div class="form-group">
+            <label for="length">Length (minutes)</label>
+            <InputNumber id="length" class="form-control" @bind-Value="_movie.Length" />
+        </div>
+        <div>
+            <label>Image:</label>
+            <InputFile OnChange="OnImageSelected" class="@GetFileInputClass()" />
+            @if (!_uploadedFileHasSizeError)
+            {
+                @if (_movie.Image is { Length: > 0 })
+                {
+                    <img class="mt-2" src="data:image/png;base64,@Convert.ToBase64String(_movie.Image)" alt="Movie Image" style="width:100px;height:auto;" />
+                }
+            }
+            else
+            {
+                <div class="text-danger">Maximum file size: @AppConfig.MaximumFileSizeInMb Mb</div>
+            }
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">Modify</button>
+    </EditForm>
+}
+else
+{
+    <p>Movie loading...</p>
+}
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    private MovieViewModel? _movie;
+    private bool _uploadedFileHasSizeError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _movie = await MovieService.GetMovieByIdAsync(Id);
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_movie == null)
+            throw new MissingMemberException(nameof(_movie));
+
+        await MovieService.UpdateMovieAsync(_movie);
+        NavigationManager.NavigateTo("/movies");
+    }
+
+    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    {
+        if (_movie == null)
+            throw new ArgumentNullException("Movie can't be null");
+
+        var maximumFileSizeInByte = AppConfig.MaximumFileSizeInMb * 1024 * 1024;
+        var file = e.File;
+
+        _uploadedFileHasSizeError = file.Size > maximumFileSizeInByte;
+        if (_uploadedFileHasSizeError)
+            return;
+
+
+        using var stream = new MemoryStream();
+        await file.OpenReadStream(maximumFileSizeInByte).CopyToAsync(stream);
+        _movie.Image = stream.ToArray();
+    }
+
+    private string GetFileInputClass()
+    {
+        return _uploadedFileHasSizeError ? "form-control invalid" : "form-control";
+    }
+}

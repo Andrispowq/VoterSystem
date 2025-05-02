@@ -1,13 +1,30 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>f70ac903-4c1b-444f-ae46-dc07a7d44912</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\VoterSystem.Shared\VoterSystem.Shared.csproj" />
+        <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.0" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Layout\MainLayout.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Layout\CustomAlertModal.razor" />
+      <AdditionalFiles Include="Layout\CustomConfirmModal.razor" />
+      <AdditionalFiles Include="Layout\MainLayout.razor" />
+      <AdditionalFiles Include="Layout\MenuComponent.razor" />
+      <AdditionalFiles Include="Layout\MessageComponent.razor" />
+      <AdditionalFiles Include="Layout\Toast.razor" />
+      <AdditionalFiles Include="Pages\Login.razor" />
     </ItemGroup>
 
 </Project>

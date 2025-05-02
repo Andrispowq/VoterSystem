@@ -234,12 +234,9 @@ namespace VoterSystem.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("VoteChoiceChoiceId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("UserId", "VotingId");
 
-                    b.HasIndex("VoteChoiceChoiceId");
+                    b.HasIndex("ChoiceId");
 
                     b.HasIndex("VotingId");
 
@@ -356,15 +353,15 @@ namespace VoterSystem.DataAccess.Migrations
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.Vote", b =>
                 {
-                    b.HasOne("VoterSystem.DataAccess.Model.User", "User")
-                        .WithMany("Votes")
-                        .HasForeignKey("UserId")
+                    b.HasOne("VoterSystem.DataAccess.Model.VoteChoice", "VoteChoice")
+                        .WithMany()
+                        .HasForeignKey("ChoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VoterSystem.DataAccess.Model.VoteChoice", "VoteChoice")
-                        .WithMany()
-                        .HasForeignKey("VoteChoiceChoiceId")
+                    b.HasOne("VoterSystem.DataAccess.Model.User", "User")
+                        .WithMany("Votes")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

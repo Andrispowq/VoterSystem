@@ -1,0 +1,22 @@
+﻿@inject NavigationManager Navigation
+@using VoterSystem.Web.Admin
+@using VoterSystem.Web.Admin.Layout
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+            <p role="alert">Sorry, there's nothing at this address.</p>
+            <button class="btn btn-primary" @onclick="NavigateToLogin">Click to Movies page</button>
+    </NotFound>
+</Router>
+
+@code {
+    private void NavigateToLogin()
+    {
+        Navigation.NavigateTo("/login");
+    }
+}

@@ -49,8 +49,14 @@ public static class DbInitializer
         IVotingService votingService,
         IVoteChoiceService voteChoiceService,
         IVoteService voteService,
-        RoleManager<UserRole> roleManager)
+        RoleManager<UserRole> roleManager,
+        bool prune = true)
     {
+        if (prune)
+        {
+            await context.Database.EnsureDeletedAsync();
+        }
+        
         await context.Database.MigrateAsync();
 
         await SeedRolesAsync(roleManager);

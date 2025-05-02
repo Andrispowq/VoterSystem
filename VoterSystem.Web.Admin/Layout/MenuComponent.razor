@@ -1,0 +1,55 @@
+﻿@using VoterSystem.Web.Admin.Services
+@inject IAuthenticationService AuthenticationService
+@inject NavigationManager NavigationManager
+
+<header>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-3">
+        <div class="container">
+            <span class="navbar-brand">ELTE Cinema 📽️🍿</span>
+            
+            <div class="collapse navbar-collapse d-flex align-items-center">
+                <ul class="navbar-nav me-auto mb-0 d-flex align-items-center">
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/movies">Movies</NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/rooms">Rooms</NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/screenings">Screenings</NavLink>
+                    </li>
+                </ul>
+
+                <span class="navbar-text me-3">Welcome, @_userName!</span>
+
+                <button class="btn btn-danger" @onclick="Logout" data-testid="logout">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+</header>
+
+@code {
+
+    private string? _userName;
+    private bool _collapseNavMenu = true;
+
+    private string? NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userName = await AuthenticationService.GetCurrentlyLoggedInUserAsync();
+    }
+
+    private void ToggleNavMenu()
+    {
+        _collapseNavMenu = !_collapseNavMenu;
+    }
+
+    private async Task Logout()
+    {
+        await AuthenticationService.LogoutAsync();
+        NavigationManager.NavigateTo("/login", forceLoad: true);
+    }
+}

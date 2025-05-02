@@ -1,0 +1,20 @@
+﻿@if (Condition)
+{
+    <div id="divErrorMessage" class="my-4 container">
+        <div role="alert" class="fade alert alert-danger show">
+            <div class="alert-heading h4">@ConditionText</div>
+            <p>@AlertMessage</p>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool Condition { get; set; }
+
+    [Parameter]
+    public string ConditionText { get; set; } = null!;
+
+    [Parameter]
+    public string AlertMessage { get; set; } = null!;
+}

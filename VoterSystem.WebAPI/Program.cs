@@ -69,6 +69,19 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddAutoMapper(_ => {});
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("BlazorPolicy",
+        policy =>
+        {
+            policy.WithOrigins(builder.Configuration["BlazorUrl"]
+                               ?? throw new ArgumentNullException("BlazorUrl", "Must set BlazorUrl in appsettings!")) // Enable Blazor port
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -78,6 +91,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+    
+    app.UseCors("BlazorPolicy");
 }
 
 app.UseHsts();

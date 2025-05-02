@@ -1,0 +1,81 @@
+﻿@page "/login"
+@using VoterSystem.Web.Admin.Services
+@using VoterSystem.Web.Admin.ViewModels
+@using VoterSystem.Web.Admin.Layout
+@inject NavigationManager NavigationManager
+@inject IAuthenticationService AuthenticationService
+
+<div class="my-4 container">
+
+    <h1>Login</h1>
+
+    <MessageComponent Condition="@Offline"
+                      ConditionText="Offline mode"
+                      AlertMessage="Switch to online mode to log in." />
+
+    @if (!Offline)
+    {
+        @if (_tryAutoLogin)
+        {
+            <p>Try autologin...</p>
+        }
+        else
+        {
+            <EditForm Model="LoginViewModel" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" for="email">Email:</label>
+                    <InputText class="form-control form-control" id="email" @bind-Value="LoginViewModel.Email" />
+                    <ValidationMessage For="@(() => LoginViewModel.Email)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="password">Password:</label>
+                    <InputText class="form-control form-control" id="password" @bind-Value="LoginViewModel.Password" type="password" />
+                    <ValidationMessage For="@(() => LoginViewModel.Password)" class="text-danger" />
+                </div>
+
+                <button class="btn btn-primary" type="submit">Login</button>
+            </EditForm>
+        }
+    }
+</div>
+
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public bool Offline { get; set; }
+
+    private LoginViewModel LoginViewModel { get; set; } = new();
+    private bool _tryAutoLogin = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Offline)
+        {
+            StateHasChanged();
+            return;
+        }
+        
+        var success = await AuthenticationService.TryAutoLoginAsync();
+        if (success)
+        {
+            NavigationManager.NavigateTo("/movies");
+        }
+        else
+        {
+            _tryAutoLogin = false;
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        var success = await AuthenticationService.LoginAsync(LoginViewModel);
+        if (success)
+        {
+            NavigationManager.NavigateTo("/movies");
+        }
+    }
+}

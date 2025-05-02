@@ -1,0 +1,113 @@
+﻿@page "/movies"
+@using ELTE.Cinema.Blazor.WebAssembly.Services
+@using ELTE.Cinema.Blazor.WebAssembly.Layout
+@using ELTE.Cinema.Blazor.WebAssembly.ViewModels
+@inject IMovieService MovieService
+@inject NavigationManager NavigationManager
+
+
+<h1>Movies</h1>
+
+<CustomConfirmModal T="int" @ref="_modalMovieDelete" Title="Confirm Deletion" Body="Are you sure you want to delete this movie?" OnConfirm="DeleteMovie" OnCancel="CancelDelete" />
+<CustomAlertModal @ref="_offlineModal" Title="Offline mode" Body="The feature is not available in offline mode." />
+
+<MessageComponent Condition="@Offline"
+                  ConditionText="Offline mode"
+                  AlertMessage="The web application has switched to offline mode." />
+
+
+@if (!Offline)
+{
+    <div class="text-end">
+        <button class="btn btn-primary" @onclick="AddMovie" data-testid="add-movie-btn">New Movie</button>
+    </div>
+}
+
+@if (_movies is null)
+{
+    <p>Loading...</p>
+}
+else if (!_movies.Any())
+{
+    <p>No movie found.</p>
+}
+else
+{
+    <div class="my-4 container">
+        <div class="g-4 row row-cols-md-5 row-cols-1">
+            @foreach (var movie in _movies)
+            {
+                <div class="col">
+                    <div class="h-100 card" @onclick="() => EditMovie(movie.Id)" style="cursor: pointer;">
+                        @if (movie.Image != null)
+                        {
+                            <img class="card-img-top" src="data:image/jpeg;base64,@Convert.ToBase64String(movie.Image)" alt="@movie.Title" width="200" />
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@movie.Title</h5>
+                        </div>
+                        @if (!Offline)
+                        {
+                            <div class="d-flex justify-content-end me-2 mb-2">
+                                <button class="btn btn-danger" @onclick:stopPropagation="true" @onclick="() => ShowDeleteConfirmModal(movie.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public bool Offline { get; set; }
+
+    private List<MovieViewModel>? _movies;
+    private CustomConfirmModal<int>? _modalMovieDelete;
+    private CustomAlertModal? _offlineModal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _movies = await MovieService.GetMoviesAsync(Offline);
+        StateHasChanged();
+    }
+
+    private void AddMovie()
+    {
+        NavigationManager.NavigateTo($"/movies/add");
+    }
+
+    private void EditMovie(int id)
+    {
+        if (Offline)
+        {
+            _offlineModal?.Show();
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/movies/edit/{id}");
+    }
+
+    private void ShowDeleteConfirmModal(int movieId)
+    {
+        _modalMovieDelete!.Show(movieId);
+    }
+
+    private async Task DeleteMovie(int movieId)
+    {
+        await MovieService.DeleteMovieAsync(movieId);
+        _movies = await MovieService.GetMoviesAsync();
+        _modalMovieDelete!.Hide();
+        StateHasChanged();
+    }
+
+    private void CancelDelete()
+    {
+        _modalMovieDelete!.Hide();
+    }
+}

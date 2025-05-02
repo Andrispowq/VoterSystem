@@ -1,0 +1,77 @@
+﻿@using ELTE.Cinema.Blazor.WebAssembly.Services
+@inject NavigationManager Navigation
+@inherits LayoutComponentBase
+@inject IJSRuntime Js
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+@inject NetworkService NetworkService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<div>
+    <main>
+        @if (!Navigation.Uri.Contains("login") && !_isOffline)
+        {
+            <MenuComponent />
+        }
+        <Toast />
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+
+    private bool _isOffline;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await HandleUnauthorizedUser();
+
+        await NetworkService.InitializeAsync();
+        NetworkService.OnConnectivityChanged += HandleConnectivityChange;
+    }
+
+    private async Task HandleUnauthorizedUser()
+    {
+        //if no stored refreshToken found user is unauthorized
+        if (await LocalStorage.GetItemAsync<string>("RefreshToken") == null)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        _isOffline = queryParams["offline"] == "true";
+        base.OnParametersSet();
+    }
+
+    private void HandleConnectivityChange(bool isOnline)
+    {
+        if (isOnline)
+        {
+            //become online navigate to login
+            //if previously login after autologin navigate to movies.
+            Navigation.NavigateTo("/login");
+        }
+        else if (Navigation.Uri.Contains("login"))
+        {
+            //become offline before login
+            Navigation.NavigateTo("/login?offline=true");
+        }
+        else
+        {
+            //become offline after login
+            Navigation.NavigateTo("/movies?offline=true");
+        }
+    }
+
+    public void Dispose()
+    {
+        NetworkService.OnConnectivityChanged -= HandleConnectivityChange;
+    }
+}

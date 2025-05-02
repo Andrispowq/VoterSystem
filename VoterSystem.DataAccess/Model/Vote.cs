@@ -12,5 +12,6 @@ public class Vote : ITimestamped
     [ForeignKey("UserId")]
     public virtual User User { get; set; } = null!;
     public virtual Voting Voting { get; set; } = null!;
+    [ForeignKey("ChoiceId")]
     public virtual VoteChoice VoteChoice { get; set; } = null!;
 }

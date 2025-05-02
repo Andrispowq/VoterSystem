@@ -1,0 +1,74 @@
+﻿@page "/screenings/edit/{Id:int}"
+@using ELTE.Cinema.Blazor.WebAssembly.Services
+@using ELTE.Cinema.Blazor.WebAssembly.ViewModels
+@inject IScreeningService ScreeningService;
+@inject IRoomService RoomService;
+@inject NavigationManager NavigationManager
+
+
+<h3>Edit Screening</h3>
+
+
+@if (_screening != null && _rooms != null)
+{
+    <EditForm Model="_screening" OnValidSubmit="ModifyScreening">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Movie:</label>
+            <label class="form-control">@_screening.Movie!.Title</label>
+        </div>
+
+        <div class="mb-3">
+            <label for="room" class="form-label">Room:</label>
+            <select id="room" class="form-control" @bind="_screening.Room!.Id">
+                <option value="">Select a room</option>
+                @foreach (var room in _rooms!)
+                {
+                    <option value="@room.Id">@room.Name</option>
+                }
+            </select>
+            <ValidationMessage For="@(() => _screening.Room)" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label for="startsAt" class="form-label">Starts At:</label>
+            <InputDate @bind-Value="_screening.StartsAt" class="form-control" id="startsAt" Type="InputDateType.DateTimeLocal" />
+            <ValidationMessage For="@(() => _screening.StartsAt)" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label for="price" class="form-label">Price:</label>
+            <InputNumber id="price" @bind-Value="_screening.Price" class="form-control" />
+            <ValidationMessage For="@(() => _screening.Price)" class="text-danger" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Modify</button>
+    </EditForm>
+}
+else
+{
+    <p>Screening loading...</p>
+}
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    private ScreeningViewModel? _screening;
+
+    private List<RoomViewModel>? _rooms = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rooms = await RoomService.GetRoomsAsync();
+        _screening = await ScreeningService.GeScreeningByIdAsync(Id);
+    }
+
+    private async Task ModifyScreening()
+    {
+        await ScreeningService.UpdateScreeningAsync(_screening!);
+        NavigationManager.NavigateTo("/screenings");
+    }
+}

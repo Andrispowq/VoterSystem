@@ -1,0 +1,79 @@
+﻿@page "/screenings/add"
+@using ELTE.Cinema.Blazor.WebAssembly.Services
+@using ELTE.Cinema.Blazor.WebAssembly.ViewModels
+@inject IScreeningService ScreeningService;
+@inject IRoomService RoomService;
+@inject IMovieService MovieService;
+@inject NavigationManager NavigationManager
+
+<h1>Create new Screening</h1>
+
+<EditForm Model="_screening" OnValidSubmit="SaveScreening">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label for="movie" class="form-label">Movie:</label>
+        <select id="movie" class="form-control" @bind="_screening.Movie!.Id">
+            <option value="">Select a movie</option>
+            @foreach (var movie in _movies)
+            {
+                <option value="@movie.Id">@movie.Title</option>
+            }
+        </select>
+        <ValidationMessage For="@(() => _screening.Movie)" class="text-danger" />
+    </div>
+
+    <div class="mb-3">
+        <label for="room" class="form-label">Room:</label>
+        <select id="room" class="form-control" @bind="_screening.Room!.Id">
+            <option value="">Select a room</option>
+            @foreach (var room in _rooms!)
+            {
+                <option value="@room.Id">@room.Name</option>
+            }
+        </select>
+        <ValidationMessage For="@(() => _screening.Room)" class="text-danger" />
+    </div>
+
+    <div class="mb-3">
+        <label for="startsAt" class="form-label">Starts At:</label>
+        <InputDate @bind-Value="_screening.StartsAt" class="form-control" id="startsAt" Type="InputDateType.DateTimeLocal" />
+        <ValidationMessage For="@(() => _screening.StartsAt)" class="text-danger" />
+    </div>
+
+    <div class="mb-3">
+        <label for="price" class="form-label">Price:</label>
+        <InputNumber id="price" @bind-Value="_screening.Price" class="form-control" />
+        <ValidationMessage For="@(() => _screening.Price)" class="text-danger" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</EditForm>
+
+
+@code {
+
+    private readonly ScreeningViewModel _screening = new()
+        {
+            Room = new(),
+            Movie = new(),
+            StartsAt = DateTime.Now
+        };
+
+
+    private List<RoomViewModel>? _rooms = new();
+    private List<MovieViewModel> _movies = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rooms = await RoomService.GetRoomsAsync();
+        _movies = await MovieService.GetMoviesAsync();
+    }
+
+    private async Task SaveScreening()
+    {
+        await ScreeningService.CreateScreeningAsync(_screening);
+        NavigationManager.NavigateTo("/screenings");
+    }
+
+}

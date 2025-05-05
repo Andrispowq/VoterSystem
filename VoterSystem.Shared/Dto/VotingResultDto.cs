@@ -2,7 +2,7 @@ using VoterSystem.DataAccess.Model;
 
 namespace VoterSystem.Shared.Dto;
 
-public class VotingDto(Voting voting)
+public class VotingResultDto(Voting voting)
 {
     public long VotingId => voting.VotingId;
     public string Name => voting.Name;
@@ -21,6 +21,11 @@ public class VotingDto(Voting voting)
     
     public ICollection<VoteChoiceDto> VoteChoices => voting.VoteChoices
         .Select(v => new VoteChoiceDto(v))
+        .OrderBy(v => v.CreatedAt)
+        .ToList();
+    
+    public ICollection<OnlyVoteDto> Results => voting.Votes
+        .Select(v => new OnlyVoteDto(v))
         .OrderBy(v => v.CreatedAt)
         .ToList();
 }

@@ -1,0 +1,44 @@
+@using VoterSystem.Web.Admin.Dto
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<div class="chart-container" style="position:relative;height:300px;width:100%">
+    <canvas id="@_chartId"></canvas>
+</div>
+
+@code {
+    [Parameter] public long VotingId { get; set; }
+    [Parameter] public ICollection<VoteChoiceDto> Choices { get; set; } = [];
+    [Parameter] public ICollection<OnlyVoteDto> Results { get; set; } = [];
+
+    private readonly string _chartId = $"chart-{Guid.NewGuid():N}";
+    private IJSObjectReference? _chartModule;
+    private IJSObjectReference? _chartInstance;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _chartModule = await Js.InvokeAsync<IJSObjectReference>("import", "./js/votePieChart.js");
+
+            var labels = Choices.Select(c => c.Name).ToArray();
+            var data = Choices.Select(c => Results.Count(r => r.VoteChoice.ChoiceId == c.ChoiceId)).ToArray();
+
+            _chartInstance = await _chartModule.InvokeAsync<IJSObjectReference>(
+                "renderVotePieChart",
+                _chartId,
+                labels,
+                data
+            );
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_chartInstance != null)
+            await _chartInstance.InvokeVoidAsync("destroy");
+
+        if (_chartModule != null)
+            await _chartModule.DisposeAsync();
+    }
+}

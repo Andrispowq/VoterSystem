@@ -69,7 +69,7 @@ public class UserController(IUserService userService) : ControllerBase
         return Ok(ret);
     }
     
-    [Authorize("AdminOnly")]
+    [Authorize]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserDto))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

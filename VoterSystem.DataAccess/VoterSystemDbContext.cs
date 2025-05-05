@@ -15,10 +15,21 @@ public class VoterSystemDbContext(DbContextOptions<VoterSystemDbContext> options
     {
         base.OnModelCreating(modelBuilder);
         
-        //We don't include the choiceId because we can only vote once
         modelBuilder.Entity<Vote>()
-            .HasKey(p => new { p.UserId, p.VotingId });
+            .HasKey(p => new { p.UserId, p.ChoiceId });
         
+        modelBuilder.Entity<Vote>()
+            .HasOne(v => v.VoteChoice)
+            .WithMany(c => c.Votes)
+            .HasForeignKey(v => v.ChoiceId)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        modelBuilder.Entity<Vote>()
+            .HasOne(v => v.Voting)
+            .WithMany(c => c.Votes)
+            .HasForeignKey(v => v.VotingId)
+            .OnDelete(DeleteBehavior.NoAction);
+
         modelBuilder.Entity<Voting>()
             .HasIndex(v => v.Name)
             .IsUnique();
@@ -27,5 +38,11 @@ public class VoterSystemDbContext(DbContextOptions<VoterSystemDbContext> options
         modelBuilder.Entity<VoteChoice>()
             .HasIndex(v => new { v.VotingId, v.Name })
             .IsUnique();
+        
+        modelBuilder.Entity<Voting>()
+            .HasOne(v => v.CreatedByUser)
+            .WithMany(user => user.Votings)
+            .HasForeignKey(v => v.CreatedByUserId)
+            .IsRequired();
     }
 }

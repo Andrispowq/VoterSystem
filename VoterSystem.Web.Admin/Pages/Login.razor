@@ -21,6 +21,19 @@
         }
         else
         {
+            <div class="mb-3">
+                <button type="button"
+                        class="btn btn-outline-secondary me-2"
+                        @onclick="LoginAsUser">
+                    Login as user
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        @onclick="LoginAsAdmin">
+                    Login as admin
+                </button>
+            </div>
+            
             <EditForm Model="LoginViewModel" OnValidSubmit="HandleLogin">
                 <DataAnnotationsValidator />
 
@@ -50,6 +63,12 @@
 
     private LoginViewModel LoginViewModel { get; set; } = new();
     private bool _tryAutoLogin = true;
+    
+    private const string DevUserEmail = "example@gmail.com";
+    private const string DevUserPassword = "test_Str0ng_password";
+
+    private const string DevAdminEmail = "example6@gmail.com";
+    private const string DevAdminPassword = "test_Str0ng_password";
 
     protected override async Task OnInitializedAsync()
     {
@@ -77,5 +96,19 @@
         {
             NavigationManager.NavigateTo("/votings");
         }
+    }
+    
+    private async Task LoginAsUser()
+    {
+        LoginViewModel.Email = DevUserEmail;
+        LoginViewModel.Password = DevUserPassword;
+        await HandleLogin();
+    }
+
+    private async Task LoginAsAdmin()
+    {
+        LoginViewModel.Email = DevAdminEmail;
+        LoginViewModel.Password = DevAdminPassword;
+        await HandleLogin();
     }
 }

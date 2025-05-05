@@ -23,6 +23,11 @@ public class VoteChoiceService(VoterSystemDbContext dbContext) : IVoteChoiceServ
 
     public async Task<Option<ServiceError>> AddVotingChoice(Voting voting, VoteChoice choice, bool commit = true)
     {
+        if (voting.HasStarted)
+        {
+            return new UnauthorizedError("Voting has already started");
+        }
+        
         try
         {
             choice.VotingId = voting.VotingId;
@@ -38,6 +43,11 @@ public class VoteChoiceService(VoterSystemDbContext dbContext) : IVoteChoiceServ
 
     public async Task<Option<ServiceError>> UpdateVotingChoice(VoteChoice choice, bool commit = true)
     {
+        if (choice.Voting.HasStarted)
+        {
+            return new UnauthorizedError("Voting has already started");
+        }
+
         try
         { 
             var item = await dbContext.VoteChoices.FindAsync(choice.ChoiceId);
@@ -55,6 +65,11 @@ public class VoteChoiceService(VoterSystemDbContext dbContext) : IVoteChoiceServ
 
     public async Task<Option<ServiceError>> DeleteVotingChoice(VoteChoice choice, bool commit = true)
     {
+        if (choice.Voting.HasStarted)
+        {
+            return new UnauthorizedError("Voting has already started");
+        }
+
         try
         { 
             var item = await dbContext.VoteChoices.FindAsync(choice.ChoiceId);

@@ -45,10 +45,8 @@ public class AuthenticationService(
 
             return true;
         }
-        else
-        {
-            await HandleHttpError(response);
-        }
+
+        await HandleHttpError(response);
 
         return false;
     }
@@ -61,13 +59,13 @@ public class AuthenticationService(
         }
         catch (HttpRequestException) { }
 
-        var keys = new List<string>() { "AuthToken", "RefreshToken", "UserName" };
+        var keys = new List<string> { "AuthToken", "RefreshToken", "UserName" };
         await localStorageService.RemoveItemsAsync(keys);
     }
 
     public async Task<bool> TryAutoLoginAsync()
     {
-        if (!(await localStorageService.ContainKeyAsync("RefreshToken")))
+        if (!await localStorageService.ContainKeyAsync("RefreshToken"))
             return false;
             
         try

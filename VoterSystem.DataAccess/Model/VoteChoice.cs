@@ -12,4 +12,5 @@ public class VoteChoice : ITimestamped
     public DateTime CreatedAt { get; set;  } = DateTime.UtcNow;
 
     public virtual Voting Voting { get; set; } = null!;
+    public virtual ICollection<Vote> Votes { get; set; } = [];
 }

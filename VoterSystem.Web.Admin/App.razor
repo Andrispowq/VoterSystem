@@ -1,5 +1,5 @@
 ﻿@inject NavigationManager Navigation
-@using VoterSystem.Web.Admin.Layout
+@using VoterSystem.Web.Admin.Layout;
 
 <Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
@@ -8,14 +8,25 @@
     </Found>
     <NotFound>
         <PageTitle>Not found</PageTitle>
-            <p role="alert">Sorry, there's nothing at this address.</p>
-            <button class="btn btn-primary" @onclick="NavigateToLogin">Click to Login page</button>
+
+        <div class="text-center mt-5">
+            <h1 class="display-4 text-danger">404 - Not Found</h1>
+            <p class="lead">Oops, the page you're looking for doesn't exist.</p>
+            <a class="btn btn-primary" @onclick="NavigateToHome">Back to Home</a>
+        </div>
+        <!--<LayoutView Layout="@typeof(MainLayout)">
+            <div class="text-center mt-5">
+                <h1 class="display-4 text-danger">404 - Not Found</h1>
+                <p class="lead">Oops, the page you're looking for doesn't exist.</p>
+                <a class="btn btn-primary" @onclick="NavigateToLogin">Back to Home</a>
+            </div>
+        </LayoutView>-->
     </NotFound>
 </Router>
 
 @code {
-    private void NavigateToLogin()
+    private void NavigateToHome()
     {
-        Navigation.NavigateTo("/login");
+        Navigation.NavigateTo("/votings");
     }
 }

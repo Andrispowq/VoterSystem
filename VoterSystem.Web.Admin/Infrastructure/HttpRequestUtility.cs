@@ -28,6 +28,17 @@ public class HttpRequestUtility(
         return new HttpResponseWrapper<T>(responseObject, response.Headers);
     }
 
+    public async Task<TU?> ExecutePatchHttpRequestAsync<T, TU>(string uri, T requestDto)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, ApiCallUri(uri))
+        {
+            Content = CreateRequestBody(requestDto)
+        };
+        
+        var response = await SendRequestAsync(request);
+        return await HandleResponseObjectAsync<TU>(response);
+    }
+
     public async Task<TU?> ExecutePostHttpRequestAsync<T, TU>(string uri, T requestDto)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, ApiCallUri(uri))
@@ -71,7 +82,6 @@ public class HttpRequestUtility(
             var content = await response.Content.ReadAsStringAsync();
             var responseObject = JsonSerializer.Deserialize<T>(content, jsonOptions) ?? throw new HttpRequestException();
             return responseObject;
-
         }
         else
         {
@@ -97,7 +107,8 @@ public class HttpRequestUtility(
             if (!string.IsNullOrEmpty(loginResponseDto.AuthToken))
             {
                 var newRequest = CloneRequest(request);
-                newRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", loginResponseDto.AuthToken);
+                newRequest.Headers.Authorization =
+                    new AuthenticationHeaderValue("Bearer", loginResponseDto.AuthToken);
 
                 response.Dispose();
                 response = await httpClient.SendAsync(newRequest, cancellationToken);

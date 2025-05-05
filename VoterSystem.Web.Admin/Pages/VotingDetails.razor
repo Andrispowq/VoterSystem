@@ -1,0 +1,249 @@
+@page "/votings/{VotingId:long}"
+@using VoterSystem.Web.Admin.Dto
+@using VoterSystem.Web.Admin.Services
+@using VoterSystem.Web.Admin.Layout
+@inject IVotingsService VotingsService
+@inject NavigationManager Navigation
+
+<h1 class="my-4">Edit Voting</h1>
+
+@if (_voting is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="card shadow-sm border-0">
+        <div class="card-header text-white bg-danger">
+            <div class="d-flex justify-content-between align-items-center">
+                <strong>@_voting.Name</strong>
+                <span class="badge bg-light text-dark">Not started</span>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Start Time -->
+            <div class="mb-2">
+                <i class="bi bi-play-circle me-1"></i>
+                @if (!_isEditingStart)
+                {
+                    <span>From: @_voting.StartsAt</span>
+                    <button class="btn btn-sm btn-link text-primary" @onclick="() =>
+                                                                     {
+                                                                         _isEditingStart = true;
+                                                                         _newStartAt = DateTime.UtcNow > _voting.StartsAt ? DateTime.UtcNow : _voting.StartsAt;
+                                                                     }">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                }
+                else
+                {
+                    <input type="datetime-local"
+                           class="form-control"
+                           @bind="_newStartAt"
+                           min="@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm")" />
+                    <div class="mt-2 d-flex justify-content-end">
+                        <button class="btn btn-success btn-sm me-2" @onclick="SaveStartAt">Save</button>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="() => _isEditingStart = false">Cancel</button>
+                    </div>
+                }
+            </div>
+
+            <!-- End Time -->
+            <div class="mb-3">
+                <i class="bi bi-stop-circle me-1"></i>
+                @if (!_isEditingEnd)
+                {
+                    <span>Until: @_voting.EndsAt</span>
+                    <button class="btn btn-sm btn-link text-primary" @onclick="() =>
+                                                                     {
+                                                                         _isEditingEnd = true;
+                                                                         _newEndAt = _voting.EndsAt;
+                                                                     }">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                }
+                else
+                {
+                    <input type="datetime-local"
+                           class="form-control"
+                           @bind="_newEndAt"
+                           min="@(_newStartAt?.AddDays(1).ToString("yyyy-MM-ddTHH:mm") ?? _voting.StartsAt.AddDays(1).ToString("yyyy-MM-ddTHH:mm"))" />
+                    <div class="mt-2 d-flex justify-content-end">
+                        <button class="btn btn-success btn-sm me-2" @onclick="SaveEndAt">Save</button>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="() => _isEditingEnd = false">Cancel</button>
+                    </div>
+                }
+            </div>
+
+            <ul class="list-group list-group-flush">
+                @foreach (var choice in _voting.VoteChoices)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>@choice.Name</strong>
+                            @if (!string.IsNullOrWhiteSpace(choice.Description))
+                            {
+                                <span class="d-block text-muted small">@choice.Description</span>
+                            }
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DeleteChoice(choice.ChoiceId)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </li>
+                }
+
+                @if (!_isAddingChoice)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <button class="btn btn-outline-primary" @onclick="AddNewChoice">
+                            <i class="bi bi-plus-lg me-1"></i> Add choice
+                        </button>
+
+                        <button class="btn btn-success" @onclick="ShowStartVotingConfirm">
+                            <i class="bi bi-play-fill me-1"></i> Start voting
+                        </button>
+                    </li>
+                }
+                else
+                {
+                    <li class="list-group-item">
+                        <div class="mb-2">
+                            <input type="text"
+                                   class="form-control"
+                                   placeholder="Name"
+                                   @bind="_newChoiceName" />
+                        </div>
+                        <div class="mb-2">
+                            <textarea class="form-control"
+                                  placeholder="Description"
+                                  rows="2"
+                                  @bind="_newChoiceDescription"></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-success"
+                                    @onclick="SubmitNewChoice"
+                                    disabled="@string.IsNullOrWhiteSpace(_newChoiceName)">
+                                <i class="bi bi-check-lg me-1"></i> Submit
+                            </button>
+                            <button class="btn btn-outline-secondary ms-2"
+                                    @onclick="CancelNewChoice">
+                                Cancel
+                            </button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    
+    <CustomConfirmModal T="long"
+                        @ref="_startVotingModal"
+                        Title="Start voting"
+                        Body="Are you sure you want to start this voting? This cannot be undone."
+                        OnConfirm="StartVotingAsync"
+                        OnCancel="OnCancelStart" />
+}
+
+@code {
+    [Parameter]
+    public long VotingId { get; set; }
+
+    private VotingDto? _voting;
+    
+    private bool _isAddingChoice;
+    private string _newChoiceName = string.Empty;
+    private string _newChoiceDescription = string.Empty;
+    
+    private bool _isEditingStart;
+    private bool _isEditingEnd;
+
+    private DateTime? _newStartAt;
+    private DateTime? _newEndAt;
+    
+    private CustomConfirmModal<long>? _startVotingModal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _voting = await VotingsService.GetVotingByIdAsync(VotingId);
+
+        if (_voting is null)
+        {
+            Navigation.NavigateTo("/notfound");
+        }
+    }
+
+    private void ShowStartVotingConfirm()
+    {
+        _startVotingModal?.Show(VotingId);
+    }
+
+    private Task OnCancelStart()
+    {
+        Console.WriteLine("Start voting cancelled.");
+        return Task.CompletedTask;
+    }
+
+    private async Task StartVotingAsync()
+    {
+        if (_voting is null) return;
+        
+        await VotingsService.StartVotingAsync(_voting.VotingId);
+        Navigation.NavigateTo("/votings");
+    }
+
+    private async Task DeleteChoice(long choiceId)
+    {
+        if (_voting is null) return;
+        
+        await VotingsService.DeleteChoiceAsync(_voting.VotingId, choiceId);
+        _voting = await VotingsService.GetVotingByIdAsync(VotingId);
+    }
+    
+    private void CancelNewChoice()
+    {
+        _isAddingChoice = false;
+        _newChoiceName = string.Empty;
+        _newChoiceDescription = string.Empty;
+    }
+
+    private async Task SubmitNewChoice()
+    {
+        await VotingsService.AddVoteChoice(VotingId, _newChoiceName, _newChoiceDescription);
+        CancelNewChoice();
+
+        _voting = await VotingsService.GetVotingByIdAsync(VotingId);
+    }
+
+    private void AddNewChoice()
+    {
+        _isAddingChoice = true;
+        StateHasChanged();
+    }
+    
+    private async Task SaveStartAt()
+    {
+        if (_newStartAt is not null && _newStartAt >= DateTime.UtcNow)
+        {
+            await VotingsService.UpdateStartTime(VotingId, _newStartAt.Value);
+
+            _isEditingStart = false;
+            _voting = await VotingsService.GetVotingByIdAsync(VotingId);
+        }
+    }
+
+    private async Task SaveEndAt()
+    {
+        if (_voting is null) return;
+        
+        var minEnd = _newStartAt?.AddDays(1) ?? _voting.StartsAt.AddDays(1);
+        if (_newEndAt >= minEnd)
+        {
+            await VotingsService.UpdateEndTime(VotingId, _newEndAt.Value);
+
+            _isEditingEnd = false;
+            _voting = await VotingsService.GetVotingByIdAsync(VotingId);
+        }
+    }
+}

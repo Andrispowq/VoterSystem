@@ -25,23 +25,7 @@ public static class DbInitializer
         new() { Email = "example7@gmail.com", Password = "test_Str0ng_password", Role = Role.Admin }
     ];
 
-    private static readonly List<Voting> Votings =
-    [
-        new() { Name = "szavazas 1", StartsAt = DateTime.Now, EndsAt = DateTime.Now.AddDays(5) },
-        new() { Name = "szavazas 2", StartsAt = DateTime.Now, EndsAt = DateTime.Now.AddDays(5) },
-        new() { Name = "szavazas 3", StartsAt = DateTime.Now.AddDays(1), EndsAt = DateTime.Now.AddDays(5) },
-        new()
-        {
-            Name = "szavazas 4", StartsAt = DateTime.Now.AddYears(1),
-            EndsAt = DateTime.Now.AddYears(1).AddDays(5)
-        },
-
-        new()
-        {
-            Name = "szavazas 5", StartsAt = DateTime.Now.AddYears(1),
-            EndsAt = DateTime.Now.AddYears(1).AddDays(5)
-        }
-    ];
+    private static List<Voting> _votings = null!;
     
     public static async Task InitialiseAsync(
         VoterSystemDbContext context, 
@@ -79,10 +63,35 @@ public static class DbInitializer
                 }
             }
         }
+        
+        var firstUser = await context.Users.FirstOrDefaultAsync();
+        var secondUser = await context.Users.Skip(1).FirstOrDefaultAsync();
+        
+        _votings =
+        [
+            new() { Name = "szavazas 1", StartsAt = DateTime.UtcNow.AddDays(-5), EndsAt = DateTime.UtcNow.AddDays(-2), 
+                CreatedByUserId = firstUser!.Id },
+            new() { Name = "szavazas 2", StartsAt = DateTime.UtcNow, EndsAt = DateTime.UtcNow.AddDays(5), 
+                CreatedByUserId = firstUser.Id },
+            new() { Name = "szavazas 3", StartsAt = DateTime.UtcNow.AddDays(1), EndsAt = DateTime.UtcNow.AddDays(5), 
+                CreatedByUserId = firstUser.Id },
+            new()
+            {
+                Name = "szavazas 4", StartsAt = DateTime.UtcNow.AddYears(1),
+                EndsAt = DateTime.UtcNow.AddYears(1).AddDays(5),
+                CreatedByUserId = secondUser!.Id
+            },
+            new()
+            {
+                Name = "szavazas 5", StartsAt = DateTime.UtcNow.AddYears(1),
+                EndsAt = DateTime.UtcNow.AddYears(1).AddDays(5),
+                CreatedByUserId = secondUser.Id
+            }
+        ];
 
         if (!context.Votings.Any())
         {
-            foreach (var voting in Votings)
+            foreach (var voting in _votings)
             {
                 var result = await votingService.CreateVoting(voting);
                 if (result.IsSome)
@@ -100,12 +109,15 @@ public static class DbInitializer
 
                 foreach (var choice in choices)
                 {
-                    result = await voteChoiceService.AddVotingChoice(voting, choice);
+                    await context.VoteChoices.AddAsync(choice);
+                    /*result = await voteChoiceService.AddVotingChoice(voting, choice);
                     if (result.IsSome)
                     {
                         throw new Exception(result.AsSome.Value.Message);
-                    }
+                    }*/
                 }
+                
+                await context.SaveChangesAsync();
             }
         }
 
@@ -113,7 +125,7 @@ public static class DbInitializer
         {
             var users = await context.Users.ToListAsync();
             var votings = await context.Votings.ToListAsync();
-            var voting = votings.First();
+            var voting = votings.Skip(1).First();
             var choices = await context.VoteChoices.Where(c => c.VotingId == voting.VotingId)
                 .ToListAsync();
             
@@ -147,12 +159,16 @@ public static class DbInitializer
 
             foreach (var vote in votes)
             {
-                var result = await voteService.CastVote(vote);
+                //Use this to bypass restrictions in the services
+                await context.Votes.AddAsync(vote);
+                /*var result = await voteService.CastVote(vote);
                 if (result.IsSome)
                 {
                     throw new Exception(result.AsSome.Value.Message);
-                }
+                }*/
             }
+            
+            await context.SaveChangesAsync();
         }
     }
     

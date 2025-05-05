@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(config["ApiBaseUrl"] ?? "-") });
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IHttpRequestUtility, HttpRequestUtility>();
+        services.AddScoped<IVotingsService, VotingsService>();
         
         services.AddScoped<NetworkService>();
 

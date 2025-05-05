@@ -57,7 +57,7 @@ public class AuthenticationService(
     {
         try
         {
-            await httpRequestUtility.ExecutePostHttpRequestAsync("users/logout");
+            await httpRequestUtility.ExecuteDeleteHttpRequestAsync("users/logout");
         }
         catch (HttpRequestException) { }
 

@@ -62,7 +62,7 @@
         var success = await AuthenticationService.TryAutoLoginAsync();
         if (success)
         {
-            NavigationManager.NavigateTo("/movies");
+            NavigationManager.NavigateTo("/votings");
         }
         else
         {
@@ -75,7 +75,7 @@
         var success = await AuthenticationService.LoginAsync(LoginViewModel);
         if (success)
         {
-            NavigationManager.NavigateTo("/movies");
+            NavigationManager.NavigateTo("/votings");
         }
     }
 }

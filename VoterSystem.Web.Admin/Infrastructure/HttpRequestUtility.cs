@@ -138,7 +138,7 @@ public class HttpRequestUtility(
             throw new ArgumentException(nameof(refreshToken));
 
         var content = new StringContent(JsonSerializer.Serialize(refreshToken, jsonOptions), Encoding.UTF8, "application/json");
-        var response = await httpClient.PostAsync("/api/v1/users/refresh", content, cancellationToken);
+        var response = await httpClient.PostAsync("/api/v1/users/refresh-token", content, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {

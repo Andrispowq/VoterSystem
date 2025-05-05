@@ -46,23 +46,8 @@ public class UserController(IUserService userService) : ControllerBase
         if (result.IsError) return result.ToHttpResult();
         
         var tokens = result.GetValueOrThrow();
-        Response.Cookies.Append(TokenIssuer.CookieTokenName, tokens.AuthToken);
-        
-        return result.ToHttpResult();
-    }
-    
-    [Authorize]
-    [HttpPost("refresh-token")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Tokens))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> LoginAsync([FromBody] Guid refreshToken)
-    {
-        var result = await userService.RedeemRefreshTokenAsync(refreshToken);
-        if (result.IsError) return result.ToHttpResult();
-        
-        var tokens = result.GetValueOrThrow();
-        Response.Cookies.Append(TokenIssuer.CookieTokenName, tokens.AuthToken);
+        Response.Cookies.Append(TokenIssuer.AuthTokenKey, tokens.AuthToken);
+        Response.Cookies.Append(TokenIssuer.RefreshTokenName, tokens.RefreshToken.ToString());
         
         return result.ToHttpResult();
     }
@@ -83,6 +68,25 @@ public class UserController(IUserService userService) : ControllerBase
         var ret = new UserDto(userR) { Role = userLevelsR.FirstOrDefault() };
         return Ok(ret);
     }
+    
+    [Authorize("AdminOnly")]
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserDto))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetUserByIdAsync(Guid id)
+    {
+        var user = await userService.GetUserByIdAsync(id);
+        if (user.IsError) return user.GetErrorOrThrow().ToHttpResult();
+        var userR = user.GetValueOrThrow();
+        
+        var userLevels = userService.GetCurrentUserRoles();
+        if (userLevels.IsError) return user.GetErrorOrThrow().ToHttpResult();
+        var userLevelsR = userLevels.GetValueOrThrow();
+
+        var ret = new UserDto(userR) { Role = userLevelsR.FirstOrDefault() };
+        return Ok(ret);
+    }
 
     [Authorize]
     [HttpDelete("logout")]
@@ -90,7 +94,8 @@ public class UserController(IUserService userService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(NotFoundError))]
     public async Task<IActionResult> LogoutAsync()
     {
-        Response.Cookies.Delete(TokenIssuer.CookieTokenName);
+        Response.Cookies.Delete(TokenIssuer.AuthTokenKey);
+        Response.Cookies.Delete(TokenIssuer.RefreshTokenName);
         return (await userService.LogoutAsync()).ToHttpResult();
     }
 
@@ -120,5 +125,21 @@ public class UserController(IUserService userService) : ControllerBase
         }
 
         return (await userService.SetUserRoleAsync(userId, Role.User)).ToHttpResult();
+    }
+    
+    [HttpPost("refresh-token")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Tokens))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RefreshTokenAsync()
+    {
+        var token = Request.Cookies.FirstOrDefault(t => t.Key == TokenIssuer.RefreshTokenName).Value;
+        if (token is null) return Unauthorized();
+
+        if (!Guid.TryParse(token, out var refreshToken))
+        {
+            return BadRequest("Refresh token is not a Guid");
+        }
+
+        return (await userService.RedeemRefreshTokenAsync(refreshToken)).ToHttpResult();
     }
 }

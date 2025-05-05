@@ -1,5 +1,4 @@
 ﻿@inject NavigationManager Navigation
-@using VoterSystem.Web.Admin
 @using VoterSystem.Web.Admin.Layout
 
 <Router AppAssembly="@typeof(App).Assembly">
@@ -10,7 +9,7 @@
     <NotFound>
         <PageTitle>Not found</PageTitle>
             <p role="alert">Sorry, there's nothing at this address.</p>
-            <button class="btn btn-primary" @onclick="NavigateToLogin">Click to Movies page</button>
+            <button class="btn btn-primary" @onclick="NavigateToLogin">Click to Login page</button>
     </NotFound>
 </Router>
 

@@ -16,12 +16,12 @@ public class VoteController(IUserService userService, IVoteChoiceService voteCho
     public async Task<IActionResult> CastVoteAsync([FromQuery] Guid choiceId)
     {
         var choiceResult = await voteChoiceService.GetChoiceById(choiceId);
-        if (choiceResult.IsError) return choiceResult.GetErrorOrThrow().ToHttpResult();
-        var choice = choiceResult.GetValueOrThrow();
+        if (choiceResult.IsError) return choiceResult.Error.ToHttpResult();
+        var choice = choiceResult.Value;
         
         var userResult = await userService.GetCurrentUserAsync();
-        if (userResult.IsError) return userResult.GetErrorOrThrow().ToHttpResult();
-        var user = userResult.GetValueOrThrow();
+        if (userResult.IsError) return userResult.Error.ToHttpResult();
+        var user = userResult.Value;
 
         var result = await voteService.CastVote(user, choice);
         return result.IsSome ? result.ToHttpResult() : Ok();
@@ -36,8 +36,8 @@ public class VoteController(IUserService userService, IVoteChoiceService voteCho
         if (!userService.IsCurrentUserAdmin())
         {
             var userResult = await userService.GetCurrentUserAsync();
-            if (userResult.IsError) return userResult.GetErrorOrThrow().ToHttpResult();
-            filterUser = userResult.GetValueOrThrow();
+            if (userResult.IsError) return userResult.Error.ToHttpResult();
+            filterUser = userResult.Value;
         }
         
         var votes = await voteService.GetAllVotes(user: filterUser);

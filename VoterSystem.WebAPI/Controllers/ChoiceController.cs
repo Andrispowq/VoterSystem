@@ -18,8 +18,8 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     public async Task<IActionResult> GetChoices(long votingId)
     {
         var voting  = await votingService.GetVoting(votingId);
-        if (voting.IsError) return voting.GetErrorOrThrow().ToHttpResult();
-        var value = voting.GetValueOrThrow();
+        if (voting.IsError) return voting.Error.ToHttpResult();
+        var value = voting.Value;
         
         return Ok(value.VoteChoices.Select(c => new VoteChoiceDto(c)).ToList());
     }
@@ -31,8 +31,8 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     public async Task<IActionResult> GetChoiceById(long votingId, long choiceId)
     {
         var voting  = await votingService.GetVoting(votingId);
-        if (voting.IsError) return voting.GetErrorOrThrow().ToHttpResult();
-        var value = voting.GetValueOrThrow();
+        if (voting.IsError) return voting.Error.ToHttpResult();
+        var value = voting.Value;
 
         var result = value.VoteChoices
             .Where(c => c.ChoiceId == choiceId)
@@ -51,8 +51,8 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     public async Task<IActionResult> CreateChoice(long votingId, [FromBody] VoteChoiceRequestDto voteChoice)
     {
         var voting  = await votingService.GetVoting(votingId);
-        if (voting.IsError) return voting.GetErrorOrThrow().ToHttpResult();
-        var value = voting.GetValueOrThrow();
+        if (voting.IsError) return voting.Error.ToHttpResult();
+        var value = voting.Value;
 
         var choice = new VoteChoice
         {
@@ -75,8 +75,8 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     public async Task<IActionResult> CreateChoice(long votingId, long choiceId)
     {
         var voting  = await votingService.GetVoting(votingId);
-        if (voting.IsError) return voting.GetErrorOrThrow().ToHttpResult();
-        var value = voting.GetValueOrThrow();
+        if (voting.IsError) return voting.Error.ToHttpResult();
+        var value = voting.Value;
         
         var choice = value.VoteChoices
             .FirstOrDefault(c => c.ChoiceId == choiceId);

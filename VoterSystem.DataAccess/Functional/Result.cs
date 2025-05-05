@@ -54,18 +54,32 @@ public sealed class Result<T, TE>
         return HasValue ? action(_result!) : errorAction(_error!);
     }
 
-    public T GetValueOrThrow()
+    /// <summary>
+    /// Gets the Value if the Result has one, or throws
+    /// </summary>
+    /// <exception cref="InvalidOperationException">If the Result had an Error</exception>
+    public T Value
     {
-        if (HasValue)
-            return _result!;
-        throw new InvalidOperationException("No result present.");
+        get
+        {
+            if (HasValue)
+                return _result!;
+            throw new InvalidOperationException("No result present.");
+        }
     }
 
-    public TE GetErrorOrThrow()
+    /// <summary>
+    /// Gets the Error if the Result has one, or throws
+    /// </summary>
+    /// <exception cref="InvalidOperationException">If the Result had a Value</exception>
+    public TE Error
     {
-        if (IsError)
-            return _error!;
-        throw new InvalidOperationException("No error present.");
+        get
+        {
+            if (IsError)
+                return _error!;
+            throw new InvalidOperationException("No error present.");
+        }
     }
 
     public override string ToString()

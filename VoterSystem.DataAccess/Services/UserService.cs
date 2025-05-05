@@ -80,7 +80,7 @@ public class UserService(
     public async Task<Option<ServiceError>> LogoutAsync()
     {
         var user = await GetCurrentUserAsync();
-        if (user.IsError) return user.GetErrorOrThrow();
+        if (user.IsError) return user.Error;
         
         await signInManager.SignOutAsync();
         return new Option<ServiceError>.None();
@@ -89,9 +89,9 @@ public class UserService(
     public async Task<Result<User, ServiceError>> GetCurrentUserAsync()
     {
         var userId = GetCurrentUserId();
-        if (userId.IsError) return userId.GetErrorOrThrow();
+        if (userId.IsError) return userId.Error;
 
-        var user = await userManager.FindByIdAsync(userId.GetValueOrThrow().ToString());
+        var user = await userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null) return new NotFoundError("User not found");
 
         return user;
@@ -112,9 +112,9 @@ public class UserService(
         if (user is null) return new NotFoundError("User not found");
         
         var currentId = GetCurrentUserId();
-        if (currentId.IsError) return currentId.GetErrorOrThrow();
+        if (currentId.IsError) return currentId.Error;
         
-        if (!IsCurrentUserAdmin() && user.Id != currentId.GetValueOrThrow())
+        if (!IsCurrentUserAdmin() && user.Id != currentId.Value)
             return new UnauthorizedError("You may now access this user");
 
         return user;
@@ -166,6 +166,6 @@ public class UserService(
         var roles = GetCurrentUserRoles();
         if (roles.IsError) return false;
 
-        return roles.GetValueOrThrow().Contains(Role.Admin);
+        return roles.Value.Contains(Role.Admin);
     }
 }

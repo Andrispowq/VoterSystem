@@ -10,8 +10,8 @@ public class VotingService(VoterSystemDbContext dbContext,
     public async Task<Result<IReadOnlyList<Voting>, ServiceError>> GetVotings()
     {
         var userId = userService.GetCurrentUserId();
-        if (userId.IsError) return userId.GetErrorOrThrow();
-        var id = userId.GetValueOrThrow();
+        if (userId.IsError) return userId.Error;
+        var id = userId.Value;
 
         var isAdmin = userService.IsCurrentUserAdmin();
         
@@ -29,8 +29,8 @@ public class VotingService(VoterSystemDbContext dbContext,
         }
         
         var userId = userService.GetCurrentUserId();
-        if (userId.IsError) return userId.GetErrorOrThrow();
-        var guid = userId.GetValueOrThrow();
+        if (userId.IsError) return userId.Error;
+        var guid = userId.Value;
 
         var isAdmin = userService.IsCurrentUserAdmin();
         if (isAdmin || item.CreatedByUserId == guid)
@@ -60,7 +60,7 @@ public class VotingService(VoterSystemDbContext dbContext,
         try
         {
             var item = await GetVoting(voting.VotingId);
-            if (item.IsError) return item.GetErrorOrThrow();
+            if (item.IsError) return item.Error;
 
             dbContext.Votings.Update(voting);
             if (commit) await dbContext.SaveChangesAsync();
@@ -77,9 +77,9 @@ public class VotingService(VoterSystemDbContext dbContext,
         try
         {
             var item = await GetVoting(id);
-            if (item.IsError) return item.GetErrorOrThrow();
+            if (item.IsError) return item.Error;
             
-            dbContext.Votings.Remove(item.GetValueOrThrow());
+            dbContext.Votings.Remove(item.Value);
             if (commit) await dbContext.SaveChangesAsync();
             return new Option<ServiceError>.None();
         }

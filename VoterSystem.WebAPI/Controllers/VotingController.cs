@@ -17,14 +17,14 @@ public class VotingController(IVotingService votingService, IUserService userSer
     public async Task<IActionResult> GetVotings()
     {
         var votings = await votingService.GetVotings();
-        if (votings.IsError) return BadRequest(votings.GetErrorOrThrow());
-        var dtos = votings.GetValueOrThrow()
+        if (votings.IsError) return BadRequest(votings.Error);
+        var dtos = votings.Value
             .Select(v => new VotingDto(v)).ToList();
         if (userService.IsCurrentUserAdmin()) return Ok(dtos);
         
         var userIdResult = userService.GetCurrentUserId();
-        if (userIdResult.IsError) return userIdResult.GetErrorOrThrow().ToHttpResult();
-        var userId = userIdResult.GetValueOrThrow();
+        if (userIdResult.IsError) return userIdResult.Error.ToHttpResult();
+        var userId = userIdResult.Value;
             
         var votes = await voteService.GetAllVotes();
         votes = votes.Where(v => v.UserId == userId).ToList();
@@ -42,13 +42,13 @@ public class VotingController(IVotingService votingService, IUserService userSer
     public async Task<IActionResult> GetVotingById(long id)
     {
         var votingRes = await votingService.GetVoting(id);
-        if (votingRes.IsError) return votingRes.GetErrorOrThrow().ToHttpResult();
-        var voting = votingRes.GetValueOrThrow();
+        if (votingRes.IsError) return votingRes.Error.ToHttpResult();
+        var voting = votingRes.Value;
         var dto = new VotingDto(voting);
         
         var userIdResult = userService.GetCurrentUserId();
-        if (userIdResult.IsError) return userIdResult.GetErrorOrThrow().ToHttpResult();
-        var userId = userIdResult.GetValueOrThrow();
+        if (userIdResult.IsError) return userIdResult.Error.ToHttpResult();
+        var userId = userIdResult.Value;
             
         var votes = await voteService.GetAllVotes();
         votes = votes.Where(v => v.UserId == userId).ToList();
@@ -62,8 +62,8 @@ public class VotingController(IVotingService votingService, IUserService userSer
     public async Task<IActionResult> GetVotingResults(long id)
     {
         var votingRes = await votingService.GetVoting(id);
-        if (votingRes.IsError) return votingRes.GetErrorOrThrow().ToHttpResult();
-        var voting = votingRes.GetValueOrThrow();
+        if (votingRes.IsError) return votingRes.Error.ToHttpResult();
+        var voting = votingRes.Value;
 
         return Ok(new VotingResultDto(voting));
     }
@@ -87,8 +87,8 @@ public class VotingController(IVotingService votingService, IUserService userSer
     public async Task<IActionResult> StartsAtVoting(long id, [FromBody] DateTime startsAt)
     {
         var votingRes = await votingService.GetVoting(id);
-        if (votingRes.IsError) return votingRes.GetErrorOrThrow().ToHttpResult();
-        var voting = votingRes.GetValueOrThrow();
+        if (votingRes.IsError) return votingRes.Error.ToHttpResult();
+        var voting = votingRes.Value;
 
         if (voting.HasStarted)
         {
@@ -116,8 +116,8 @@ public class VotingController(IVotingService votingService, IUserService userSer
     public async Task<IActionResult> EndAtVoting(long id, [FromBody] DateTime endsAt)
     {
         var votingRes = await votingService.GetVoting(id);
-        if (votingRes.IsError) return votingRes.GetErrorOrThrow().ToHttpResult();
-        var voting = votingRes.GetValueOrThrow();
+        if (votingRes.IsError) return votingRes.Error.ToHttpResult();
+        var voting = votingRes.Value;
 
         if (voting.HasStarted)
         {
@@ -145,8 +145,8 @@ public class VotingController(IVotingService votingService, IUserService userSer
     public async Task<IActionResult> EndAtVoting(long id)
     {
         var votingRes = await votingService.GetVoting(id);
-        if (votingRes.IsError) return votingRes.GetErrorOrThrow().ToHttpResult();
-        var voting = votingRes.GetValueOrThrow();
+        if (votingRes.IsError) return votingRes.Error.ToHttpResult();
+        var voting = votingRes.Value;
 
         if (voting.HasStarted)
         {

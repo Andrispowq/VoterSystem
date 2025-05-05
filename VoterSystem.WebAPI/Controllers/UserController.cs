@@ -45,7 +45,7 @@ public class UserController(IUserService userService) : ControllerBase
         var result = await userService.LoginAsync(request.Email, request.Password);
         if (result.IsError) return result.ToHttpResult();
         
-        var tokens = result.GetValueOrThrow();
+        var tokens = result.Value;
         Response.Cookies.Append(TokenIssuer.AuthTokenKey, tokens.AuthToken);
         Response.Cookies.Append(TokenIssuer.RefreshTokenName, tokens.RefreshToken.ToString());
         
@@ -58,12 +58,12 @@ public class UserController(IUserService userService) : ControllerBase
     public async Task<IActionResult> GetCurrentUserAsync()
     {
         var user = await userService.GetCurrentUserAsync();
-        if (user.IsError) return user.GetErrorOrThrow().ToHttpResult();
-        var userR = user.GetValueOrThrow();
+        if (user.IsError) return user.Error.ToHttpResult();
+        var userR = user.Value;
         
         var userLevels = userService.GetCurrentUserRoles();
-        if (userLevels.IsError) return user.GetErrorOrThrow().ToHttpResult();
-        var userLevelsR = userLevels.GetValueOrThrow();
+        if (userLevels.IsError) return user.Error.ToHttpResult();
+        var userLevelsR = userLevels.Value;
 
         var ret = new UserDto(userR) { Role = userLevelsR.FirstOrDefault() };
         return Ok(ret);
@@ -77,12 +77,12 @@ public class UserController(IUserService userService) : ControllerBase
     public async Task<IActionResult> GetUserByIdAsync(Guid id)
     {
         var user = await userService.GetUserByIdAsync(id);
-        if (user.IsError) return user.GetErrorOrThrow().ToHttpResult();
-        var userR = user.GetValueOrThrow();
+        if (user.IsError) return user.Error.ToHttpResult();
+        var userR = user.Value;
         
         var userLevels = userService.GetCurrentUserRoles();
-        if (userLevels.IsError) return user.GetErrorOrThrow().ToHttpResult();
-        var userLevelsR = userLevels.GetValueOrThrow();
+        if (userLevels.IsError) return user.Error.ToHttpResult();
+        var userLevelsR = userLevels.Value;
 
         var ret = new UserDto(userR) { Role = userLevelsR.FirstOrDefault() };
         return Ok(ret);
@@ -104,8 +104,8 @@ public class UserController(IUserService userService) : ControllerBase
     public async Task<IActionResult> PromoteToAdminAsync([FromQuery] Guid userId)
     {
         var current = userService.GetCurrentUserId();
-        if (current.IsError) return current.GetErrorOrThrow().ToHttpResult();
-        if (userId == current.GetValueOrThrow())
+        if (current.IsError) return current.Error.ToHttpResult();
+        if (userId == current.Value)
         {
             return BadRequest("Can not promote yourself");
         }
@@ -118,8 +118,8 @@ public class UserController(IUserService userService) : ControllerBase
     public async Task<IActionResult> DemoteToUserAsync([FromQuery] Guid userId)
     {
         var current = userService.GetCurrentUserId();
-        if (current.IsError) return current.GetErrorOrThrow().ToHttpResult();
-        if (userId == current.GetValueOrThrow())
+        if (current.IsError) return current.Error.ToHttpResult();
+        if (userId == current.Value)
         {
             return BadRequest("Can not demote yourself");
         }

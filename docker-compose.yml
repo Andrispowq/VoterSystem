@@ -9,7 +9,10 @@ services:
       - "6900:6900"
     environment:
       - ASPNETCORE_URLS=http://+:6900
-    restart: always
+    restart: unless-stopped
+    networks:
+      - votersystem-internal-network
+
 
   web:
     build:
@@ -20,7 +23,9 @@ services:
       - "6901:6901"
     environment:
       - ASPNETCORE_URLS=http://+:6901
-    restart: always
+    restart: unless-stopped
+    networks:
+      - votersystem-internal-network
 
   admin:
     build:
@@ -31,4 +36,10 @@ services:
       - "6902:6902"
     environment:
       - ASPNETCORE_URLS=http://+:6902
-    restart: always
+    restart: unless-stopped
+    networks:
+      - votersystem-internal-network
+
+networks:
+  votersystem-internal-network:
+     name: votersystem_internal_network

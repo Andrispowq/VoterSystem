@@ -17,7 +17,7 @@ public class VoteController(IUserService userService, IVoteChoiceService voteCho
         var choiceResult = await voteChoiceService.GetChoiceById(choiceId);
         if (choiceResult.IsError) return choiceResult.Error.ToHttpResult();
         var choice = choiceResult.Value;
-        
+      
         var userResult = await userService.GetCurrentUserAsync();
         if (userResult.IsError) return userResult.Error.ToHttpResult();
         var user = userResult.Value;

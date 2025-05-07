@@ -35,3 +35,33 @@ TestResults/
 
 ## Other temporary files
 tmp/
+
+
+.vs
+.vs/
+.vs/**
+**/.vs
+**/.vs/
+**/.vs/**
+appsettings.json
+appsettings.Development.json
+LogoBackend/appsettings.json
+LogoBackend/appsettings.Development.json
+Secret/
+Images/
+**/bin/**
+**/obj/**
+bin/**
+obj/**
+bin/
+obj/
+TestResults/
+/DbData
+/data
+data/
+data
+/coveragereport
+/.sonarqube
+/configs/graylog-certs
+.env
+.env

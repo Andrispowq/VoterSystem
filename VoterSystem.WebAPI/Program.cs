@@ -10,6 +10,7 @@ using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.WebAPI.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,7 +97,8 @@ builder.Services.AddCors(options =>
         });
 });
 
-builder.Services.Add
+builder.Services.AddHealthChecks()
+    .AddCheck<HealthController>("apple-maps");
 
 var app = builder.Build();
 

@@ -6,8 +6,8 @@ CREATE DATABASE "VoterSystem";
 DO
 $$
 BEGIN
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${server_access}') THEN
-        CREATE USER "${server_access}" WITH PASSWORD '${test_password}';
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'server_access') THEN
+        CREATE USER "server_access" WITH PASSWORD 'test_password';
     END IF;
 END
 $$;
@@ -30,5 +30,5 @@ END
 $$;
 
 -- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE "VoterSystem" TO "${server_access}";
-ALTER USER "${server_access}" WITH SUPERUSER;
+GRANT ALL PRIVILEGES ON DATABASE "VoterSystem" TO "server_access";
+ALTER USER "server_access" WITH SUPERUSER;

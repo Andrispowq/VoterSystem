@@ -1,24 +1,28 @@
 
 services:
   db:
-    image: mariadb:11.4.2-noble
+    image: postgres:17.4
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        DB_USER: ${MYSQL_USER}
+        DB_PASSWORD: ${MYSQL_PASSWORD}
+        POSTGRES_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
-      - ./configs/db/:/docker-entrypoint-initdb.d/
-      - ./data/db/:/var/lib/mysql/
+        - ./backend/docker/initSQL/:/docker-entrypoint-initdb.d/
+        - ./data/db/:/var/lib/postgresql/data
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
     healthcheck:
-      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d VoterSystem" ]
       start_period: 1m
       start_interval: 10s
       interval: 1m
       timeout: 5s
       retries: 3
+    restart: unless-stopped
     networks:
       - votersystem-internal-network
-    restart: unless-stopped
         
   webapi:
     build:

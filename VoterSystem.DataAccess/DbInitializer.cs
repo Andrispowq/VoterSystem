@@ -7,7 +7,7 @@ namespace VoterSystem.DataAccess;
 
 public static class DbInitializer
 {
-    private class UserSeedDto
+    private sealed class UserSeedDto
     {
         public required string Email { get; init; }
         public required string Password { get; init; }
@@ -24,8 +24,6 @@ public static class DbInitializer
         new() { Email = "example6@gmail.com", Password = "test_Str0ng_password", Role = Role.Admin },
         new() { Email = "example7@gmail.com", Password = "test_Str0ng_password", Role = Role.Admin }
     ];
-
-    private static List<Voting> _votings = null!;
     
     public static async Task InitialiseAsync(
         VoterSystemDbContext context, 
@@ -56,10 +54,10 @@ public static class DbInitializer
                     Email = user.Email
                 };
 
-                var result = await userService.AddUserAsync(usr, user.Password, user.Role);
+                var result = await userService.CreateUser(usr, user.Password, user.Role);
                 if (result.IsSome)
                 {
-                    throw new Exception(result.AsSome.Value.Message);
+                    throw new InvalidOperationException(result.AsSome.Value.Message);
                 }
             }
         }
@@ -67,7 +65,7 @@ public static class DbInitializer
         var firstUser = await context.Users.FirstOrDefaultAsync();
         var secondUser = await context.Users.Skip(1).FirstOrDefaultAsync();
         
-        _votings =
+        List<Voting> votings =
         [
             new() { Name = "szavazas 1", StartsAt = DateTime.UtcNow.AddDays(-5), EndsAt = DateTime.UtcNow.AddDays(-2), 
                 CreatedByUserId = firstUser!.Id },
@@ -91,14 +89,11 @@ public static class DbInitializer
 
         if (!context.Votings.Any())
         {
-            foreach (var voting in _votings)
+            foreach (var voting in votings)
             {
-                var result = await votingService.CreateVoting(voting);
-                if (result.IsSome)
-                {
-                    throw new Exception(result.AsSome.Value.Message);
-                }
-
+                await context.Votings.AddAsync(voting);
+                await context.SaveChangesAsync();
+                
                 var choices = new List<VoteChoice>
                 {
                     new() { Name = "elso valasz", VotingId = voting.VotingId, Description = "nem kamu" },
@@ -110,11 +105,6 @@ public static class DbInitializer
                 foreach (var choice in choices)
                 {
                     await context.VoteChoices.AddAsync(choice);
-                    /*result = await voteChoiceService.AddVotingChoice(voting, choice);
-                    if (result.IsSome)
-                    {
-                        throw new Exception(result.AsSome.Value.Message);
-                    }*/
                 }
                 
                 await context.SaveChangesAsync();
@@ -124,8 +114,8 @@ public static class DbInitializer
         if (!context.Votes.Any())
         {
             var users = await context.Users.ToListAsync();
-            var votings = await context.Votings.ToListAsync();
-            var voting = votings.Skip(1).First();
+            var votingList = await context.Votings.ToListAsync();
+            var voting = votingList.Skip(1).First();
             var choices = await context.VoteChoices.Where(c => c.VotingId == voting.VotingId)
                 .ToListAsync();
             
@@ -135,25 +125,25 @@ public static class DbInitializer
                 {
                     UserId = users[0].Id,
                     VotingId = voting.VotingId,
-                    ChoiceId = choices.First().ChoiceId,
+                    ChoiceId = choices[0].ChoiceId,
                 },
                 new()
                 {
                     UserId = users[1].Id,
                     VotingId = voting.VotingId,
-                    ChoiceId = choices.Last().ChoiceId,
+                    ChoiceId = choices[^1].ChoiceId,
                 },
                 new()
                 {
                     UserId = users[2].Id,
                     VotingId = voting.VotingId,
-                    ChoiceId = choices.First().ChoiceId,
+                    ChoiceId = choices[0].ChoiceId,
                 },
                 new()
                 {
                     UserId = users[3].Id,
                     VotingId = voting.VotingId,
-                    ChoiceId = choices.Skip(1).First().ChoiceId,
+                    ChoiceId = choices[1].ChoiceId,
                 }
             };
 
@@ -161,11 +151,6 @@ public static class DbInitializer
             {
                 //Use this to bypass restrictions in the services
                 await context.Votes.AddAsync(vote);
-                /*var result = await voteService.CastVote(vote);
-                if (result.IsSome)
-                {
-                    throw new Exception(result.AsSome.Value.Message);
-                }*/
             }
             
             await context.SaveChangesAsync();

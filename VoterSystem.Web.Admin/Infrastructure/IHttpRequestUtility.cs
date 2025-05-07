@@ -9,6 +9,7 @@ public interface IHttpRequestUtility
     Task<TU?> ExecutePutHttpRequestAsync<T, TU>(string uri, T requestDto);
     Task<TU?> ExecutePatchHttpRequestAsync<T, TU>(string uri, T requestDto);
     Task<TU?> ExecutePostHttpRequestAsync<T, TU>(string uri, T requestDto);
+    Task ExecutePatchHttpRequestAsync(string uri);
     Task ExecutePostHttpRequestAsync(string uri);
     Task ExecuteDeleteHttpRequestAsync(string uri);
     Task<TokensDto> RedeemTokenAsync(CancellationToken cancellationToken = default);

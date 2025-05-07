@@ -9,7 +9,7 @@
 @code {
     [Parameter] public long VotingId { get; set; }
     [Parameter] public ICollection<VoteChoiceDto> Choices { get; set; } = [];
-    [Parameter] public ICollection<OnlyVoteDto> Results { get; set; } = [];
+    [Parameter] public VotingResultsDto Results { get; set; } = null!;
 
     private readonly string _chartId = $"chart-{Guid.NewGuid():N}";
     private IJSObjectReference? _chartModule;
@@ -21,8 +21,11 @@
         {
             _chartModule = await Js.InvokeAsync<IJSObjectReference>("import", "./js/votePieChart.js");
 
-            var labels = Choices.Select(c => c.Name).ToArray();
-            var data = Choices.Select(c => Results.Count(r => r.VoteChoice.ChoiceId == c.ChoiceId)).ToArray();
+
+            var labels = Results.ChoiceResults
+                .Select(c =>
+                    Choices.FirstOrDefault(c1 => c.ChoiceId == c1.ChoiceId)?.Name ?? "");
+            var data = Results.ChoiceResults.Select(c => c.VoteCount);
 
             _chartInstance = await _chartModule.InvokeAsync<IJSObjectReference>(
                 "renderVotePieChart",

@@ -49,6 +49,14 @@ public class HttpRequestUtility(
         return await HandleResponseObjectAsync<TU>(response);
     }
 
+    public async Task ExecutePatchHttpRequestAsync(string uri)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, ApiCallUri(uri));
+        var response = await SendRequestAsync(request);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestErrorException(response);
+    }
+
     public async Task ExecutePostHttpRequestAsync(string uri)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, ApiCallUri(uri));

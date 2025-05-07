@@ -144,6 +144,12 @@ else
                         Body="Are you sure you want to start this voting? This cannot be undone."
                         OnConfirm="StartVotingAsync"
                         OnCancel="OnCancelStart" />
+    
+    <CustomAlertModal
+        @ref="_startVotingWarning"
+        Body="You must have at least two choices before starting a vote."
+        Title="Error: you can not start this voting"
+        OnOk="() => {}" />
 }
 
 @code {
@@ -163,6 +169,7 @@ else
     private DateTime? _newEndAt;
     
     private CustomConfirmModal<long>? _startVotingModal;
+    private CustomAlertModal? _startVotingWarning;
 
     protected override async Task OnInitializedAsync()
     {
@@ -176,6 +183,14 @@ else
 
     private void ShowStartVotingConfirm()
     {
+        if (_voting is null) return;
+        
+        if (_voting.VoteChoices.Count < 2)
+        {
+            _startVotingWarning?.Show();
+            return;
+        }
+        
         _startVotingModal?.Show(VotingId);
     }
 

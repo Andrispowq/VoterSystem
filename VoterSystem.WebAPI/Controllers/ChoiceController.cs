@@ -17,7 +17,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetChoices(long votingId)
     {
-        var voting  = await votingService.GetVoting(votingId);
+        var voting  = await votingService.GetVotingById(votingId);
         if (voting.IsError) return voting.Error.ToHttpResult();
         var value = voting.Value;
         
@@ -30,7 +30,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetChoiceById(long votingId, long choiceId)
     {
-        var voting  = await votingService.GetVoting(votingId);
+        var voting  = await votingService.GetVotingById(votingId);
         if (voting.IsError) return voting.Error.ToHttpResult();
         var value = voting.Value;
 
@@ -50,7 +50,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateChoice(long votingId, [FromBody] VoteChoiceRequestDto voteChoice)
     {
-        var voting  = await votingService.GetVoting(votingId);
+        var voting  = await votingService.GetVotingById(votingId);
         if (voting.IsError) return voting.Error.ToHttpResult();
         var value = voting.Value;
 
@@ -74,7 +74,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateChoice(long votingId, long choiceId)
     {
-        var voting  = await votingService.GetVoting(votingId);
+        var voting  = await votingService.GetVotingById(votingId);
         if (voting.IsError) return voting.Error.ToHttpResult();
         var value = voting.Value;
         

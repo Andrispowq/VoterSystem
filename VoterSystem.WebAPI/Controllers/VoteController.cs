@@ -13,7 +13,7 @@ public class VoteController(IUserService userService, IVoteChoiceService voteCho
 {
     [Authorize("UserOnly")]
     [HttpPost("cast-vote")]
-    public async Task<IActionResult> CastVoteAsync([FromQuery] Guid choiceId)
+    public async Task<IActionResult> CastVoteAsync([FromQuery] long choiceId)
     {
         var choiceResult = await voteChoiceService.GetChoiceById(choiceId);
         if (choiceResult.IsError) return choiceResult.Error.ToHttpResult();
@@ -29,18 +29,9 @@ public class VoteController(IUserService userService, IVoteChoiceService voteCho
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetAllVotes()
+    public async Task<IActionResult> GetMyVotes()
     {
-        User? filterUser = null;
-        
-        if (!userService.IsCurrentUserAdmin())
-        {
-            var userResult = await userService.GetCurrentUserAsync();
-            if (userResult.IsError) return userResult.Error.ToHttpResult();
-            filterUser = userResult.Value;
-        }
-        
-        var votes = await voteService.GetAllVotes(user: filterUser);
-        return Ok(votes.Select(v => new VoteDto(v)));
+        var votes = await voteService.GetMyVotes();
+        return votes.ToOkResult(list => list.Select(v => new VoteDto(v)));
     }
 }

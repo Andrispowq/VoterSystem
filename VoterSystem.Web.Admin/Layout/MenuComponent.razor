@@ -16,12 +16,21 @@
                     <li class="nav-item">
                         <NavLink class="nav-link" href="/settings">Settings</NavLink>
                     </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/">Placeholder</NavLink>
-                    </li>
+                    @if (_currentRole == Role.Admin)
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/users">Users</NavLink>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/votings/create">New voting</NavLink>
+                        </li>
+                    }
                 </ul>
 
-                <span class="navbar-text me-3">Welcome, @_userName (@_currentRole)!</span>
+                <span class="navbar-text me-3">Welcome, @_userName!</span>
 
                 <button class="btn btn-danger" @onclick="Logout" data-testid="logout">
                     <i class="bi bi-box-arrow-right"></i> Logout

@@ -12,7 +12,8 @@ public class UserService(
     IHttpContextAccessor httpContextAccessor,
     UserManager<User> userManager, 
     SignInManager<User> signInManager,
-    ITokenIssuer tokenIssuer) : IUserService
+    ITokenIssuer tokenIssuer) 
+    : IUserService
 {
     public async Task<bool> AnyAdmins()
     {
@@ -20,7 +21,17 @@ public class UserService(
         return list.Count > 0;
     }
 
-    public async Task<Option<ServiceError>> AddUserAsync(User user, string password, Role? role = null)
+    public async Task<Result<List<User>, ServiceError>> GetAllUsersAsync()
+    {
+        if (!IsCurrentUserAdmin())
+        {
+            return new UnauthorizedError("Access denied");
+        }
+        
+        return await userManager.Users.ToListAsync();
+    }
+
+    public async Task<Option<ServiceError>> CreateUser(User user, string password, Role? role = null)
     {
         user.RefreshToken = Guid.NewGuid();
 
@@ -81,17 +92,78 @@ public class UserService(
     {
         var user = await GetCurrentUserAsync();
         if (user.IsError) return user.Error;
-        
         await signInManager.SignOutAsync();
         return new Option<ServiceError>.None();
+    }
+
+    public async Task<Option<ServiceError>> ChangePasswordAsync(string oldPassword, string newPassword)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user.IsError) return user.Error;
+
+        if (oldPassword == newPassword)
+        {
+            return new BadRequestError("Passwords cannot be the same");
+        }
+
+        var result = await userManager.ChangePasswordAsync(user.Value, oldPassword, newPassword);
+        if (result.Succeeded) return new Option<ServiceError>.None();
+
+        return new ConflictError(result.Errors.First().Description);
+    }
+
+    public async Task<Result<string, ServiceError>> GenerateEmailConfirmTokenAsync()
+    {
+        var user = await GetCurrentUserAsync();
+        if (user.IsError) return user.Error;
+
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user.Value);
+        return token;
+    }
+
+    public async Task<Option<ServiceError>> ConfirmEmailAsync(string token)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user.IsError) return user.Error;
+
+        var result = await userManager.ConfirmEmailAsync(user.Value, token);
+        if (result.Succeeded) return new Option<ServiceError>.None();
+
+        return new ConflictError(result.Errors.First().Description);
+    }
+
+    public async Task<Result<string, ServiceError>> GeneratePasswordResetTokenAsync()
+    {
+        var user = await GetCurrentUserAsync();
+        if (user.IsError) return user.Error;
+
+        if (!user.Value.EmailConfirmed)
+        {
+            return new UnauthorizedError("Cannot reset password with unconfirmed email");
+        }
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user.Value);
+        return token;
+    }
+
+    public async Task<Option<ServiceError>> ResetPasswordAsync(string token, string newPassword)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user.IsError) return user.Error;
+
+        var result = await userManager.ResetPasswordAsync(user.Value, token, newPassword);
+        if (result.Succeeded) return new Option<ServiceError>.None();
+
+        return new ConflictError(result.Errors.First().Description);
     }
 
     public async Task<Result<User, ServiceError>> GetCurrentUserAsync()
     {
         var userId = GetCurrentUserId();
         if (userId.IsError) return userId.Error;
+        var id = userId.Value;
 
-        var user = await userManager.FindByIdAsync(userId.Value.ToString());
+        var user = await userManager.FindByIdAsync(id.ToString());
         if (user is null) return new NotFoundError("User not found");
 
         return user;
@@ -120,7 +192,16 @@ public class UserService(
         return user;
     }
 
-    public Result<List<Role>, ServiceError> GetCurrentUserRoles()
+    public async Task<Result<Role, ServiceError>> GetUserRoleByIdAsync(Guid id)
+    {
+        var user = await userManager.FindByIdAsync(id.ToString());
+        if (user is null) return new NotFoundError("User not found");
+        
+        var result = await userManager.GetRolesAsync(user);
+        return result.Select(Enum.Parse<Role>).FirstOrDefault();
+    }
+
+    public Result<Role, ServiceError> GetCurrentUserRole()
     {
         var user = httpContextAccessor.HttpContext?.User;
         if (user is null) return new UnauthorizedError("No user found");
@@ -132,7 +213,7 @@ public class UserService(
 
         try
         {
-            return roles.Select(Enum.Parse<Role>).ToList();
+            return roles.Select(Enum.Parse<Role>).FirstOrDefault();
         }
         catch (Exception e)
         {
@@ -163,9 +244,9 @@ public class UserService(
 
     public bool IsCurrentUserAdmin()
     {
-        var roles = GetCurrentUserRoles();
+        var roles = GetCurrentUserRole();
         if (roles.IsError) return false;
 
-        return roles.Value.Contains(Role.Admin);
+        return roles.Value == Role.Admin;
     }
 }

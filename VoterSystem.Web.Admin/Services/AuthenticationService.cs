@@ -15,6 +15,48 @@ public class AuthenticationService(
     IHttpRequestUtility httpRequestUtility)
     : BaseService(toastService), IAuthenticationService
 {
+    public async Task<List<UserDto>> GetUsersAsync()
+    {
+        try
+        {
+            var response = await httpRequestUtility.ExecuteGetHttpRequestAsync<List<UserDto>>("users/all");
+            return response.Response;
+        }
+        catch (HttpRequestErrorException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return [];
+        }
+    }
+
+    public async Task<bool> PromoteUserToAdminAsync(Guid userId)
+    {
+        try
+        {
+            await httpRequestUtility.ExecutePatchHttpRequestAsync($"users/promote?userId={userId}");
+            return true;
+        }
+        catch (HttpRequestErrorException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return false;
+        }
+    }
+
+    public async Task<bool> DemoteAdminToUserAsync(Guid userId)
+    {
+        try
+        {
+            await httpRequestUtility.ExecutePatchHttpRequestAsync($"users/demote?userId={userId}");
+            return true;
+        }
+        catch (HttpRequestErrorException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return false;
+        }
+    }
+
     public async Task<bool> LoginAsync(LoginViewModel loginBindingViewModel)
     {
         UserLoginRequestDto loginDto = new UserLoginRequestDto
@@ -52,19 +94,26 @@ public class AuthenticationService(
         return false;
     }
 
-    public async Task<Role?> GetCurrentRoleAsync()
+    public async Task<bool> ChangePasswordAsync(ChangePasswordViewModel changePasswordBindingViewModel)
     {
         try
         {
-            var userId = await localStorageService.GetItemAsStringAsync("UserId");
-            var response = await httpRequestUtility.ExecuteGetHttpRequestAsync<UserDto>($"users/{userId}");
-            return response.Response.Role;
+            await httpRequestUtility.ExecutePostHttpRequestAsync<UserChangePasswordRequestDto, string>($"users/change-password",
+                new UserChangePasswordRequestDto(changePasswordBindingViewModel));
+            await LogoutAsync();
+            
+            return true;
         }
         catch (HttpRequestErrorException ex)
         {
             Console.WriteLine(ex.Message);
-            return null;
+            return false;
         }
+    }
+
+    public async Task<Role?> GetCurrentRoleAsync()
+    {
+        return (await GetCurrentUserAsync())?.Role;
     }
 
     public async Task LogoutAsync()
@@ -90,7 +139,7 @@ public class AuthenticationService(
         }
         catch (HttpRequestErrorException)
         {
-            var keys = new List<string>() { "AuthToken", "RefreshToken", "UserName" };
+            var keys = new List<string> { "AuthToken", "RefreshToken", "UserName" };
             await localStorageService.RemoveItemsAsync(keys);
             return false;
         }
@@ -100,6 +149,21 @@ public class AuthenticationService(
     public async Task<string?> GetCurrentlyLoggedInUserAsync()
     {
         return await localStorageService.GetItemAsStringAsync("UserName");
+    }
+
+    public async Task<UserDto?> GetCurrentUserAsync()
+    {
+        try
+        {
+            var userId = await localStorageService.GetItemAsStringAsync("UserId");
+            var response = await httpRequestUtility.ExecuteGetHttpRequestAsync<UserDto>($"users/{userId}");
+            return response.Response;
+        }
+        catch (HttpRequestErrorException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return null;
+        }
     }
 
     private async Task SetCurrentUserNameAsync(Guid currentUserId)

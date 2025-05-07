@@ -8,7 +8,7 @@ namespace VoterSystem.DataAccess.Services;
 /// </summary>
 public interface IVoteService
 {
-    Task<List<Vote>> GetAllVotes(Voting? voting = null, User? user = null);
-    Task<Option<ServiceError>> CastVote(Vote vote);
+    Task<Result<List<Vote>, ServiceError>> GetVotesForVoting(Voting voting);
+    Task<Result<List<Vote>, ServiceError>> GetMyVotes();
     Task<Option<ServiceError>> CastVote(User user, VoteChoice voteChoice);
 }

@@ -37,13 +37,13 @@ public class VotingsService(IHttpRequestUtility httpRequestUtility) : IVotingsSe
         }
     }
 
-    public async Task<VotingResultViewModel?> GetVotingResultAsync(long votingId)
+    public async Task<VotingResultsDto?> GetVotingResultAsync(long votingId)
     {
         try
         {
             var result =
-                await httpRequestUtility.ExecuteGetHttpRequestAsync<VotingResultDto>($"votings/{votingId}/results");
-            return new VotingResultViewModel(result.Response);
+                await httpRequestUtility.ExecuteGetHttpRequestAsync<VotingResultsDto>($"votings/{votingId}/results");
+            return result.Response;
         }
         catch (System.Exception ex)
         {
@@ -88,7 +88,7 @@ public class VotingsService(IHttpRequestUtility httpRequestUtility) : IVotingsSe
                 Description = newChoiceDescription
             };
             
-            await httpRequestUtility.ExecutePostHttpRequestAsync<VoteChoiceRequestDto, VotingResultDto>($"votings/{votingId}/choices", 
+            await httpRequestUtility.ExecutePostHttpRequestAsync<VoteChoiceRequestDto, VotingDto>($"votings/{votingId}/choices", 
                 request);
         }
         catch (System.Exception ex)
@@ -114,6 +114,31 @@ public class VotingsService(IHttpRequestUtility httpRequestUtility) : IVotingsSe
         try
         {
             await httpRequestUtility.ExecutePostHttpRequestAsync($"votings/{votingId}/start");
+        }
+        catch (System.Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    public async Task<VotingDto?> CreateVotingAsync(VotingCreateRequestDto dto)
+    {
+        try
+        {
+            return await httpRequestUtility.ExecutePostHttpRequestAsync<VotingCreateRequestDto, VotingDto>("votings", dto);
+        }
+        catch (System.Exception ex)
+        {
+            Console.WriteLine(ex);
+            return null;
+        }
+    }
+
+    public async Task DeleteVotingAsync(long votingId)
+    {
+        try
+        {
+            await httpRequestUtility.ExecuteDeleteHttpRequestAsync($"votings/{votingId}");
         }
         catch (System.Exception ex)
         {

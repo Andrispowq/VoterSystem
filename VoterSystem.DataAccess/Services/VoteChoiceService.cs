@@ -4,8 +4,12 @@ using VoterSystem.DataAccess.Model;
 
 namespace VoterSystem.DataAccess.Services;
 
-public class VoteChoiceService(VoterSystemDbContext dbContext) : IVoteChoiceService
+public class VoteChoiceService(VoterSystemDbContext dbContext, IUserService userService) 
+    :  BaseService<VoteChoice>(userService), IVoteChoiceService
 {
+    private readonly IUserService _userService = userService;
+    protected override bool CanAccessAll(bool admin) => true;
+    
     public async Task<List<VoteChoice>> GetVoteChoices(Voting voting)
     {
         return await dbContext.VoteChoices
@@ -13,7 +17,7 @@ public class VoteChoiceService(VoterSystemDbContext dbContext) : IVoteChoiceServ
             .ToListAsync();
     }
 
-    public async Task<Result<VoteChoice, ServiceError>> GetChoiceById(Guid choiceId)
+    public async Task<Result<VoteChoice, ServiceError>> GetChoiceById(long choiceId)
     {
         var choice = await dbContext.VoteChoices.FindAsync(choiceId);
         if (choice is null) return new NotFoundError("Choice not found");
@@ -26,6 +30,14 @@ public class VoteChoiceService(VoterSystemDbContext dbContext) : IVoteChoiceServ
         if (voting.HasStarted)
         {
             return new UnauthorizedError("Voting has already started");
+        }
+        
+        var userId = _userService.GetCurrentUserId();
+        if (userId.IsError) return userId.Error;
+
+        if (voting.CreatedByUserId != userId.Value)
+        {
+            return new UnauthorizedError("Access not authorized");
         }
         
         try

@@ -16,9 +16,6 @@ services:
       interval: 1m
       timeout: 5s
       retries: 3
-    networks:
-      logo-internal-network:
-        ipv4_address: ${DB_IP}
     restart: unless-stopped
     ports:
         - "3306:3306"

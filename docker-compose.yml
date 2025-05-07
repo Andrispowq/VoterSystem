@@ -1,5 +1,25 @@
 
 services:
+  db:
+    image: mariadb:11.4.2-noble
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./configs/db/:/docker-entrypoint-initdb.d/
+      - ./data/db/:/var/lib/mysql/
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      start_period: 1m
+      start_interval: 10s
+      interval: 1m
+      timeout: 5s
+      retries: 3
+    networks:
+      - votersystem-internal-network
+    restart: unless-stopped
+        
   webapi:
     build:
       context: .
@@ -10,6 +30,10 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:6900
     restart: unless-stopped
+    depends_on:
+       db:
+         condition: service_healthy
+
     networks:
       - votersystem-internal-network
 

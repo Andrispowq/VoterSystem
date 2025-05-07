@@ -1,10 +1,9 @@
-version: '3.9'
 
 services:
   webapi:
     build:
-      context: .
-      dockerfile: VoterSystem.WebAPI/Dockerfile
+      context: VoterSystem.WebAPI/
+      dockerfile: Dockerfile
     container_name: webapi
     ports:
       - "6900:6900"
@@ -14,8 +13,8 @@ services:
 
   web:
     build:
-      context: .
-      dockerfile: VoterSystem.Blazor.Web/Dockerfile
+      context: VoterSystem.Web/
+      dockerfile: Dockerfile
     container_name: web
     ports:
       - "6901:6901"
@@ -25,8 +24,8 @@ services:
 
   admin:
     build:
-      context: .
-      dockerfile: VoterSystem.Blazor.Admin/Admin.csproj
+      context: VoterSystem.Web.Admin/
+      dockerfile: Dockerfile
     container_name: admin
     ports:
       - "6902:6902"

@@ -20,6 +20,5 @@ services:
       interval: 1m
       timeout: 5s
       retries: 3
-    restart: unless-stopped
     ports:
         - "3306:3306"

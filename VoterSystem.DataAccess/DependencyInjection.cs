@@ -21,7 +21,8 @@ public static class DependencyInjection
         // Database
         var connectionString = config.GetConnectionString("VoterSystemConnection");
         services.AddDbContext<VoterSystemDbContext>(options => options
-            .UseSqlServer(connectionString)
+            .UseMySql(connectionString,
+                new MySqlServerVersion(new Version(10, 5, 9)))
             .UseLazyLoadingProxies()
         );
         

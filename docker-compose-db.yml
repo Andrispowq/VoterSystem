@@ -7,12 +7,8 @@ services:
         DB_PASSWORD: ${MYSQL_PASSWORD}
         POSTGRES_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
-        - ./backend/docker/initSQL/:/docker-entrypoint-initdb.d/
         - ./data/db/:/var/lib/postgresql/data
     restart: unless-stopped
-    depends_on:
-      init:
-        condition: service_completed_successfully
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d VoterSystem" ]
       start_period: 1m

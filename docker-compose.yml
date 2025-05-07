@@ -48,7 +48,7 @@ services:
       - ASPNETCORE_URLS=http://+:6901
     restart: unless-stopped
     depends_on:
-       webapi:
+       db:
          condition: service_healthy
     networks:
       - votersystem-internal-network
@@ -64,7 +64,7 @@ services:
       - ASPNETCORE_URLS=http://+:6902
     restart: unless-stopped
     depends_on:
-       webapi:
+       db:
          condition: service_healthy
     networks:
       - votersystem-internal-network

@@ -1,0 +1,102 @@
+@page "/voting/{VotingId:long}"
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Dto
+@using VoterSystem.Web.Layout
+@layout MainLayout
+@inject IVotingsService VotingsService
+@inject NavigationManager NavigationManager
+
+<h1 class="my-4">Voting</h1>
+
+@if (_voting is null)
+{
+    <p class="text-muted">Loading voting...</p>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <strong>@_voting.Name</strong>
+        </div>
+        <div class="card-body">
+            <p>
+                <i class="bi bi-play-circle me-1"></i>
+                From: @_voting.StartsAt.ToLocalTime():g
+            </p>
+            <p>
+                <i class="bi bi-stop-circle me-1"></i>
+                Until: @_voting.EndsAt.ToLocalTime():g
+            </p>
+
+            <EditForm Model="_selectedChoiceId" OnValidSubmit="OnVoteClicked">
+                <div class="form-group mb-4">
+                    <InputRadioGroup @bind-Value="_selectedChoiceId" name="voteChoice">
+                        @foreach (var choice in _voting.VoteChoices)
+                        {
+                            <div class="form-check mb-2">
+                                <InputRadio class="form-check-input"
+                                            name="voteChoice"
+                                            Value="@choice.ChoiceId"/>
+                                <label class="form-check-label">
+                                    <strong>@choice.Name</strong>
+                                    @if (!string.IsNullOrWhiteSpace(choice.Description))
+                                    {
+                                        <div class="text-muted small">@choice.Description</div>
+                                    }
+                                </label>
+                            </div>
+                        }
+                    </InputRadioGroup>
+                </div>
+
+                <button type="submit" class="btn btn-success" disabled="@(_selectedChoiceId == 0)">
+                    <i class="bi bi-check2-circle me-1"></i> Submit Vote
+                </button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<CustomConfirmModal T="long" @ref="_confirmModal"
+                    Title="Confirm your vote"
+                    Body="Are you sure you want to submit your vote? You won’t be able to change it later."
+                    OnConfirm="SubmitVoteAsync"
+                    OnCancel="()=>Task.CompletedTask" />
+
+@code {
+    [Parameter] public long VotingId { get; set; }
+
+    private VotingDto? _voting;
+    private long _selectedChoiceId;
+    private CustomConfirmModal<long>? _confirmModal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await VotingsService.GetVotingByIdAsync(VotingId);
+        if (result is null)
+        {
+            NavigationManager.NavigateTo("/home");
+            return;
+        }
+
+        _voting = result;
+    }
+
+    private Task OnVoteClicked()
+    {
+        Console.WriteLine($"Trying to vote on {_selectedChoiceId}");
+        
+        if (_selectedChoiceId > 0)
+            _confirmModal?.Show();
+
+        return Task.CompletedTask;
+    }
+
+    private async Task SubmitVoteAsync()
+    {
+        Console.WriteLine($"Voting on {_selectedChoiceId}");
+        await VotingsService.VoteAsync(_selectedChoiceId);
+
+        NavigationManager.NavigateTo("/home");
+    }
+}

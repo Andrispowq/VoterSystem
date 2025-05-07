@@ -1,12 +1,13 @@
-﻿@using VoterSystem.Web.Admin.Dto
-@using VoterSystem.Web.Admin.Services
+﻿@using VoterSystem.DataAccess.Model
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Web.Admin.Config
 @inject IAuthenticationService AuthenticationService
 @inject NavigationManager NavigationManager
 
 <header>
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-3">
         <div class="container">
-            <span class="navbar-brand">Voter System</span>
+            <span class="navbar-brand">Voter Admin</span>
             
             <div class="collapse navbar-collapse d-flex align-items-center">
                 <ul class="navbar-nav me-auto mb-0 d-flex align-items-center">
@@ -34,6 +35,10 @@
 
                 <button class="btn btn-danger" @onclick="Logout" data-testid="logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+
+                <button class="btn btn-link" @onclick="WebPage" data-testid="webp-page">
+                    <i class="bi bi-box-arrow-right"></i> Go to Web page
                 </button>
             </div>
         </div>
@@ -63,5 +68,11 @@
     {
         await AuthenticationService.LogoutAsync();
         NavigationManager.NavigateTo("/login", forceLoad: true);
+    }
+
+    private async Task WebPage()
+    {
+        NavigationManager.NavigateTo($"{WebRedirect.BaseUrl}/login", forceLoad: true);
+        await Task.CompletedTask;
     }
 }

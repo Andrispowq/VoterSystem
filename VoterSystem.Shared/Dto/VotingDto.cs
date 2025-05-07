@@ -1,17 +1,15 @@
-using VoterSystem.DataAccess.Model;
-
 namespace VoterSystem.Shared.Dto;
 
-public class VotingDto(Voting voting)
+public class VotingDto
 {
-    public long VotingId => voting.VotingId;
-    public string Name => voting.Name;
-    public DateTime CreatedAt => voting.CreatedAt;
-    public DateTime StartsAt => voting.StartsAt;
-    public DateTime EndsAt => voting.EndsAt;
-    public bool HasStarted => voting.HasStarted;
-    public bool HasEnded => voting.HasEnded;
-    public bool IsOngoing => voting.IsOngoing;
+    public required long VotingId { get; init; }
+    public required string Name { get; init; }
+    public required DateTime CreatedAt { get; init; }
+    public required DateTime StartsAt { get; init; }
+    public required DateTime EndsAt { get; init; }
+    public required bool HasStarted { get; init; }
+    public required bool HasEnded { get; init; }
+    public required bool IsOngoing { get; init; }
 
     /// <summary>
     /// For Admin users, this will always be null.
@@ -19,8 +17,5 @@ public class VotingDto(Voting voting)
     /// </summary>
     public bool? HasVoted { get; set; } = null;
     
-    public ICollection<VoteChoiceDto> VoteChoices => voting.VoteChoices
-        .Select(v => new VoteChoiceDto(v))
-        .OrderBy(v => v.CreatedAt)
-        .ToList();
+    public required ICollection<VoteChoiceDto> VoteChoices { get; init; }
 }

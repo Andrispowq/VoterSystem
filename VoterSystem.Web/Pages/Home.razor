@@ -1,0 +1,98 @@
+@page "/home"
+
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Dto
+@inject NavigationManager NavigationManager
+@inject IVotingsService VotingsService
+@inject IAuthenticationService AuthService
+
+<PageTitle>Home · VoterSystem</PageTitle>
+
+@if (_isLoading)
+{
+    <div class="flex justify-center items-center h-64">
+        <span class="animate-pulse text-lg font-medium">Loading votings…</span>
+    </div>
+}
+else if (!_votings.Any())
+{
+    <div class="text-center mt-10 text-muted">No ongoing votings available right now.</div>
+}
+else
+{
+    <div class="my-4 container">
+        <div class="row g-4 row-cols-md-2 row-cols-1">
+            @foreach (var voting in _votings)
+            {
+                <div class="col">
+                    <div class="h-100 card shadow-sm border-0">
+                        <div class="card-header bg-primary text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong>@voting.Name</strong>
+                                <span class="badge bg-light text-dark">Ongoing</span>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <p class="mb-1 text-muted">
+                                <i class="bi bi-play-circle me-1"></i>
+                                From: @voting.StartsAt.ToLocalTime():g
+                            </p>
+                            <p class="mb-3 text-muted">
+                                <i class="bi bi-stop-circle me-1"></i>
+                                Until: @voting.EndsAt.ToLocalTime():g
+                            </p>
+
+                            <ul class="list-group list-group-flush mb-3">
+                                @foreach (var choice in voting.VoteChoices)
+                                {
+                                    <li class="list-group-item">
+                                        <strong>@choice.Name</strong>
+                                        @if (!string.IsNullOrWhiteSpace(choice.Description))
+                                        {
+                                            <div class="text-muted small">@choice.Description</div>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+
+                            <div class="text-end">
+                                <button class="btn btn-primary" @onclick="() => GoToVoting(voting.VotingId)">
+                                    <i class="bi bi-check2-square me-1"></i> Vote
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<VotingDto> _votings = new();
+    private bool _isLoading = true;
+    private Guid? _currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthService.GetCurrentUserAsync();
+        _currentUserId = user?.Id;
+
+        var all = await VotingsService.GetVotableVotingsAsync();
+        if (all is null) return;
+
+        _votings = all.Votings
+            .Where(v => v.IsOngoing) //TODO exclude own
+            .OrderBy(v => v.EndsAt)
+            .ToList();
+
+        _isLoading = false;
+    }
+
+    private Task GoToVoting(long votingId)
+    {
+        NavigationManager.NavigateTo($"/voting/{votingId}");
+        return Task.CompletedTask;
+    }
+}

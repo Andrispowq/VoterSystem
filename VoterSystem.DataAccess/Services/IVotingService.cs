@@ -8,7 +8,7 @@ namespace VoterSystem.DataAccess.Services;
 /// </summary>
 public interface IVotingService
 {
-    Task<Result<IReadOnlyList<Voting>, ServiceError>> GetAllVotings();
+    Task<Result<List<Voting>, ServiceError>> GetAllVotings();
     Task<Result<Voting, ServiceError>> GetVotingById(long id);
     Task<Option<ServiceError>> CreateVoting(Voting voting, bool commit = true);
     Task<Option<ServiceError>> UpdateVoting(Voting voting, bool commit = true);

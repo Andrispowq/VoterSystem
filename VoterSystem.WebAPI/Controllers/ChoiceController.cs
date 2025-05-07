@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.Shared.Dto;
+using VoterSystem.WebAPI.Dto;
 using VoterSystem.WebAPI.Functional;
 
 namespace VoterSystem.WebAPI.Controllers;
@@ -21,7 +22,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
         if (voting.IsError) return voting.Error.ToHttpResult();
         var value = voting.Value;
         
-        return Ok(value.VoteChoices.Select(c => new VoteChoiceDto(c)).ToList());
+        return Ok(value.VoteChoices.Select(DtoExtensions.ToVoteChoiceDto).ToList());
     }
 
     [Authorize]
@@ -36,7 +37,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
 
         var result = value.VoteChoices
             .Where(c => c.ChoiceId == choiceId)
-            .Select(c => new VoteChoiceDto(c))
+            .Select(DtoExtensions.ToVoteChoiceDto)
             .FirstOrDefault();
 
         return result is null ? Ok(result) : NotFound("Choice not found");
@@ -65,7 +66,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
         if (result.IsSome) return result.ToHttpResult();
 
         return CreatedAtAction(nameof(GetChoiceById), new { votingId, choiceId = choice.ChoiceId },
-            new VoteChoiceDto(choice));
+            choice.ToVoteChoiceDto());
     }
 
     [Authorize]

@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
-using VoterSystem.Shared.Dto;
+using VoterSystem.WebAPI.Dto;
 using VoterSystem.WebAPI.Functional;
 
 namespace VoterSystem.WebAPI.Controllers;
@@ -32,6 +31,6 @@ public class VoteController(IUserService userService, IVoteChoiceService voteCho
     public async Task<IActionResult> GetMyVotes()
     {
         var votes = await voteService.GetMyVotes();
-        return votes.ToOkResult(list => list.Select(v => new VoteDto(v)));
+        return votes.ToOkResult(list => list.Select(DtoExtensions.ToVoteDto));
     }
 }

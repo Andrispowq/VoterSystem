@@ -1,6 +1,6 @@
 ﻿@page "/login"
-@using VoterSystem.Web.Admin.Services
-@using VoterSystem.Web.Admin.ViewModels
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Blazor.ViewModels
 @using VoterSystem.Web.Admin.Layout
 @inject NavigationManager NavigationManager
 @inject IAuthenticationService AuthenticationService
@@ -49,7 +49,15 @@
                     <ValidationMessage For="@(() => LoginViewModel.Password)" class="text-danger" />
                 </div>
 
-                <button class="btn btn-primary" type="submit">Login</button>
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                    </button>
+
+                    <button class="btn btn-outline-primary" type="button" @onclick="Register">
+                        <i class="bi bi-person-plus me-1"></i> Register
+                    </button>
+                </div>
             </EditForm>
         }
     }
@@ -110,5 +118,11 @@
         LoginViewModel.Email = DevAdminEmail;
         LoginViewModel.Password = DevAdminPassword;
         await HandleLogin();
+    }
+
+    private async Task Register()
+    {
+        NavigationManager.NavigateTo("/register");
+        await Task.CompletedTask;
     }
 }

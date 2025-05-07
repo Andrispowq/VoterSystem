@@ -1,0 +1,25 @@
+﻿@inject NavigationManager Navigation
+@using VoterSystem.Web.Layout
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+
+        <div class="text-center mt-5">
+            <h1 class="display-4 text-danger">404 - Not Found</h1>
+            <p class="lead">Oops, the page you're looking for doesn't exist.</p>
+            <a class="btn btn-primary" @onclick="NavigateToHome">Back to Home</a>
+        </div>
+    </NotFound>
+</Router>
+
+@code {
+    private void NavigateToHome()
+    {
+        Navigation.NavigateTo("/votings");
+    }
+}

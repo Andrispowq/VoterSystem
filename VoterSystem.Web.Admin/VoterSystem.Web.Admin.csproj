@@ -22,13 +22,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Layout\CustomAlertModal.razor" />
-      <AdditionalFiles Include="Layout\CustomConfirmModal.razor" />
-      <AdditionalFiles Include="Layout\MainLayout.razor" />
-      <AdditionalFiles Include="Layout\MenuComponent.razor" />
-      <AdditionalFiles Include="Layout\MessageComponent.razor" />
-      <AdditionalFiles Include="Layout\Toast.razor" />
+      <AdditionalFiles Include="Layout\VotePieChart.razor" />
       <AdditionalFiles Include="Pages\Login.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\VoterSystem.Shared.Blazor\VoterSystem.Shared.Blazor.csproj" />
     </ItemGroup>
 
 </Project>

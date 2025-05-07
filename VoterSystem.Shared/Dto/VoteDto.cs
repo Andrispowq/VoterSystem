@@ -1,10 +1,8 @@
-using VoterSystem.DataAccess.Model;
-
 namespace VoterSystem.Shared.Dto;
 
-public class VoteDto(Vote vote)
+public class VoteDto
 {
-    public VoteChoiceDto VoteChoice => new(vote.VoteChoice);
-    public VotingDto Voting => new(vote.Voting);
-    public DateTime CreatedAt => vote.CreatedAt;
+    public required VoteChoiceDto VoteChoice { get; init; }
+    public required VotingDto Voting { get; init; }
+    public required DateTime CreatedAt { get; init; }
 }

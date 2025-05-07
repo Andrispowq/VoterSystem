@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.Shared.Dto;
+using VoterSystem.WebAPI.Dto;
 using VoterSystem.WebAPI.Functional;
 
 namespace VoterSystem.WebAPI.Controllers;
@@ -17,13 +18,64 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<VotingDto>))]
     public async Task<IActionResult> GetVotings()
     {
+        var isAdmin = userService.IsCurrentUserAdmin();
+        
+        var userRes = userService.GetCurrentUserId();
+        if (userRes.IsError) return userRes.Error.ToHttpResult();
+        var id = userRes.Value;
+
         var votings = await votingService.GetAllVotings();
         if (votings.IsError) return votings.Error.ToHttpResult();
         
         return Ok(votings.Value
-            .Select(v => new VotingDto(v)).ToList());
+            .Where(v => isAdmin || v.CreatedByUserId == id)
+            .Select(DtoExtensions.ToVotingDto).ToList());
     }
-    
+
+    [Authorize("UserOnly")]
+    [HttpGet("votable")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<VotingDto>))]
+    public async Task<IActionResult> GetVotableVotings()
+    {
+        var userRes = userService.GetCurrentUserId();
+        if (userRes.IsError) return userRes.Error.ToHttpResult();
+        var id = userRes.Value;
+
+        var votings = await votingService.GetAllVotings();
+        if (votings.IsError) return votings.Error.ToHttpResult();
+        var list = votings.Value.Where(v => v.IsOngoing).ToList();
+
+        var votes = await voteService.GetMyVotes();
+        if (votes.IsError) return votes.Error.ToHttpResult();
+        var voteList = votes.Value;
+
+        list = list
+            .Where(v => v.CreatedByUserId != id &&
+                        voteList.TrueForAll(vote => vote.VotingId != v.VotingId)).ToList();
+
+        return Ok(list.Select(DtoExtensions.ToVotingDto).ToList());
+    }
+
+    [Authorize("UserOnly")]
+    [HttpGet("voted")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<VotingDto>))]
+    public async Task<IActionResult> GetVotedVotings()
+    {
+        var votings = await votingService.GetAllVotings();
+        if (votings.IsError) return votings.Error.ToHttpResult();
+
+        var votes = await voteService.GetMyVotes();
+        if (votes.IsError) return votes.Error.ToHttpResult();
+        var voteList = votes.Value;
+
+        var list = votings.Value
+            .Where(v => voteList
+                .Exists(vote => vote.VotingId == v.VotingId))
+            .ToList();
+
+        return Ok(list.Select(DtoExtensions.ToVotingDto).ToList());
+    }
+
     [Authorize]
     [HttpGet("{id:long}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(VotingDto))]
@@ -32,10 +84,8 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
         var votingRes = await votingService.GetVotingById(id);
         if (votingRes.IsError) return votingRes.Error.ToHttpResult();
         var voting = votingRes.Value;
-        var dto = new VotingDto(voting)
-        {
-            HasVoted = await votingService.HasVotedOnVoting(voting)
-        };
+        var dto = voting.ToVotingDto();
+        dto.HasVoted = await votingService.HasVotedOnVoting(voting);
 
         return Ok(dto);
     }
@@ -51,7 +101,7 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
         var votes = await voteService.GetVotesForVoting(voting);
         if (votes.IsError) return votes.Error.ToHttpResult();
         
-        return Ok(new VotingResultsDto(votes.Value));
+        return Ok(votes.Value.ToVotingResultsDto());
     }
 
     [Authorize]
@@ -73,7 +123,7 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
         var result = await votingService.CreateVoting(obj);
         return result.IsSome
             ? result.ToHttpResult()
-            : CreatedAtAction(nameof(GetVotingById), new { id = obj.VotingId }, new VotingDto(obj));
+            : CreatedAtAction(nameof(GetVotingById), new { id = obj.VotingId }, obj.ToVotingDto());
     }
 
     [Authorize]
@@ -100,7 +150,7 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
         voting.StartsAt = startsAt;
         
         var error = await votingService.UpdateVoting(voting);
-        return error.IsSome ? error.ToHttpResult() : Ok(new VotingDto(voting));
+        return error.IsSome ? error.ToHttpResult() : Ok(voting.ToVotingDto());
     }
 
     [Authorize]
@@ -127,7 +177,7 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
         voting.EndsAt = endsAt;
         
         var error = await votingService.UpdateVoting(voting);
-        return error.IsSome ? error.ToHttpResult() : Ok(new VotingDto(voting));
+        return error.IsSome ? error.ToHttpResult() : Ok(voting.ToVotingDto());
     }
 
     [Authorize]
@@ -154,7 +204,7 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
         voting.StartsAt = DateTime.UtcNow;
         
         var error = await votingService.UpdateVoting(voting);
-        return error.IsSome ? error.ToHttpResult() : Ok(new VotingDto(voting));
+        return error.IsSome ? error.ToHttpResult() : Ok(voting.ToVotingDto());
     }
 
     [Authorize]
@@ -174,6 +224,6 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
         var voting = votingRes.Value;
 
         var votes = await voteService.GetVotesForVoting(voting);
-        return votes.ToOkResult(list => list.Select(v => new VoteDto(v)));
+        return votes.ToOkResult(list => list.Select(DtoExtensions.ToVoteDto));
     }
 }

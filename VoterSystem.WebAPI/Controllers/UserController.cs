@@ -5,6 +5,7 @@ using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared.Dto;
+using VoterSystem.WebAPI.Dto;
 using VoterSystem.WebAPI.Functional;
 
 namespace VoterSystem.WebAPI.Controllers;
@@ -66,11 +67,10 @@ public class UserController(IUserService userService) : ControllerBase
         {
             var result = await userService.GetUserRoleByIdAsync(user.Id);
             var role = result.IsError ? Role.User : result.Value;
-            
-            userDtos.Add(new UserDto(user)
-            {
-                Role = role
-            });
+
+            var dto = user.ToUserDto();
+            dto.Role = role;
+            userDtos.Add(dto);
         }
         
         return Ok(userDtos);
@@ -89,7 +89,8 @@ public class UserController(IUserService userService) : ControllerBase
         if (userLevels.IsError) return user.Error.ToHttpResult();
         var userLevelsR = userLevels.Value;
 
-        var ret = new UserDto(userR) { Role = userLevelsR };
+        var ret = userR.ToUserDto();
+        ret.Role = userLevelsR;
         return Ok(ret);
     }
     
@@ -108,7 +109,8 @@ public class UserController(IUserService userService) : ControllerBase
         if (userLevels.IsError) return user.Error.ToHttpResult();
         var userLevelsR = userLevels.Value;
 
-        var ret = new UserDto(userR) { Role = userLevelsR };
+        var ret = userR.ToUserDto();
+        ret.Role = userLevelsR;
         return Ok(ret);
     }
 

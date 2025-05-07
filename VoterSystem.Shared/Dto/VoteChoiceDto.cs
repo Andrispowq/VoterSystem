@@ -1,11 +1,9 @@
-using VoterSystem.DataAccess.Model;
-
 namespace VoterSystem.Shared.Dto;
 
-public class VoteChoiceDto(VoteChoice choice)
+public class VoteChoiceDto
 {
-    public long ChoiceId => choice.ChoiceId;
-    public string Name => choice.Name;
-    public string? Description => choice.Description;
-    public DateTime CreatedAt => choice.CreatedAt;
+    public required long ChoiceId { get; init; }
+    public required string Name { get; init; }
+    public required string? Description { get; init; }
+    public required DateTime CreatedAt { get; init; }
 }

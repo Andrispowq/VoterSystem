@@ -1,10 +1,8 @@
-using VoterSystem.DataAccess.Model;
-
 namespace VoterSystem.Shared.Dto;
 
-public class TokensDto(Tokens tokens)
+public class TokensDto
 {
-    public string AuthToken => tokens.AuthToken;
-    public Guid RefreshToken => tokens.RefreshToken;
-    public Guid UserId => tokens.UserId;
+    public required string AuthToken { get; init; }
+    public required Guid RefreshToken { get; init; }
+    public required Guid UserId { get; init; }
 }

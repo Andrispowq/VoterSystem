@@ -10,7 +10,7 @@ public class VotingService(VoterSystemDbContext dbContext, IUserService userServ
     private readonly IUserService _userService = userService;
     protected override bool CanAccessAll(bool admin) => true;
     
-    public async Task<Result<IReadOnlyList<Voting>, ServiceError>> GetAllVotings()
+    public async Task<Result<List<Voting>, ServiceError>> GetAllVotings()
     {
         if (!CheckAccessOnAll())
         {

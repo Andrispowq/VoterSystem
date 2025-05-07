@@ -94,6 +94,11 @@ public class VoteService(VoterSystemDbContext dbContext, IUserService userServic
             ChoiceId = voteChoice.ChoiceId,
         };
 
+        if (voteChoice.Voting.CreatedByUserId == user.Id)
+        {
+            return new UnauthorizedError("You can not vote on your own voting!");
+        }
+
         return await CastVote(vote);
     }
 }

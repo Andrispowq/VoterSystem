@@ -2,19 +2,14 @@ using VoterSystem.DataAccess.Model;
 
 namespace VoterSystem.Shared.Dto;
 
-public class UserDto(User user)
+public class UserDto
 {
-    public Guid Id => user.Id;
-    public string Name => user.Name;
-    public string Email => user.Email!;
-    public bool EmailConfirmed => user.EmailConfirmed;
-    public bool TwoFactorEnabled => user.TwoFactorEnabled;
-    public required Role Role { get; set; }
+    public required Guid Id { get; init; }
+    public required string Name { get; init; }
+    public required string Email { get; init; }
+    public required bool EmailConfirmed { get; init; }
+    public required bool TwoFactorEnabled { get; init; }
+    public Role Role { get; set; }
     
-    public ICollection<VoteDto> Votes => GetVotes();
-
-    private List<VoteDto> GetVotes()
-    {
-        return user.Votes.Select(vote => new VoteDto(vote)).ToList();
-    }
+    public required ICollection<VoteDto> Votes { get; init; }
 }

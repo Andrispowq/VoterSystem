@@ -10,6 +10,11 @@ COPY ["VoterSystem.WebAPI/VoterSystem.WebAPI.csproj", "VoterSystem.WebAPI/"]
 RUN dotnet restore "VoterSystem.WebAPI/VoterSystem.WebAPI.csproj"
 COPY . .
 WORKDIR "/src/VoterSystem.WebAPI"
+
+RUN sed -ir "s/Host=[^;]*;/Host=$DB_IP;/g" ./appsettings.json
+RUN sed -ir "s/Username=[^;]*;/Username=$MYSQL_USER;/g" ./appsettings.json
+RUN sed -ir "s/Password=[^;]*;/Password=$MYSQL_PASSWORD;/g" ./appsettings.json
+
 RUN dotnet build "VoterSystem.WebAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

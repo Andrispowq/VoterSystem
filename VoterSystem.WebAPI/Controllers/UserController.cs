@@ -130,16 +130,8 @@ public class UserController(IUserService userService) : ControllerBase
     [HttpPost("refresh-token")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Tokens))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> RefreshTokenAsync()
+    public async Task<IActionResult> RefreshTokenAsync([FromBody] Guid refreshToken)
     {
-        var token = Request.Cookies.FirstOrDefault(t => t.Key == TokenIssuer.RefreshTokenName).Value;
-        if (token is null) return Unauthorized();
-
-        if (!Guid.TryParse(token, out var refreshToken))
-        {
-            return BadRequest("Refresh token is not a Guid");
-        }
-
         return (await userService.RedeemRefreshTokenAsync(refreshToken)).ToHttpResult();
     }
 }

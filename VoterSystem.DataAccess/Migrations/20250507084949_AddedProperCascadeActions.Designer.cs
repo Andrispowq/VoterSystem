@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VoterSystem.DataAccess;
 
@@ -11,9 +12,11 @@ using VoterSystem.DataAccess;
 namespace VoterSystem.DataAccess.Migrations
 {
     [DbContext(typeof(VoterSystemDbContext))]
-    partial class VoterSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250507084949_AddedProperCascadeActions")]
+    partial class AddedProperCascadeActions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

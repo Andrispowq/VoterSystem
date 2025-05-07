@@ -28,7 +28,19 @@ public class VoterSystemDbContext(DbContextOptions<VoterSystemDbContext> options
             .HasOne(v => v.Voting)
             .WithMany(c => c.Votes)
             .HasForeignKey(v => v.VotingId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<Vote>()
+            .HasOne(v => v.User)
+            .WithMany(c => c.Votes)
+            .HasForeignKey(v => v.UserId)
             .OnDelete(DeleteBehavior.NoAction);
+        
+        modelBuilder.Entity<VoteChoice>()
+            .HasOne(v => v.Voting)
+            .WithMany(c => c.VoteChoices)
+            .HasForeignKey(v => v.VotingId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Voting>()
             .HasIndex(v => v.Name)

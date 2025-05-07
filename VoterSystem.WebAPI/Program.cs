@@ -78,8 +78,18 @@ builder.Services.AddCors(options =>
     options.AddPolicy("BlazorPolicy",
         policy =>
         {
-            policy.WithOrigins(builder.Configuration["BlazorUrl"]
-                               ?? throw new ArgumentNullException("BlazorUrl", "Must set BlazorUrl in appsettings!")) // Enable Blazor port
+            var urls = builder.Configuration
+                .GetSection("BlazorUrls")
+                .Get<List<string>>();
+
+            if (urls == null || !urls.Any())
+                throw new ArgumentNullException(
+                    nameof(urls),
+                    "Must set BlazorUrls (as a JSON array of strings) in appsettings!"
+                );
+            
+            // Enable Blazor ports
+            policy.WithOrigins(urls.ToArray()) 
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();

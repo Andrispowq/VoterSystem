@@ -41,6 +41,7 @@ public class AuthenticationService(
 
             await localStorageService.SetItemAsStringAsync("AuthToken", responseBody.AuthToken);
             await localStorageService.SetItemAsStringAsync("RefreshToken", responseBody.RefreshToken.ToString());
+            await localStorageService.SetItemAsStringAsync("UserId", responseBody.UserId.ToString());
             await SetCurrentUserNameAsync(responseBody.UserId);
 
             return true;
@@ -49,6 +50,21 @@ public class AuthenticationService(
         await HandleHttpError(response);
 
         return false;
+    }
+
+    public async Task<Role?> GetCurrentRoleAsync()
+    {
+        try
+        {
+            var userId = await localStorageService.GetItemAsStringAsync("UserId");
+            var response = await httpRequestUtility.ExecuteGetHttpRequestAsync<UserDto>($"users/{userId}");
+            return response.Response.Role;
+        }
+        catch (HttpRequestErrorException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return null;
+        }
     }
 
     public async Task LogoutAsync()
@@ -88,7 +104,14 @@ public class AuthenticationService(
 
     private async Task SetCurrentUserNameAsync(Guid currentUserId)
     {
-        var response = await httpRequestUtility.ExecuteGetHttpRequestAsync<UserDto>($"users/{currentUserId}");
-        await localStorageService.SetItemAsStringAsync("UserName", response.Response.Name);
+        try
+        {
+            var response = await httpRequestUtility.ExecuteGetHttpRequestAsync<UserDto>($"users/{currentUserId}");
+            await localStorageService.SetItemAsStringAsync("UserName", response.Response.Name);
+        }
+        catch (HttpRequestErrorException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 }

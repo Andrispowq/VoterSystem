@@ -1,0 +1,76 @@
+@page "/settings"
+@using VoterSystem.Web.Admin.Layout
+@using VoterSystem.Web.Admin.ViewModels
+@layout MainLayout
+@inject NavigationManager NavigationManager
+
+<h1 class="my-4">Settings</h1>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>User Data</strong>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Coming soon...</p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Change Password</strong>
+    </div>
+    <div class="card-body">
+        <EditForm Model="_passwordModel" OnValidSubmit="HandlePasswordChange">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Current Password</label>
+                <InputText type="password" class="form-control" @bind-Value="_passwordModel.OldPassword" />
+                <ValidationMessage For="@(() => _passwordModel.OldPassword)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">New Password</label>
+                <InputText type="password" class="form-control" @bind-Value="_passwordModel.NewPassword" />
+                <ValidationMessage For="@(() => _passwordModel.NewPassword)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Confirm New Password</label>
+                <InputText type="password" class="form-control" @bind-Value="_passwordModel.ConfirmPassword" />
+                <ValidationMessage For="@(() => _passwordModel.ConfirmPassword)" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update Password</button>
+        </EditForm>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Forgot Password</strong>
+    </div>
+    <div class="card-body">
+        <p>If you've forgotten your password, click below and we'll email you a reset link (TODO).</p>
+        <button class="btn btn-outline-warning" @onclick="HandleForgotPassword">
+            <i class="bi bi-envelope me-1"></i> Forgot Password
+        </button>
+    </div>
+</div>
+
+@code {
+    private readonly ChangePasswordViewModel _passwordModel = new();
+
+    private async Task HandlePasswordChange()
+    {
+        // TODO: Call your user service to update password
+        Console.WriteLine("ChangePassword: " +
+                          $"{_passwordModel.OldPassword} -> {_passwordModel.NewPassword}");
+    }
+
+    private void HandleForgotPassword()
+    {
+        Console.WriteLine("TODO: Trigger forgot password email");
+    }
+}

@@ -2,8 +2,8 @@
 services:
   webapi:
     build:
-      context: VoterSystem.WebAPI/
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: VoterSystem.WebAPI/Dockerfile
     container_name: webapi
     ports:
       - "6900:6900"
@@ -13,8 +13,8 @@ services:
 
   web:
     build:
-      context: VoterSystem.Web/
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: VoterSystem.Web/Dockerfile
     container_name: web
     ports:
       - "6901:6901"
@@ -24,8 +24,8 @@ services:
 
   admin:
     build:
-      context: VoterSystem.Web.Admin/
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: VoterSystem.Web.Admin/Dockerfile
     container_name: admin
     ports:
       - "6902:6902"

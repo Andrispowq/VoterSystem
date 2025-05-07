@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  webapi:
+    build:
+      context: .
+      dockerfile: VoterSystem.WebAPI/Dockerfile
+    container_name: webapi
+    ports:
+      - "6900:6900"
+    environment:
+      - ASPNETCORE_URLS=http://+:6900
+    restart: always
+
+  web:
+    build:
+      context: .
+      dockerfile: VoterSystem.Blazor.Web/Dockerfile
+    container_name: web
+    ports:
+      - "6901:6901"
+    environment:
+      - ASPNETCORE_URLS=http://+:6901
+    restart: always
+
+  admin:
+    build:
+      context: .
+      dockerfile: VoterSystem.Blazor.Admin/Admin.csproj
+    container_name: admin
+    ports:
+      - "6902:6902"
+    environment:
+      - ASPNETCORE_URLS=http://+:6902
+    restart: always

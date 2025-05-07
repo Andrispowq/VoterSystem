@@ -1,6 +1,0 @@
-﻿services:
-  votersystem.webapi:
-    image: votersystem.webapi
-    build:
-      context: .
-      dockerfile: VoterSystem.WebAPI/Dockerfile

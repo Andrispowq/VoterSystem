@@ -11,7 +11,7 @@ RUN dotnet restore "VoterSystem.WebAPI/VoterSystem.WebAPI.csproj"
 COPY . .
 WORKDIR "/src/VoterSystem.WebAPI"
 
-RUN sed -ir "s/Host=[^;]*;/Host=$DB_IP;/g" ./appsettings.json
+RUN sed -ir "s/Host=[^;]*;/Host=db;/g" ./appsettings.json
 
 RUN dotnet build "VoterSystem.WebAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
 

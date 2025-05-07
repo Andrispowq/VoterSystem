@@ -96,6 +96,8 @@ builder.Services.AddCors(options =>
         });
 });
 
+builder.Services.Add
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -116,6 +118,8 @@ app.UseRouting();
 
 app.UseAuthorization();
 app.MapControllers();
+
+app.UseHealthChecks("/api/v1/health");
 
 using (var scope = app.Services.CreateScope())
 {

@@ -3,11 +3,12 @@ services:
   db:
     image: postgres:17.4
     environment:
-        DB_USER: ${MYSQL_USER}
-        DB_PASSWORD: ${MYSQL_PASSWORD}
-        POSTGRES_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD}
     volumes:
-        - ./data/db/:/var/lib/postgresql/data
+      - ./postgreinit/:/docker-entrypoint-initdb.d/
+      - ./data/db/:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d VoterSystem" ]
@@ -32,7 +33,6 @@ services:
     depends_on:
        db:
          condition: service_healthy
-
     networks:
       - votersystem-internal-network
 
@@ -47,6 +47,9 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:6901
     restart: unless-stopped
+    depends_on:
+       webapi:
+         condition: service_healthy
     networks:
       - votersystem-internal-network
 
@@ -60,6 +63,9 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:6902
     restart: unless-stopped
+    depends_on:
+       webapi:
+         condition: service_healthy
     networks:
       - votersystem-internal-network
 

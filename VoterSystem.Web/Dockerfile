@@ -25,5 +25,5 @@ WORKDIR /app
 
 # deploy with nginx
 FROM nginx:alpine
-COPY ../nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ../nginx/user-nginx.conf /etc/nginx/user-nginx.conf
 COPY --from=build ./ /usr/share/nginx/html/web

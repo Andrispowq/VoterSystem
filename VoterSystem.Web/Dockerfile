@@ -25,4 +25,4 @@ WORKDIR /app
 
 FROM nginx:alpine
 COPY ../../nginx/web-nginx.conf /etc/nginx/web-nginx.conf
-COPY --from=build wwwroot /usr/share/nginx/html/web
+COPY --from=build . /usr/share/nginx/html/web

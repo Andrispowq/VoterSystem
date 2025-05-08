@@ -67,13 +67,18 @@ services:
     networks:
       - votersystem-internal-network
       
-   admin-host:
+  admin-host:
     image: nginx:alpine
     ports:
       - "6902:80"
     volumes:
       - ./VoterSystem.Web.Admin/bin/Release/net9.0/publish/wwwroot:/usr/share/nginx/html/admin:ro
       - ./nginx/admin-nginx.conf:/etc/nginx/admin-nginx.conf:ro
+    depends_on:
+       admin:
+         condition: completed
+    networks:
+      - votersystem-internal-network
 
   web-host:
     image: nginx:alpine
@@ -82,6 +87,11 @@ services:
     volumes:
       - ./VoterSystem.Web/bin/Release/net9.0/publish/wwwroot:/usr/share/nginx/html/user:ro
       - ./nginx/user-nginx.conf:/etc/nginx/user-nginx.conf:ro
+    depends_on:
+       web:
+         condition: completed
+    networks:
+      - votersystem-internal-network
 
 networks:
   votersystem-internal-network:

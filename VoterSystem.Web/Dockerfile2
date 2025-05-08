@@ -22,7 +22,3 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 WORKDIR /app
-
-FROM nginx:alpine
-COPY ../../nginx/web-nginx.conf /etc/nginx/web-nginx.conf
-COPY --from=build wwwroot /usr/share/nginx/html/web

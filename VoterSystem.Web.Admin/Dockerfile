@@ -21,3 +21,7 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 WORKDIR /wwwroot
+
+FROM nginx:alpine
+COPY ../../nginx/admin-nginx.conf /etc/nginx/admin-nginx.conf
+COPY --from=build wwwroot /usr/share/nginx/html/admin

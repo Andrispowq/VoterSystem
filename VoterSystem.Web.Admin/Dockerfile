@@ -34,9 +34,10 @@ WORKDIR /app
 COPY ./wwwroot/appsettings.template.json ./wwwroot/appsettings.json
 
 # Replace with env value using envsubst
-RUN apt-get update && apt-get install -y gettext && \
-    envsubst < ./wwwroot/appsettings.json > ./wwwroot/appsettings.json.tmp && \
-    mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
+RUN apt-get update && apt-get install -y gettext
+
+CMD envsubst < ./wwwroot/appsettings.template.json > ./wwwroot/appsettings.json.tmp && \
+	mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
 
 FROM nginx:alpine
 COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf

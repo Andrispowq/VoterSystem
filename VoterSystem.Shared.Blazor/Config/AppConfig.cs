@@ -2,5 +2,5 @@
 
 public class AppConfig
 {
-    public required long ToastDurationInMillis { get; init; }
+    public long ToastDurationInMillis { get; init; }
 }

@@ -10,10 +10,18 @@ using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared;
 using VoterSystem.WebAPI.Config;
 using VoterSystem.WebAPI.Controllers;
+using DependencyInjection = VoterSystem.WebAPI.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//load from user secrets in dev
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+{
+    DependencyInjection.LoadDotEnv(builder.Configuration);
+}
 
 builder.Services.AddDataAccess(builder.Configuration);
 
@@ -23,12 +31,8 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.Configure<BlazorSettings>(
-    builder.Configuration.GetSection("BlazorSettings"));
-
-var jwtSection = builder.Configuration.GetSection("JwtSettings");
-var jwtSettings = jwtSection.Get<JwtSettings>() ?? throw new ArgumentNullException(nameof(JwtSettings));
-builder.Services.Configure<JwtSettings>(jwtSection);
+builder.Services.BindWithEnvSubstitution<BlazorSettings>(builder.Configuration, "BlazorSettings");
+var jwtSettings = builder.Services.BindWithEnvSubstitution<JwtSettings>(builder.Configuration, "JwtSettings");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -85,7 +89,7 @@ builder.Services.AddCors(options =>
         {
             var urls = builder.Configuration
                 .GetSection("BlazorUrls")
-                .Get<List<string>>();
+                .Get<List<string>>()?.Select(Utils.ReplaceFromEnv).ToList();
 
             if (urls == null || !urls.Any())
                 throw new ArgumentNullException(
@@ -115,7 +119,6 @@ if (/*app.Environment.IsDevelopment()*/true)
     app.MapScalarApiReference();
     app.UseCors("BlazorPolicy");
 }
-    
 
 app.UseHsts();
 

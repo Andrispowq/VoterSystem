@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VoterSystem.Shared.Blazor.Config;
 using VoterSystem.Shared.Blazor.Services;
+using VoterSystem.Shared.DotEnv;
 
 namespace VoterSystem.Shared.Blazor.Infrastructure;
 
@@ -13,9 +14,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddSharedBlazorServices(this IServiceCollection services, IConfiguration config)
     {
-        var appConfig = config.GetSection("AppConfig").Get<AppConfig>();
-        if (appConfig == null)
-            throw new ArgumentNullException(nameof(appConfig), "Not exist or wrong appConfig");
+        //load from user secrets in dev
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        {
+            LoadDotEnv(config);
+        }
+
+        var appConfig = services.BindWithEnvSubstitution<AppConfig>(config, "AppConfig");
 
         services.AddSingleton(appConfig);
         services.AddSingleton<IToastService, ToastService>();
@@ -35,7 +40,12 @@ public static class DependencyInjection
 
         services.AddBlazoredLocalStorage();
 
-        var url = new Uri(config["ApiBaseUrl"] ?? "-");
+        var urlS = config["ApiBaseUrl"] ?? "-";
+        urlS = Utils.ReplaceFromEnv(urlS);
+        var url = new Uri(urlS);
+        
+        RedirectUrls.WebBaseUrl = Utils.ReplaceFromEnv(config["WebUrl"] ?? "localhost");
+        RedirectUrls.AdminBaseUrl = Utils.ReplaceFromEnv(config["AdminBaseUrl"] ?? "localhost");
 
         services.AddScoped(_ => new HttpClient { BaseAddress = url });
         services.AddScoped<IAuthenticationService, AuthenticationService>();
@@ -45,5 +55,49 @@ public static class DependencyInjection
         services.AddScoped<NetworkService>();
 
         return services;
+    }
+    
+    private static void LoadDotEnv(IConfiguration config)
+    {
+        var list = config.GetSection("DotEnv")
+            .Get<List<DotEnvConfigEntry>>();
+
+        if (list is null)
+        {
+            Console.WriteLine("Warning: No DotEnv configuration found.");
+            return;
+        }
+        
+        list.Load();
+    }
+    
+    private static T BindWithEnvSubstitution<T>(this IServiceCollection services, IConfiguration config,
+        string sectionName)
+        where T : class, new()
+    {
+        var section = config.GetSection(sectionName);
+        var raw = new ConfigurationBuilder()
+            .AddInMemoryCollection(section.AsEnumerable()
+                .Where(pair => pair.Value is not null)
+                .Select(pair => new KeyValuePair<string, string>(
+                    pair.Key,
+                    Utils.ReplaceFromEnv(pair.Value!)))!)
+            .Build();
+
+        var instance = new T();
+        raw.Bind(sectionName, instance);
+
+        services.Configure<T>(options =>
+        {
+            foreach (var prop in typeof(T).GetProperties())
+            {
+                if (prop.CanWrite)
+                {
+                    prop.SetValue(options, prop.GetValue(instance));
+                }
+            }
+        });
+
+        return instance;
     }
 }

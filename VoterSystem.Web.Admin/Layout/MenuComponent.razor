@@ -1,6 +1,6 @@
 ﻿@using VoterSystem.DataAccess.Model
 @using VoterSystem.Shared.Blazor.Services
-@using VoterSystem.Web.Admin.Config
+@using VoterSystem.Shared.Blazor.Config
 @inject IAuthenticationService AuthenticationService
 @inject NavigationManager NavigationManager
 
@@ -72,7 +72,7 @@
 
     private async Task WebPage()
     {
-        NavigationManager.NavigateTo($"{WebRedirect.BaseUrl}/login", forceLoad: true);
+        NavigationManager.NavigateTo($"{RedirectUrls.WebBaseUrl}/login", forceLoad: true);
         await Task.CompletedTask;
     }
 }

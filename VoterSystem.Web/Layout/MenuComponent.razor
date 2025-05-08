@@ -1,6 +1,6 @@
 ﻿@using VoterSystem.DataAccess.Model
 @using VoterSystem.Shared.Blazor.Services
-@using VoterSystem.Web.Config
+@using VoterSystem.Shared.Blazor.Config
 @inject IAuthenticationService AuthenticationService
 @inject NavigationManager NavigationManager
 
@@ -16,9 +16,6 @@
                     </li>
                     <li class="nav-item">
                         <NavLink class="nav-link" href="/history">History</NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/settings">Settings</NavLink>
                     </li>
                 </ul>
 
@@ -63,6 +60,6 @@
 
     private async Task AdminPage()
     {
-        NavigationManager.NavigateTo($"{AdminRedirect.BaseUrl}/login", forceLoad: true);
+        NavigationManager.NavigateTo($"{RedirectUrls.AdminBaseUrl}/login", forceLoad: true);
     }
 }

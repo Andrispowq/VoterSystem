@@ -21,7 +21,7 @@ RUN dotnet publish "VoterSystem.Web.Admin.csproj" -c $BUILD_CONFIGURATION -o /ap
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-WORKDIR /wwwroot
+WORKDIR /app
 
 FROM nginx:alpine
 COPY ../../nginx/admin-nginx.conf /etc/nginx/admin-nginx.conf

@@ -24,5 +24,5 @@ WORKDIR /wwwroot
 
 # nginx
 FROM nginx:alpine
-COPY ../nginx/admin-nginx.conf /etc/nginx/admin-nginx.conf
+COPY nginx/admin-nginx.conf /etc/nginx/admin-nginx.conf
 COPY --from=build ./ /usr/share/nginx/html/admin

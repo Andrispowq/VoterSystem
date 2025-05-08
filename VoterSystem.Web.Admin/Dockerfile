@@ -24,5 +24,5 @@ COPY --from=publish /app/publish .
 WORKDIR /app
 
 FROM nginx:alpine
-COPY ../../nginx/admin-nginx.conf /etc/nginx/admin-nginx.conf
+COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf
 COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/

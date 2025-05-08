@@ -3,9 +3,9 @@ USER $APP_UID
 WORKDIR /app
 EXPOSE 80
 
-ARGS API_HTTP
-ARGS WEB_HTTP
-ARGS ADMIN_HTTP
+ARG API_HTTP
+ARG WEB_HTTP
+ARG ADMIN_HTTP
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -36,5 +36,5 @@ RUN apt-get update && apt-get install -y gettext && \
     mv ./wwwroot/config.json.tmp ./wwwroot/config.json
 
 FROM nginx:alpine
-COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ../../nginx/web-nginx.conf /etc/nginx/web-nginx.conf
 COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/

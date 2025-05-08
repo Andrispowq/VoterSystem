@@ -25,4 +25,4 @@ WORKDIR /wwwroot
 
 FROM nginx:alpine
 COPY ../../nginx/admin-nginx.conf /etc/nginx/admin-nginx.conf
-COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/admin/
+COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/

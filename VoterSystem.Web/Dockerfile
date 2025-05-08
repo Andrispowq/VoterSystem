@@ -31,7 +31,7 @@ COPY --from=publish /app/publish .
 WORKDIR /app
 
 # Copy file
-COPY ./wwwroot/appsettings.template.json ./wwwroot/appsettings.json
+# COPY ./wwwroot/appsettings.template.json ./wwwroot/appsettings.json
 
 # Replace with env value using envsubst
 # RUN apt-get update && apt-get install -y gettext && \

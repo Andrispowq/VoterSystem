@@ -183,8 +183,64 @@ public class AuthenticationService(
 
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/v1/users/register", register);
+            var response = await httpClient.PostAsJsonAsync("users/register", register);
             return response.IsSuccessStatusCode;
+        }
+        catch (System.Exception)
+        {
+            ShowErrorMessage("Unknown error occured");
+            return false;
+        }
+    }
+
+    public async Task<bool> RequestEmailConfirmationAsync()
+    {
+        try
+        {
+            await httpRequestUtility.ExecutePostHttpRequestAsync("users/confirm-email-request");
+            return true;
+        }
+        catch (System.Exception)
+        {
+            ShowErrorMessage("Unknown error occured");
+            return false;
+        }
+    }
+
+    public async Task<bool> ConfirmEmailAsync(UserEmailConfirmRequestDto dto)
+    {
+        try
+        {
+            await httpRequestUtility.ExecutePostHttpRequestAsync("users/confirm-email", dto);
+            return true;
+        }
+        catch (System.Exception)
+        {
+            ShowErrorMessage("Unknown error occured");
+            return false;
+        }
+    }
+
+    public async Task<bool> RequestPasswordResetAsync(string email)
+    {
+        try
+        {
+            await httpRequestUtility.ExecutePostHttpRequestAsync("users/reset-password-request", email);
+            return true;
+        }
+        catch (System.Exception)
+        {
+            ShowErrorMessage("Unknown error occured");
+            return false;
+        }
+    }
+
+    public async Task<bool> ResetPasswordAsync(UserPasswordResetRequestDto dto)
+    {
+        try
+        {
+            await httpRequestUtility.ExecutePostHttpRequestAsync("users/reset-password", dto);
+            return true;
         }
         catch (System.Exception)
         {

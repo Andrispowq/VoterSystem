@@ -22,7 +22,7 @@ public static class DbInitializer
         new() { Email = "example4@gmail.com", Password = "test_Str0ng_password", Role = Role.User },
         new() { Email = "example5@gmail.com", Password = "test_Str0ng_password", Role = Role.User },
         new() { Email = "example6@gmail.com", Password = "test_Str0ng_password", Role = Role.Admin },
-        new() { Email = "example7@gmail.com", Password = "test_Str0ng_password", Role = Role.Admin }
+        new() { Email = "akmeczo@gmail.com", Password = "1Password#", Role = Role.Admin }
     ];
     
     public static async Task InitialiseAsync(

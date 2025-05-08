@@ -121,9 +121,9 @@ public class UserService(
         return token;
     }
 
-    public async Task<Option<ServiceError>> ConfirmEmailAsync(string token)
+    public async Task<Option<ServiceError>> ConfirmEmailAsync(string email, string token)
     {
-        var user = await GetCurrentUserAsync();
+        var user = await GetUserByEmailAsync(email);
         if (user.IsError) return user.Error;
 
         var result = await userManager.ConfirmEmailAsync(user.Value, token);
@@ -146,9 +146,9 @@ public class UserService(
         return token;
     }
 
-    public async Task<Option<ServiceError>> ResetPasswordAsync(string token, string newPassword)
+    public async Task<Option<ServiceError>> ResetPasswordAsync(string email, string token, string newPassword)
     {
-        var user = await GetCurrentUserAsync();
+        var user = await GetUserByEmailAsync(email);
         if (user.IsError) return user.Error;
 
         var result = await userManager.ResetPasswordAsync(user.Value, token, newPassword);
@@ -188,6 +188,14 @@ public class UserService(
         
         if (!IsCurrentUserAdmin() && user.Id != currentId.Value)
             return new UnauthorizedError("You may now access this user");
+
+        return user;
+    }
+
+    public async Task<Result<User, ServiceError>> GetUserByEmailAsync(string email)
+    {
+        var user = await userManager.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user is null) return new NotFoundError("User not found");
 
         return user;
     }

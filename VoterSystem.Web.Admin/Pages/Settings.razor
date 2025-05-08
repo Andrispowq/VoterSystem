@@ -107,10 +107,9 @@
         _user = await AuthenticationService.GetCurrentUserAsync();
     }
 
-    private Task ConfirmEmailAsync()
+    private async Task ConfirmEmailAsync()
     {
-        Console.WriteLine("TODO: Send confirmation email");
-        return Task.CompletedTask;
+        await AuthenticationService.RequestEmailConfirmationAsync();
     }
 
     private Task ConfigureTwoFactorAsync()
@@ -128,8 +127,17 @@
         }
     }
 
-    private void HandleForgotPassword()
+    private async Task HandleForgotPassword()
     {
-        Console.WriteLine("TODO: Trigger forgot password email");
+        if (_user is not null)
+        {
+            var result = await AuthenticationService.RequestPasswordResetAsync(_user.Email);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/login");
+            }
+        }
+        
+        Console.WriteLine("Error resetting password");
     }
 }

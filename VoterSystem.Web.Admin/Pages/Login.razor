@@ -54,6 +54,10 @@
                         <i class="bi bi-box-arrow-in-right me-1"></i> Login
                     </button>
 
+                    <button class="btn btn-link text-muted" type="button" @onclick="ForgotPassword">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Forgot Password?
+                    </button>
+
                     <button class="btn btn-outline-primary" type="button" @onclick="Register">
                         <i class="bi bi-person-plus me-1"></i> Register
                     </button>
@@ -123,6 +127,12 @@
     private async Task Register()
     {
         NavigationManager.NavigateTo("/register");
+        await Task.CompletedTask;
+    }
+
+    private async Task ForgotPassword()
+    {
+        NavigationManager.NavigateTo("/forgot-password");
         await Task.CompletedTask;
     }
 }

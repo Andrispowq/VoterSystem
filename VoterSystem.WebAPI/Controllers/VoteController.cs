@@ -10,6 +10,7 @@ namespace VoterSystem.WebAPI.Controllers;
 [Route("/api/v1/votes/")]
 public class VoteController(IUserService userService, IVoteChoiceService voteChoiceService, IVoteService voteService) : ControllerBase
 {
+    
     [Authorize("UserOnly")]
     [HttpPost("cast-vote")]
     public async Task<IActionResult> CastVoteAsync([FromQuery] long choiceId)

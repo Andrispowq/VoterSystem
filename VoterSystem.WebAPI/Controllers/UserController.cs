@@ -1,10 +1,13 @@
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared.Dto;
+using VoterSystem.WebAPI.Config;
 using VoterSystem.WebAPI.Dto;
 using VoterSystem.WebAPI.Functional;
 
@@ -12,8 +15,11 @@ namespace VoterSystem.WebAPI.Controllers;
 
 [ApiController]
 [Route("/api/v1/users")]
-public class UserController(IUserService userService) : ControllerBase
+public class UserController(IUserService userService, IEmailService emailService,
+    IOptions<BlazorSettings> blazorSettings) : ControllerBase
 {
+    private readonly BlazorSettings _blazorSettings = blazorSettings.Value;
+    
     [HttpPost("register")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -129,40 +135,80 @@ public class UserController(IUserService userService) : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("confirm-email")]
-    public Task<IActionResult> RequestEmailConfirm()
-    {
-        throw new NotImplementedException();
-    }
-
-    [Authorize]
-    [HttpPost("confirm-email/{token}")]
+    [HttpPost("confirm-email-request")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ConfirmEmail(string token)
+    public async Task<IActionResult> RequestEmailConfirm()
     {
-        var confirm = await userService.ConfirmEmailAsync(token);
+        var user = await userService.GetCurrentUserAsync();
+        if (user.IsError) return user.ToHttpResult();
+        var userValue = user.Value;
+        if (userValue.EmailConfirmed)
+        {
+            return Unauthorized("Email is already confirmed");
+        }
+        
+        var code = await userService.GenerateEmailConfirmTokenAsync();
+        if (code.IsError) return code.ToHttpResult();
+
+        var codeResult = code.Value;
+        var base64 = Convert.ToBase64String(Encoding.ASCII.GetBytes(codeResult));
+        
+        var link = $"{_blazorSettings.AdminPageUrl}/confirm-email?email={userValue.Email}&code={base64}";
+        var message = EmailText.GetEmail(userValue.Email!, "email confirmation", link);
+
+        var result = await emailService.SendEmailAsync(user.Value.Email!, "Email confirmation code", message);
+        return result.ToHttpResult();
+    }
+
+    [Authorize]
+    [HttpPost("confirm-email")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ConfirmEmail([FromBody] UserEmailConfirmRequestDto dto)
+    {
+        var convertedToken = Encoding.ASCII.GetString(Convert.FromBase64String(dto.Token));
+        
+        var confirm = await userService.ConfirmEmailAsync(dto.Email, convertedToken);
         return confirm.IsSome
             ? confirm.ToHttpResult()
             : Ok();
     }
 
-    [Authorize]
-    [HttpPost("reset-password")]
-    public Task<IActionResult> RequestPasswordReset()
-    {
-        throw new NotImplementedException();
-    }
-
-    [Authorize]
-    [HttpPost("reset-password/{token}")]
+    [HttpPost("reset-password-request")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ResetPassword(string token, [FromBody] string newPassword)
+    public async Task<IActionResult> RequestPasswordReset(string email)
     {
-        var confirm = await userService.ResetPasswordAsync(token, newPassword);
+        var user = await userService.GetUserByEmailAsync(email);
+        if (user.IsError) return user.ToHttpResult();
+        var userValue = user.Value;
+        if (!userValue.EmailConfirmed)
+        {
+            return Unauthorized("Email is not confirmed");
+        }
+        
+        var code = await userService.GeneratePasswordResetTokenAsync();
+        if (code.IsError) return code.ToHttpResult();
+
+        var codeResult = code.Value;
+        var link = $"{_blazorSettings.AdminPageUrl}/reset-password?email={email}&code={codeResult}";
+        var message = EmailText.GetEmail(userValue.Email!, "password reset", link);
+
+        var result = await emailService.SendEmailAsync(user.Value.Email!, "Email confirmation code", message);
+        return result.ToHttpResult();
+    }
+
+    [HttpPost("reset-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ResetPassword([FromBody] UserPasswordResetRequestDto dto)
+    {
+        var confirm = await userService.ResetPasswordAsync(dto.Email, dto.Token, dto.NewPassword);
         return confirm.IsSome
             ? confirm.ToHttpResult()
             : Ok();

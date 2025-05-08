@@ -1,0 +1,79 @@
+@page "/confirm-email"
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Dto
+@inject NavigationManager NavigationManager
+@inject IAuthenticationService AuthenticationService
+
+<h1 class="my-4">Email Confirmation</h1>
+
+@if (_confirmed)
+{
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle me-1"></i>
+        Your email <strong>@Email</strong> has been confirmed successfully!
+    </div>
+    <button class="btn btn-outline-primary" @onclick="LoginPage">
+        <i class="bi bi-box-arrow-in-right me-1"></i> Go to Login
+    </button>
+}
+else if (_error)
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        Email confirmation failed. The link might be expired or invalid.
+    </div>
+}
+else if (!_confirming)
+{
+    <div class="mb-3">
+        <p>Do you want to confirm <strong>@Email</strong>?</p>
+        <button class="btn btn-success" @onclick="HandleConfirm">
+            <i class="bi bi-check-circle me-1"></i> Confirm Email
+        </button>
+    </div>
+}
+else
+{
+    <div class="text-muted">
+        <i class="bi bi-hourglass-split me-1"></i> Confirming...
+    </div>
+}
+
+@code {
+    [Parameter] [SupplyParameterFromQuery] public string? Email { get; set; }
+    [Parameter] [SupplyParameterFromQuery] public string? Code { get; set; }
+
+    private bool _confirming;
+    private bool _confirmed;
+    private bool _error;
+
+    private async Task HandleConfirm()
+    {
+        _confirming = true;
+
+        if (!string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Code))
+        {
+            var dto = new UserEmailConfirmRequestDto
+            {
+                Email = Email,
+                Token = Code
+            };
+            
+            var result = await AuthenticationService.ConfirmEmailAsync(dto);
+            _confirmed = result;
+            _error = !result;
+        }
+        else
+        {
+            _error = true;
+        }
+
+        _confirming = false;
+    }
+
+    private async Task LoginPage()
+    {
+        NavigationManager.NavigateTo("/login");
+        await Task.CompletedTask;
+    }
+}

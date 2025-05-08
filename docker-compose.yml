@@ -42,13 +42,6 @@ services:
     build:
       context: .
       dockerfile: VoterSystem.Web/Dockerfile
-      args:
-        API_HTTP: ${API_HTTP}
-        API_HTTPS: ${API_HTTPS}
-        WEB_HTTP: ${WEB_HTTP}
-        WEB_HTTPS: ${WEB_HTTPS}
-        ADMIN_HTTP: ${ADMIN_HTTP}
-        ADMIN_HTTPS: ${ADMIN_HTTPS}
     container_name: web
     ports:
       - "6901:80"
@@ -67,13 +60,6 @@ services:
     build:
       context: .
       dockerfile: VoterSystem.Web.Admin/Dockerfile
-      args:
-         API_HTTP: ${API_HTTP}
-         API_HTTPS: ${API_HTTPS}
-         WEB_HTTP: ${WEB_HTTP}
-         WEB_HTTPS: ${WEB_HTTPS}
-         ADMIN_HTTP: ${ADMIN_HTTP}
-         ADMIN_HTTPS: ${ADMIN_HTTPS}
     container_name: admin
     ports:
       - "6902:80"

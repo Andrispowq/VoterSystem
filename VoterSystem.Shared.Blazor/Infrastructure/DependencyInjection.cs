@@ -14,12 +14,12 @@ public static class DependencyInjection
     public static IServiceCollection AddSharedBlazorServices(this IServiceCollection services, IConfiguration config)
     {
         //Default values for now, will be overwritten in prod
-        if (Environment.GetEnvironmentVariable("API_HTTPS") is null)
-            Environment.SetEnvironmentVariable("API_HTTPS", "https://localhost:6910");
-        if (Environment.GetEnvironmentVariable("WEB_HTTPS") is null)
-            Environment.SetEnvironmentVariable("WEB_HTTPS", "https://localhost:6911");
-        if (Environment.GetEnvironmentVariable("ADMIN_HTTPS") is null)
-            Environment.SetEnvironmentVariable("ADMIN_HTTPS", "https://localhost:6912");
+        if (Environment.GetEnvironmentVariable("API_HTTP") is null)
+            Environment.SetEnvironmentVariable("API_HTTP", "http://localhost:6900");
+        if (Environment.GetEnvironmentVariable("WEB_HTTP") is null)
+            Environment.SetEnvironmentVariable("WEB_HTTP", "http://localhost:6901");
+        if (Environment.GetEnvironmentVariable("ADMIN_HTTP") is null)
+            Environment.SetEnvironmentVariable("ADMIN_HTTP", "http://localhost:6902");
         
         var appConfig = services.BindWithEnvSubstitution<AppConfig>(config, "AppConfig");
 
@@ -45,7 +45,7 @@ public static class DependencyInjection
         urlS = Utils.ReplaceFromEnv(urlS);
         var url = new Uri(urlS);
         
-        RedirectUrls.WebBaseUrl = Utils.ReplaceFromEnv(config["WebUrl"] ?? "localhost");
+        RedirectUrls.WebBaseUrl = Utils.ReplaceFromEnv(config["WebBaseUrl"] ?? "localhost");
         RedirectUrls.AdminBaseUrl = Utils.ReplaceFromEnv(config["AdminBaseUrl"] ?? "localhost");
 
         services.AddScoped(_ => new HttpClient { BaseAddress = url });

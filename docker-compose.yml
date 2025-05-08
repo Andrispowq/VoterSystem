@@ -42,7 +42,7 @@ services:
       dockerfile: VoterSystem.Web/Dockerfile
     container_name: web
     ports:
-      - "6901:80"
+      - "6901:6901"
     environment:
       - ASPNETCORE_URLS=http://+:6901
     restart: unless-stopped
@@ -64,7 +64,7 @@ services:
        db:
          condition: service_healthy
     ports:
-      - "6902:80"
+      - "6902:6902"
     networks:
       - votersystem-internal-network
 

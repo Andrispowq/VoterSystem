@@ -24,6 +24,10 @@ services:
     build:
       context: .
       dockerfile: VoterSystem.WebAPI/Dockerfile
+      args:
+        API_HTTP: ${API_HTTP}
+        WEB_HTTP: ${API_HTTP}
+        ADMIN_HTTP: ${ADMIN_HTTP}
     container_name: webapi
     ports:
       - "6900:6900"
@@ -42,6 +46,10 @@ services:
     build:
       context: .
       dockerfile: VoterSystem.Web/Dockerfile
+      args:
+        API_HTTP: ${API_HTTP}
+        WEB_HTTP: ${API_HTTP}
+        ADMIN_HTTP: ${ADMIN_HTTP}
     container_name: web
     ports:
       - "6901:80"

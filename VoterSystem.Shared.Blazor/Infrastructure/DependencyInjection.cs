@@ -13,14 +13,6 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddSharedBlazorServices(this IServiceCollection services, IConfiguration config)
     {
-        //Default values for now, will be overwritten in prod
-        if (Environment.GetEnvironmentVariable("API_HTTP") is null)
-            Environment.SetEnvironmentVariable("API_HTTP", "http://localhost:6900");
-        if (Environment.GetEnvironmentVariable("WEB_HTTP") is null)
-            Environment.SetEnvironmentVariable("WEB_HTTP", "http://localhost:6901");
-        if (Environment.GetEnvironmentVariable("ADMIN_HTTP") is null)
-            Environment.SetEnvironmentVariable("ADMIN_HTTP", "http://localhost:6902");
-        
         var appConfig = services.BindWithEnvSubstitution<AppConfig>(config, "AppConfig");
 
         services.AddSingleton(appConfig);

@@ -3,6 +3,10 @@ USER $APP_UID
 WORKDIR /app
 EXPOSE 80
 
+ARGS API_HTTP
+ARGS WEB_HTTP
+ARGS ADMIN_HTTP
+
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
@@ -22,6 +26,14 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 WORKDIR /app
+
+# Copy and process config
+COPY ./wwwroot/config.template.json ./wwwroot/config.json
+
+# Replace with env value using envsubst
+RUN apt-get update && apt-get install -y gettext && \
+    envsubst < ./wwwroot/config.json > ./wwwroot/config.json.tmp && \
+    mv ./wwwroot/config.json.tmp ./wwwroot/config.json
 
 FROM nginx:alpine
 COPY ../../nginx/web-nginx.conf /etc/nginx/web-nginx.conf

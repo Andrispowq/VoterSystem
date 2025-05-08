@@ -76,7 +76,7 @@ services:
       - ./nginx/admin-nginx.conf:/etc/nginx/admin-nginx.conf:ro
     depends_on:
        admin:
-         condition: completed
+         condition: service_completed_successfully
     networks:
       - votersystem-internal-network
 
@@ -89,7 +89,7 @@ services:
       - ./nginx/user-nginx.conf:/etc/nginx/user-nginx.conf:ro
     depends_on:
        web:
-         condition: completed
+         condition: service_completed_successfully
     networks:
       - votersystem-internal-network
 

@@ -36,5 +36,5 @@ RUN apt-get update && apt-get install -y gettext && \
     mv ./wwwroot/config.json.tmp ./wwwroot/config.json
 
 FROM nginx:alpine
-COPY ../../nginx/web-nginx.conf /etc/nginx/web-nginx.conf
+COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf
 COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/

@@ -1,6 +1,7 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER $APP_UID
 WORKDIR /app
+EXPOSE 6902
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -21,4 +22,8 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 WORKDIR /wwwroot
-EXPOSE 6902
+
+# nginx
+FROM nginx:alpine
+COPY ../nginx/nginx.conf /etc/nginx/nginx.conf
+COPY --from=build ./ /usr/share/nginx/html/admin

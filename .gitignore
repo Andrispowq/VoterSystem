@@ -43,7 +43,6 @@ tmp/
 **/.vs
 **/.vs/
 **/.vs/**
-appsettings.json
 appsettings.Development.json
 LogoBackend/appsettings.json
 LogoBackend/appsettings.Development.json

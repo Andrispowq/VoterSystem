@@ -134,16 +134,11 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var database = services.GetService<VoterSystemDbContext>()!;
-    await database.Database.MigrateAsync();
 
-    var voteService = services.GetService<IVoteService>()!;
-    var votingService = services.GetService<IVotingService>()!;
     var userService = services.GetService<IUserService>()!;
-    var voteChoiceService = services.GetService<IVoteChoiceService>()!;
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();
     
-    await DbInitializer.InitialiseAsync(database, userService,
-        votingService, voteChoiceService, voteService, roleManager);
+    await DbInitializer.InitialiseAsync(database, userService, roleManager);
 }
 
 app.Run();

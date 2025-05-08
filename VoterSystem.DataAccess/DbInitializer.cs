@@ -28,11 +28,8 @@ public static class DbInitializer
     public static async Task InitialiseAsync(
         VoterSystemDbContext context, 
         IUserService userService, 
-        IVotingService votingService,
-        IVoteChoiceService voteChoiceService,
-        IVoteService voteService,
         RoleManager<UserRole> roleManager,
-        bool prune = false)
+        bool prune = true)
     {
         if (prune)
         {

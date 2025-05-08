@@ -105,13 +105,13 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler("/Home/Error");
 
-if (app.Environment.IsDevelopment())
+if (/*app.Environment.IsDevelopment()*/true)
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
-    
     app.UseCors("BlazorPolicy");
 }
+    
 
 app.UseHsts();
 

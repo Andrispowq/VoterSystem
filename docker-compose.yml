@@ -58,8 +58,6 @@ services:
       context: .
       dockerfile: VoterSystem.Web.Admin/Dockerfile
     container_name: admin
-    ports:
-      - "6902:6902"
     environment:
       - ASPNETCORE_URLS=http://+:6902
     restart: unless-stopped
@@ -68,6 +66,22 @@ services:
          condition: service_healthy
     networks:
       - votersystem-internal-network
+      
+   admin-host:
+    image: nginx:alpine
+    ports:
+      - "6902:80"
+    volumes:
+      - ./VoterSystem.Web.Admin/bin/Release/net9.0/publish/wwwroot:/usr/share/nginx/html/admin:ro
+      - ./nginx/admin-nginx.conf:/etc/nginx/admin-nginx.conf:ro
+
+  web-host:
+    image: nginx:alpine
+    ports:
+      - "6901:80"
+    volumes:
+      - ./VoterSystem.Web/bin/Release/net9.0/publish/wwwroot:/usr/share/nginx/html/user:ro
+      - ./nginx/user-nginx.conf:/etc/nginx/user-nginx.conf:ro
 
 networks:
   votersystem-internal-network:

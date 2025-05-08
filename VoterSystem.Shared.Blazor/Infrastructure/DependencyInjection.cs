@@ -35,7 +35,9 @@ public static class DependencyInjection
 
         services.AddBlazoredLocalStorage();
 
-        services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(config["ApiBaseUrl"] ?? "-") });
+        var url = new Uri(config["ApiBaseUrl"] ?? "-");
+
+        services.AddScoped(_ => new HttpClient { BaseAddress = url });
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IHttpRequestUtility, HttpRequestUtility>();
         services.AddScoped<IVotingsService, VotingsService>();

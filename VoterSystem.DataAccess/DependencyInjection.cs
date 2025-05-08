@@ -24,7 +24,7 @@ public static class DependencyInjection
             .UseNpgsql(connectionString)
             .UseLazyLoadingProxies()
         );
-        
+
         //Identity
         services.AddIdentity<User, UserRole>(options =>
         {

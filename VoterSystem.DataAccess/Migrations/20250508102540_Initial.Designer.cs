@@ -12,7 +12,7 @@ using VoterSystem.DataAccess;
 namespace VoterSystem.DataAccess.Migrations
 {
     [DbContext(typeof(VoterSystemDbContext))]
-    [Migration("20250507202044_Initial")]
+    [Migration("20250508102540_Initial")]
     partial class Initial
     {
         /// <inheritdoc />

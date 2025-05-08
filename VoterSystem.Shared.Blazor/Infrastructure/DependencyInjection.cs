@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VoterSystem.Shared.Blazor.Config;
 using VoterSystem.Shared.Blazor.Services;
-using VoterSystem.Shared.DotEnv;
 
 namespace VoterSystem.Shared.Blazor.Infrastructure;
 
@@ -14,12 +13,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddSharedBlazorServices(this IServiceCollection services, IConfiguration config)
     {
-        //load from user secrets in dev
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-        {
-            LoadDotEnv(config);
-        }
-
+        //Default values for now, will be overwritten in prod
+        if (Environment.GetEnvironmentVariable("API_HTTPS") is null)
+            Environment.SetEnvironmentVariable("API_HTTPS", "https://localhost:6910");
+        if (Environment.GetEnvironmentVariable("WEB_HTTPS") is null)
+            Environment.SetEnvironmentVariable("WEB_HTTPS", "https://localhost:6911");
+        if (Environment.GetEnvironmentVariable("ADMIN_HTTPS") is null)
+            Environment.SetEnvironmentVariable("ADMIN_HTTPS", "https://localhost:6912");
+        
         var appConfig = services.BindWithEnvSubstitution<AppConfig>(config, "AppConfig");
 
         services.AddSingleton(appConfig);
@@ -55,20 +56,6 @@ public static class DependencyInjection
         services.AddScoped<NetworkService>();
 
         return services;
-    }
-    
-    private static void LoadDotEnv(IConfiguration config)
-    {
-        var list = config.GetSection("DotEnv")
-            .Get<List<DotEnvConfigEntry>>();
-
-        if (list is null)
-        {
-            Console.WriteLine("Warning: No DotEnv configuration found.");
-            return;
-        }
-        
-        list.Load();
     }
     
     private static T BindWithEnvSubstitution<T>(this IServiceCollection services, IConfiguration config,

@@ -169,19 +169,26 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ConfirmEmail([FromBody] UserEmailConfirmRequestDto dto)
     {
-        var convertedToken = Encoding.ASCII.GetString(Convert.FromBase64String(dto.Token));
-        
-        var confirm = await userService.ConfirmEmailAsync(dto.Email, convertedToken);
-        return confirm.IsSome
-            ? confirm.ToHttpResult()
-            : Ok();
+        try
+        {
+            var convertedToken = Encoding.ASCII.GetString(Convert.FromBase64String(dto.Token));
+
+            var confirm = await userService.ConfirmEmailAsync(dto.Email, convertedToken);
+            return confirm.IsSome
+                ? confirm.ToHttpResult()
+                : Ok();
+        }
+        catch
+        {
+            return BadRequest();
+        }
     }
 
     [HttpPost("reset-password-request")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RequestPasswordReset(string email)
+    public async Task<IActionResult> RequestPasswordReset([FromBody] string email)
     {
         var user = await userService.GetUserByEmailAsync(email);
         if (user.IsError) return user.ToHttpResult();
@@ -191,11 +198,13 @@ public class UserController(IUserService userService, IEmailService emailService
             return Unauthorized("Email is not confirmed");
         }
         
-        var code = await userService.GeneratePasswordResetTokenAsync();
+        var code = await userService.GeneratePasswordResetTokenAsync(email);
         if (code.IsError) return code.ToHttpResult();
 
         var codeResult = code.Value;
-        var link = $"{_blazorSettings.AdminPageUrl}/reset-password?email={email}&code={codeResult}";
+        var base64 = Convert.ToBase64String(Encoding.ASCII.GetBytes(codeResult));
+        
+        var link = $"{_blazorSettings.AdminPageUrl}/reset-password?email={email}&code={base64}";
         var message = EmailText.GetEmail(userValue.Email!, "password reset", link);
 
         var result = await emailService.SendEmailAsync(user.Value.Email!, "Email confirmation code", message);
@@ -208,10 +217,19 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ResetPassword([FromBody] UserPasswordResetRequestDto dto)
     {
-        var confirm = await userService.ResetPasswordAsync(dto.Email, dto.Token, dto.NewPassword);
-        return confirm.IsSome
-            ? confirm.ToHttpResult()
-            : Ok();
+        try
+        {
+            var convertedToken = Encoding.ASCII.GetString(Convert.FromBase64String(dto.Token));
+
+            var confirm = await userService.ResetPasswordAsync(dto.Email, convertedToken, dto.NewPassword);
+            return confirm.IsSome
+                ? confirm.ToHttpResult()
+                : Ok();
+        }
+        catch
+        {
+            return BadRequest();
+        }
     }
 
     [Authorize]

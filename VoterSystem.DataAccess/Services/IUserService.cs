@@ -21,7 +21,7 @@ public interface IUserService
     Task<Result<string, ServiceError>> GenerateEmailConfirmTokenAsync();
 
     Task<Option<ServiceError>> ConfirmEmailAsync(string email, string token);
-    Task<Result<string, ServiceError>> GeneratePasswordResetTokenAsync();
+    Task<Result<string, ServiceError>> GeneratePasswordResetTokenAsync(string email);
     Task<Option<ServiceError>> ResetPasswordAsync(string email, string token, string newPassword);
     //Helper methods
     Task<Result<User, ServiceError>> GetCurrentUserAsync();

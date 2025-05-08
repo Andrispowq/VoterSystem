@@ -32,7 +32,7 @@ public static class DbInitializer
         IVoteChoiceService voteChoiceService,
         IVoteService voteService,
         RoleManager<UserRole> roleManager,
-        bool prune = true)
+        bool prune = false)
     {
         if (prune)
         {

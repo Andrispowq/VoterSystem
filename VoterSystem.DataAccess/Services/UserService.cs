@@ -132,9 +132,9 @@ public class UserService(
         return new ConflictError(result.Errors.First().Description);
     }
 
-    public async Task<Result<string, ServiceError>> GeneratePasswordResetTokenAsync()
+    public async Task<Result<string, ServiceError>> GeneratePasswordResetTokenAsync(string email)
     {
-        var user = await GetCurrentUserAsync();
+        var user = await GetUserByEmailAsync(email);
         if (user.IsError) return user.Error;
 
         if (!user.Value.EmailConfirmed)

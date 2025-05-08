@@ -225,7 +225,7 @@ public class AuthenticationService(
     {
         try
         {
-            await httpRequestUtility.ExecutePostHttpRequestAsync("users/reset-password-request", email);
+            await httpRequestUtility.ExecutePostHttpRequestAsync($"users/reset-password-request", email);
             return true;
         }
         catch (System.Exception)

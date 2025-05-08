@@ -7,11 +7,7 @@
 
 <div>
     <main>
-        @if (!(Navigation.Uri.Contains("login") ||
-               Navigation.Uri.Contains("register") ||
-               Navigation.Uri.Contains("confirm-email") ||
-               Navigation.Uri.Contains("reset-password") ||
-               Navigation.Uri.Contains("forgot-password")) && !_isOffline)
+        @if (!IsUriUnauthorized() && !_isOffline)
         {
             <MenuComponent />
         }
@@ -26,6 +22,15 @@
 @code {
     private bool _isOffline;
 
+    private bool IsUriUnauthorized()
+    {
+        return Navigation.Uri.Contains("login") ||
+               Navigation.Uri.Contains("register") ||
+               Navigation.Uri.Contains("confirm-email") ||
+               Navigation.Uri.Contains("reset-password") ||
+               Navigation.Uri.Contains("forgot-password");
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await HandleUnauthorizedUser();
@@ -37,7 +42,8 @@
     private async Task HandleUnauthorizedUser()
     {
         //if no stored refreshToken found user is unauthorized
-        if (await LocalStorage.GetItemAsync<string>("RefreshToken") == null)
+        if (await LocalStorage.GetItemAsync<string>("RefreshToken") == null
+            && !IsUriUnauthorized())
         {
             Navigation.NavigateTo("/login");
         }

@@ -49,7 +49,7 @@ public static class DependencyInjection
         services.AddScoped<IVotingService, VotingService>();
         services.AddScoped<IVoteChoiceService, VoteChoiceService>();
 
-        //services.AddSingleton<IEmailService, SmtpEmailService>();
+        services.AddSingleton<IEmailService, EmailService>();
 
         return services;
     }

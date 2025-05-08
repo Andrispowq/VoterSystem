@@ -20,4 +20,9 @@ public interface IAuthenticationService
     Task<string?> GetCurrentlyLoggedInUserAsync();
     Task<UserDto?> GetCurrentUserAsync();
     Task<bool> RegisterAsync(RegisterViewModel registerViewModel);
+    
+    Task<bool> RequestEmailConfirmationAsync();
+    Task<bool> ConfirmEmailAsync(UserEmailConfirmRequestDto dto);
+    Task<bool> RequestPasswordResetAsync(string email);
+    Task<bool> ResetPasswordAsync(UserPasswordResetRequestDto dto);
 }

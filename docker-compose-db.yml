@@ -1,0 +1,21 @@
+
+services:
+  db:
+    image: postgres:17.4
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - ./postgreinit/:/docker-entrypoint-initdb.d/
+      - ./data/db/:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d VoterSystem" ]
+      start_period: 1m
+      start_interval: 10s
+      interval: 1m
+      timeout: 5s
+      retries: 3
+    ports:
+        - "5432:5432"

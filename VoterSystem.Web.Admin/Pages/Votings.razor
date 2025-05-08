@@ -1,0 +1,256 @@
+@page "/votings"
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Blazor.ViewModels
+@using VoterSystem.Shared.Dto
+@using VoterSystem.Web.Admin.Layout
+@inject IVotingsService VotingsService
+@inject NavigationManager NavigationManager
+
+<div class="my-4 container">
+
+    <h1>Votings</h1>
+
+    <MessageComponent Condition="@Offline"
+                      ConditionText="Offline mode"
+                      AlertMessage="Switch to online mode to log in." />
+
+    <CustomConfirmModal T="long" @ref="_deleteConfirmModal"
+                Title="Delete voting"
+                Body="Are you sure you want to delete this voting? This action cannot be undone."
+                OnConfirm="DeleteVotingAsync"
+                OnCancel="CancelDeleteAsync" />
+    
+    @if (ViewModel is null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!ViewModel.Votings.Any())
+    {
+        <p>No votings found...</p>
+    }
+    else
+    {
+        <div class="my-4 container">
+            <!-- Ongoing Votings -->
+            @if (ViewModel.Votings.Any(v => v.IsOngoing))
+            {
+                <h2 class="mt-4 mb-3 text-success">🟢 Ongoing Votings</h2>
+                <div class="row g-4 row-cols-md-2 row-cols-1"> <!-- Wider layout -->
+                    @foreach (var voting in ViewModel.Votings.Where(v => v.IsOngoing))
+                    {
+                        @DisplayVotingCard(voting)
+                    }
+                </div>
+            }
+
+            <!-- Upcoming Votings -->
+            @if (ViewModel.Votings.Any(v => !v.HasStarted))
+            {
+                <h2 class="mt-5 mb-3 text-danger">🕒 Upcoming Votings</h2>
+                <div class="row g-4 row-cols-md-3 row-cols-1">
+                    @foreach (var voting in ViewModel.Votings.Where(v => !v.HasStarted))
+                    {
+                        @DisplayVotingCard(voting)
+                    }
+                </div>
+            }
+
+            <!-- Completed Votings -->
+            @if (ViewModel.Votings.Any(v => v.HasEnded))
+            {
+                <h2 class="mt-5 mb-3 text-primary">🔵 Completed Votings</h2>
+                <div class="row g-4 row-cols-md-3 row-cols-1">
+                    @foreach (var voting in ViewModel.Votings.Where(v => v.HasEnded))
+                    {
+                        @DisplayVotingCard(voting)
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] [SupplyParameterFromQuery] public bool Offline { get; set; }
+
+    private VotingsViewModel? ViewModel { get; set; }
+    
+    private Dictionary<long, VotingResultsDto> VotingResults { get; set; } = new();
+    private HashSet<long> LoadingResults { get; set; } = new();
+    
+    private CustomConfirmModal<long>? _deleteConfirmModal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Offline)
+        {
+            StateHasChanged();
+            return;
+        }
+        
+        ViewModel = await VotingsService.GetVotingsAsync();
+        if (ViewModel is null)
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+
+        if (ViewModel is not null)
+        {
+            foreach (var voting in ViewModel.Votings.Where(v => v.IsOngoing || v.HasEnded))
+            {
+                await LoadVotingResult(voting.VotingId); // fire and forget
+            }
+        }
+    }
+    
+    private void ShowDeleteConfirm(VotingDto voting)
+    {
+        _deleteConfirmModal?.Show(voting.VotingId);
+    }
+
+    private async Task DeleteVotingAsync(long votingId)
+    {
+        await VotingsService.DeleteVotingAsync(votingId);
+
+        await OnInitializedAsync();
+        StateHasChanged();
+    }
+
+    private void CancelDeleteAsync()
+    {
+        Console.WriteLine("Cancelled deletion");
+    }
+
+    private async Task LoadVotingResult(long votingId)
+    {
+        if (VotingResults.ContainsKey(votingId) || !LoadingResults.Add(votingId))
+            return;
+
+        StateHasChanged();
+
+        try
+        {
+            var result = await VotingsService.GetVotingResultAsync(votingId);
+            Console.WriteLine($"Loaded result for voting ID {votingId}: {result is not null}");
+
+            if (result is not null)
+            {
+                VotingResults[votingId] = result;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading voting result for ID {votingId}: {ex.Message}");
+        }
+
+        LoadingResults.Remove(votingId);
+        StateHasChanged();
+    }
+    
+    private void EditVoting(VotingDto voting)
+    {
+        if (!voting.HasStarted)
+        {
+            NavigationManager.NavigateTo($"/votings/{voting.VotingId}");
+        }
+    }
+}
+
+@functions {
+    private RenderFragment DisplayVotingCard(VotingDto voting) => @<div class="col">
+        <div class="h-100 card shadow-sm border-0"
+             style="cursor:@(voting.HasStarted ? "default" : "pointer")"
+             @onclick="() => EditVoting(voting)">
+            <div class="card-header text-white @(voting.IsOngoing ? "bg-success" : voting.HasEnded ? "bg-primary" : "bg-danger")">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm border-0 bg-white text-dark me-2"
+                                style="box-shadow: none;"
+                                title="Delete voting"
+                                @onclick:stopPropagation
+                                @onclick="() => ShowDeleteConfirm(voting)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <strong>@voting.Name</strong>
+                    </div>
+                    <span class="badge bg-light text-dark">
+                        @(voting.IsOngoing ? "Ongoing" : voting.HasEnded ? "Ended" : "Not started")
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body">
+                @if ((voting.IsOngoing || voting.HasEnded) && VotingResults.TryGetValue(voting.VotingId, out var result))
+                {
+                    <div class="row">
+                        <!-- Left column: Info + choices -->
+                        <div class="col-md-6">
+                            @RenderVotingDetailsAndChoices(voting)
+                        </div>
+
+                        <!-- Right column: Chart -->
+                        <div class="col-md-6 d-flex flex-column justify-content-center align-items-center">
+                            <div class="w-100" style="max-height:300px">
+                                <h6 class="text-muted text-center">@(voting.IsOngoing ? "Live results" : "Results")</h6>
+
+                                @if (result.ChoiceResults.Any())
+                                {
+                                    <VotePieChart VotingId="@voting.VotingId"
+                                                  Choices="@voting.VoteChoices"
+                                                  Results="@result" />
+                                }
+                                else
+                                {
+                                    <p class="text-center text-muted mt-3">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        No votes have been cast yet.
+                                    </p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @RenderVotingDetailsAndChoices(voting)
+                }
+            </div>
+        </div>
+    </div>;
+
+    private RenderFragment RenderVotingDetailsAndChoices(VotingDto voting) =>
+        @<div>
+            <p class="mb-1">
+                <i class="bi bi-play-circle me-1"></i>
+                From: @voting.StartsAt
+            </p>
+            <p class="mb-3">
+                <i class="bi bi-stop-circle me-1"></i>
+                Until: @voting.EndsAt
+            </p>
+
+            <ul class="list-group list-group-flush">
+                @foreach (var choice in voting.VoteChoices)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>@choice.Name</strong>
+                            @if (!string.IsNullOrWhiteSpace(choice.Description))
+                            {
+                                <span class="d-block text-muted small">@choice.Description</span>
+                            }
+                        </div>
+                    </li>
+                }
+                
+                @if (!voting.HasStarted)
+                {
+                    <li class="list-group-item text-center">
+                        <button class="btn btn-outline-secondary" @onclick="() => EditVoting(voting)">
+                            <i class="bi bi-pencil me-1"></i> Edit voting
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>;
+}

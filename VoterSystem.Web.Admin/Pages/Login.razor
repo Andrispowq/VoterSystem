@@ -1,0 +1,138 @@
+﻿@page "/login"
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Blazor.ViewModels
+@using VoterSystem.Web.Admin.Layout
+@inject NavigationManager NavigationManager
+@inject IAuthenticationService AuthenticationService
+
+<div class="my-4 container">
+
+    <h1>Login</h1>
+
+    <MessageComponent Condition="@Offline"
+                      ConditionText="Offline mode"
+                      AlertMessage="Switch to online mode to log in." />
+
+    @if (!Offline)
+    {
+        @if (_tryAutoLogin)
+        {
+            <p>Try autologin...</p>
+        }
+        else
+        {
+            <div class="mb-3">
+                <button type="button"
+                        class="btn btn-outline-secondary me-2"
+                        @onclick="LoginAsUser">
+                    Login as user
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        @onclick="LoginAsAdmin">
+                    Login as admin
+                </button>
+            </div>
+            
+            <EditForm Model="LoginViewModel" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" for="email">Email:</label>
+                    <InputText class="form-control form-control" id="email" @bind-Value="LoginViewModel.Email" />
+                    <ValidationMessage For="@(() => LoginViewModel.Email)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="password">Password:</label>
+                    <InputText class="form-control form-control" id="password" @bind-Value="LoginViewModel.Password" type="password" />
+                    <ValidationMessage For="@(() => LoginViewModel.Password)" class="text-danger" />
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                    </button>
+
+                    <button class="btn btn-link text-muted" type="button" @onclick="ForgotPassword">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Forgot Password?
+                    </button>
+
+                    <button class="btn btn-outline-primary" type="button" @onclick="Register">
+                        <i class="bi bi-person-plus me-1"></i> Register
+                    </button>
+                </div>
+            </EditForm>
+        }
+    }
+</div>
+
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public bool Offline { get; set; }
+
+    private LoginViewModel LoginViewModel { get; set; } = new();
+    private bool _tryAutoLogin = true;
+    
+    private const string DevUserEmail = "example@gmail.com";
+    private const string DevUserPassword = "test_Str0ng_password";
+
+    private const string DevAdminEmail = "example6@gmail.com";
+    private const string DevAdminPassword = "test_Str0ng_password";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Offline)
+        {
+            StateHasChanged();
+            return;
+        }
+        
+        var success = await AuthenticationService.TryAutoLoginAsync();
+        if (success)
+        {
+            NavigationManager.NavigateTo("/votings");
+        }
+        else
+        {
+            _tryAutoLogin = false;
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        var success = await AuthenticationService.LoginAsync(LoginViewModel);
+        if (success)
+        {
+            NavigationManager.NavigateTo("/votings");
+        }
+    }
+    
+    private async Task LoginAsUser()
+    {
+        LoginViewModel.Email = DevUserEmail;
+        LoginViewModel.Password = DevUserPassword;
+        await HandleLogin();
+    }
+
+    private async Task LoginAsAdmin()
+    {
+        LoginViewModel.Email = DevAdminEmail;
+        LoginViewModel.Password = DevAdminPassword;
+        await HandleLogin();
+    }
+
+    private async Task Register()
+    {
+        NavigationManager.NavigateTo("/register");
+        await Task.CompletedTask;
+    }
+
+    private async Task ForgotPassword()
+    {
+        NavigationManager.NavigateTo("/forgot-password");
+        await Task.CompletedTask;
+    }
+}

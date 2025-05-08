@@ -1,0 +1,114 @@
+﻿@page "/login"
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Blazor.ViewModels
+@using VoterSystem.Web.Layout
+@inject NavigationManager NavigationManager
+@inject IAuthenticationService AuthenticationService
+
+<div class="my-4 container">
+
+    <h1>Login</h1>
+
+    <MessageComponent Condition="@Offline"
+                      ConditionText="Offline mode"
+                      AlertMessage="Switch to online mode to log in." />
+
+    @if (!Offline)
+    {
+        @if (_tryAutoLogin)
+        {
+            <p>Try autologin...</p>
+        }
+        else
+        {
+            <div class="mb-3">
+                <button type="button"
+                        class="btn btn-outline-secondary me-2"
+                        @onclick="LoginAsUser">
+                    Login as user
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        @onclick="LoginAsAdmin">
+                    Login as admin
+                </button>
+            </div>
+            
+            <EditForm Model="LoginViewModel" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" for="email">Email:</label>
+                    <InputText class="form-control form-control" id="email" @bind-Value="LoginViewModel.Email" />
+                    <ValidationMessage For="@(() => LoginViewModel.Email)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="password">Password:</label>
+                    <InputText class="form-control form-control" id="password" @bind-Value="LoginViewModel.Password" type="password" />
+                    <ValidationMessage For="@(() => LoginViewModel.Password)" class="text-danger" />
+                </div>
+
+                <button class="btn btn-primary" type="submit">Login</button>
+            </EditForm>
+        }
+    }
+</div>
+
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public bool Offline { get; set; }
+
+    private LoginViewModel LoginViewModel { get; set; } = new();
+    private bool _tryAutoLogin = true;
+    
+    private const string DevUserEmail = "example2@gmail.com";
+    private const string DevUserPassword = "test_Str0ng_password";
+
+    private const string DevAdminEmail = "example6@gmail.com";
+    private const string DevAdminPassword = "test_Str0ng_password";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Offline)
+        {
+            StateHasChanged();
+            return;
+        }
+        
+        var success = await AuthenticationService.TryAutoLoginAsync();
+        if (success)
+        {
+            NavigationManager.NavigateTo("/home");
+        }
+        else
+        {
+            _tryAutoLogin = false;
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        var success = await AuthenticationService.LoginAsync(LoginViewModel);
+        if (success)
+        {
+            NavigationManager.NavigateTo("/home");
+        }
+    }
+    
+    private async Task LoginAsUser()
+    {
+        LoginViewModel.Email = DevUserEmail;
+        LoginViewModel.Password = DevUserPassword;
+        await HandleLogin();
+    }
+
+    private async Task LoginAsAdmin()
+    {
+        LoginViewModel.Email = DevAdminEmail;
+        LoginViewModel.Password = DevAdminPassword;
+        await HandleLogin();
+    }
+}

@@ -1,0 +1,63 @@
+﻿@if (_isVisible)
+{
+    <div class="modal show" tabindex="-1" style="display: block;" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Title</h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CancelAsync"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@Body</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelAsync">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmAsync">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@typeparam T
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Body { get; set; }
+    [Parameter] public EventCallback<T> OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private T? _selectedItem;
+
+    private bool _isVisible = false;
+
+    public void Show(T item)
+    {
+        _selectedItem = item;
+        Show();
+    }
+
+    public void Show(){
+        _isVisible = true;
+        StateHasChanged();
+    }
+
+    public void Hide()
+    {
+        _isVisible = false;
+        _selectedItem = default;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmAsync()
+    {
+        await OnConfirm.InvokeAsync(_selectedItem);
+        Hide();
+    }
+
+    private async Task CancelAsync()
+    {
+        await OnCancel.InvokeAsync();
+        Hide();
+    }
+}

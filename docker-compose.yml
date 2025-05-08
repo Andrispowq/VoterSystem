@@ -1,0 +1,73 @@
+
+services:
+  db:
+    image: postgres:17.4
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - ./postgreinit/:/docker-entrypoint-initdb.d/
+      - ./data/db/:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d VoterSystem" ]
+      start_period: 1m
+      start_interval: 10s
+      interval: 1m
+      timeout: 5s
+      retries: 3
+    networks:
+      - votersystem-internal-network
+        
+  webapi:
+    build:
+      context: .
+      dockerfile: VoterSystem.WebAPI/Dockerfile
+    container_name: webapi
+    ports:
+      - "6900:6900"
+    environment:
+      - ASPNETCORE_URLS=http://+:6900
+    restart: unless-stopped
+    depends_on:
+       db:
+         condition: service_healthy
+    networks:
+      - votersystem-internal-network
+
+  web:
+    build:
+      context: .
+      dockerfile: VoterSystem.Web/Dockerfile
+    container_name: web
+    ports:
+      - "6901:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:6901
+    restart: unless-stopped
+    depends_on:
+       db:
+         condition: service_healthy
+    networks:
+      - votersystem-internal-network
+
+  admin:
+    build:
+      context: .
+      dockerfile: VoterSystem.Web.Admin/Dockerfile
+    container_name: admin
+    environment:
+      - ASPNETCORE_URLS=http://+:6902
+    restart: unless-stopped
+    depends_on:
+       db:
+         condition: service_healthy
+    ports:
+      - "6902:80"
+    networks:
+      - votersystem-internal-network
+
+networks:
+  votersystem-internal-network:
+     name: votersystem_internal_network

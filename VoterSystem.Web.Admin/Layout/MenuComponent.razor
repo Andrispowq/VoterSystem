@@ -1,0 +1,78 @@
+﻿@using VoterSystem.DataAccess.Model
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Web.Admin.Config
+@inject IAuthenticationService AuthenticationService
+@inject NavigationManager NavigationManager
+
+<header>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-3">
+        <div class="container">
+            <span class="navbar-brand">Voter Admin</span>
+            
+            <div class="collapse navbar-collapse d-flex align-items-center">
+                <ul class="navbar-nav me-auto mb-0 d-flex align-items-center">
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/votings">Votings</NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/settings">Settings</NavLink>
+                    </li>
+                    @if (_currentRole == Role.Admin)
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/users">Users</NavLink>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/votings/create">New voting</NavLink>
+                        </li>
+                    }
+                </ul>
+
+                <span class="navbar-text me-3">Welcome, @_userName!</span>
+
+                <button class="btn btn-danger" @onclick="Logout" data-testid="logout">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+
+                <button class="btn btn-link" @onclick="WebPage" data-testid="webp-page">
+                    <i class="bi bi-box-arrow-right"></i> Go to Web page
+                </button>
+            </div>
+        </div>
+    </nav>
+</header>
+
+@code {
+
+    private string? _userName;
+    private Role? _currentRole;
+    private bool _collapseNavMenu = true;
+
+    private string? NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userName = await AuthenticationService.GetCurrentlyLoggedInUserAsync();
+        _currentRole = await AuthenticationService.GetCurrentRoleAsync() ?? Role.User;
+    }
+
+    private void ToggleNavMenu()
+    {
+        _collapseNavMenu = !_collapseNavMenu;
+    }
+
+    private async Task Logout()
+    {
+        await AuthenticationService.LogoutAsync();
+        NavigationManager.NavigateTo("/login", forceLoad: true);
+    }
+
+    private async Task WebPage()
+    {
+        NavigationManager.NavigateTo($"{WebRedirect.BaseUrl}/login", forceLoad: true);
+        await Task.CompletedTask;
+    }
+}

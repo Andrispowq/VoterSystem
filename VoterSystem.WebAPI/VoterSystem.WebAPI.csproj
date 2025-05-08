@@ -9,11 +9,19 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="AutoMapper" Version="14.0.0" />
+        <PackageReference Include="ELTE.FI.SARuleSet" Version="3.1.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.4" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.3">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.3" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.2.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -24,6 +32,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\VoterSystem.DataAccess\VoterSystem.DataAccess.csproj" />
+      <ProjectReference Include="..\VoterSystem.Shared\VoterSystem.Shared.csproj" />
     </ItemGroup>
 
 </Project>

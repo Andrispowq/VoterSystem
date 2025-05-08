@@ -1,0 +1,237 @@
+﻿@page "/screenings"
+@using ELTE.Cinema.Blazor.WebAssembly.Config
+@using ELTE.Cinema.Blazor.WebAssembly.Layout
+@using ELTE.Cinema.Blazor.WebAssembly.Services
+@using ELTE.Cinema.Blazor.WebAssembly.ViewModels
+@inject IScreeningService ScreeningService;
+@inject NavigationManager NavigationManager
+@inject IRoomService RoomService
+@inject IMovieService MovieService;
+@inject AppConfig AppConfig
+
+<h1>Screenings</h1>
+
+<div class="text-end">
+    <button class="btn btn-primary" @onclick="AddScreening">New Screening</button>
+</div>
+
+<CustomConfirmModal T="int" @ref="_modal" Title="Confirm Deletion" Body="Are you sure you want to delete this screening?" OnConfirm="DeleteScreeningAsync" OnCancel="CancelDelete" />
+
+
+<div class="mb-3">
+    <label for="movie" class="form-label">Movie filter:</label>
+    <select id="movie" class="form-control" @bind="SelectedMovieId">
+        <option value="-1">All movies</option>
+        @foreach (var movie in _movies!)
+        {
+            <option value="@movie.Id">@movie.Title</option>
+        }
+    </select>
+</div>
+
+<div class="mb-3">
+    <label for="room" class="form-label">Room filter:</label>
+    <select id="room" class="form-control" @bind="SelectedRoomId">
+        <option value="-1">All rooms</option>
+        @foreach (var room in _rooms!)
+        {
+            <option value="@room.Id">@room.Name</option>
+        }
+    </select>
+</div>
+
+<div class="row">
+
+    <div class="col-md-6 mb-3 d-flex align-items-end">
+        <div class="flex-grow-1">
+            <label for="startsAfter" class="form-label">Starts after:</label>
+            <InputDate @bind-Value="StartsAfter" class="form-control" id="startsAfter" Type="InputDateType.DateTimeLocal" />
+        </div>
+        <button type="button" class="btn btn-outline-secondary ms-2" @onclick="ClearStartsAfter">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <div class="col-md-6 mb-3 d-flex align-items-end">
+        <div class="flex-grow-1">
+            <label for="startsBefore" class="form-label">Starts before:</label>
+            <InputDate @bind-Value="StartsBefore" class="form-control" id="startsBefore" Type="InputDateType.DateTimeLocal" />
+        </div>
+        <button type="button" class="btn btn-outline-secondary ms-2" @onclick="ClearStartsBefore">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+</div>
+
+
+@if (_screenings is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="my-4 container">
+        <div class="g-4 row row-cols-md-5 row-cols-1">
+            @foreach (var screening in _screenings)
+            {
+                <div class="col">
+                    <div class="h-100 card" @onclick="() => EditScreening(screening.Id)" style="cursor: pointer;">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">@screening.Movie!.Title</h5>
+                            <p class="card-text mb-1">Room: @screening.Room!.Name</p>
+                            <p class="card-text">Starts at: @screening.StartsAt</p>
+                        </div>
+                        <div class="d-flex justify-content-end me-2 mb-2">
+                            <button class="btn btn-primary" @onclick:stopPropagation="true" @onclick="() => NavigateToReservationPage(screening)">
+                                <i class="bi bi-ticket"></i>
+                            </button>
+                            <button class="btn btn-danger ms-2" @onclick:stopPropagation="true" @onclick="() => ShowDeleteConfirmModal(screening.Id)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-secondary" @onclick="() => ChangePageAsync(_currentPage - 1)" disabled="@(_currentPage == 1)">Previous</button>
+            <span>Page @_currentPage / @((_totalScreenings + _pageSize - 1) / _pageSize)</span>
+            <button class="btn btn-secondary" @onclick="() => ChangePageAsync(_currentPage + 1)" disabled="@(_currentPage * _pageSize >= _totalScreenings)">Next</button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ScreeningViewModel>? _screenings;
+    private List<RoomViewModel>? _rooms = new();
+    private List<MovieViewModel>? _movies = new();
+    private CustomConfirmModal<int>? _modal;
+    private int _currentPage = 1;
+    private int _pageSize;
+    private int _totalScreenings;
+
+    private int _selectedRoomId = -1;
+
+    private int SelectedRoomId
+    {
+        get => _selectedRoomId;
+        set
+        {
+            _selectedRoomId = value;
+            _ = FilterListAsync();
+        }
+    }
+
+
+    private int _selectedMovieId = -1;
+
+    private int SelectedMovieId
+    {
+        get => _selectedMovieId;
+        set
+        {
+            _selectedMovieId = value;
+            _ = FilterListAsync();
+        }
+    }
+
+
+    private DateTime? _startsAfter;
+
+    private DateTime? StartsAfter
+    {
+        get => _startsAfter;
+        set
+        {
+            _startsAfter = value;
+            _ = FilterListAsync();
+        }
+    }
+
+    private DateTime? _startsBefore;
+
+    private DateTime? StartsBefore
+    {
+        get => _startsBefore;
+        set
+        {
+            _startsBefore = value;
+            _ = FilterListAsync();
+        }
+    }
+
+    private void ClearStartsAfter()
+    {
+        StartsAfter = null;
+    }
+
+    private void ClearStartsBefore()
+    {
+        StartsBefore = null;
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _pageSize = AppConfig.PageSize;
+        _rooms = await RoomService.GetRoomsAsync();
+        _movies = await MovieService.GetMoviesAsync();
+        await LoadScreeningsAsync();
+    }
+
+    public async Task FilterListAsync(){
+        _currentPage = 1;
+        await LoadScreeningsAsync();
+    }
+
+    private async Task LoadScreeningsAsync()
+    {
+        _screenings = null;
+        var response = await ScreeningService.GetScreeningsAsync(_currentPage, _pageSize, _selectedRoomId, _selectedMovieId, _startsAfter, _startsBefore);
+
+        if (response == null)
+            return;
+
+        _screenings = response.Items;
+        _totalScreenings = response.TotalCount;
+        StateHasChanged();
+    }
+
+    private void AddScreening()
+    {
+        NavigationManager.NavigateTo($"/screenings/add");
+    }
+
+    private void EditScreening(int id)
+    {
+        NavigationManager.NavigateTo($"/screenings/edit/{id}");
+    }
+
+    private void ShowDeleteConfirmModal(int screeningId)
+    {
+        _modal!.Show(screeningId);
+    }
+
+    private async Task DeleteScreeningAsync(int screeningId)
+    {
+        await ScreeningService.DeleteScreeningAsync(screeningId);
+        await LoadScreeningsAsync();
+        _modal!.Hide();
+    }
+
+    private void CancelDelete()
+    {
+        _modal!.Hide();
+    }
+
+    private async Task ChangePageAsync(int page)
+    {
+        _currentPage = page;
+        await LoadScreeningsAsync();
+    }
+
+    private void NavigateToReservationPage(ScreeningViewModel screening){
+        NavigationManager.NavigateTo($"/rooms/{screening.Room?.Id}/screening/{screening.Id}/reservation");
+    }
+}

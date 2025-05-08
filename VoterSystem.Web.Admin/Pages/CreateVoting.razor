@@ -1,0 +1,65 @@
+@page "/votings/create"
+@layout MainLayout
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Web.Admin.Layout
+@using VoterSystem.Shared.Dto
+@inject NavigationManager NavigationManager
+@inject IVotingsService VotingsService
+
+<h1 class="my-4">Create Voting</h1>
+
+<EditForm Model="_model" OnValidSubmit="HandleCreateAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Voting Name</label>
+                <InputText class="form-control" @bind-Value="_model.Name" />
+                <ValidationMessage For="@(() => _model.Name)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Starts At</label>
+                <InputDate @bind-Value="_model.StartsAt"
+                           class="form-control"
+                           min="@NowFormatted" />
+                <ValidationMessage For="@(() => _model.StartsAt)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Ends At</label>
+                <InputDate @bind-Value="_model.EndsAt"
+                           class="form-control"
+                           min="@MinEndFormatted" />
+                <ValidationMessage For="@(() => _model.EndsAt)" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Create
+            </button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private readonly VotingCreateRequestDto _model = new()
+    {
+        Name = string.Empty,
+        StartsAt = DateTime.UtcNow.AddHours(1),
+        EndsAt = DateTime.UtcNow.AddDays(1).AddHours(1)
+    };
+
+    private string NowFormatted => DateTime.UtcNow.ToString("yyyy-MM-dd");
+    private string MinEndFormatted => _model.StartsAt.AddDays(1).ToString("yyyy-MM-dd");
+
+    private async Task HandleCreateAsync()
+    {
+        var newVoting = await VotingsService.CreateVotingAsync(_model);
+        if (newVoting is not null)
+        {
+            NavigationManager.NavigateTo($"/votings/{newVoting.VotingId}");
+        }
+    }
+}

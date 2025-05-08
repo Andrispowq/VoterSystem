@@ -1,0 +1,60 @@
+﻿@page "/rooms/edit/{Id:int}"
+@using ELTE.Cinema.Blazor.WebAssembly.Services
+@using ELTE.Cinema.Blazor.WebAssembly.ViewModels
+@inject IRoomService RoomService
+@inject NavigationManager NavigationManager
+
+
+<h1>Edit Room</h1>
+
+@if (_room != null)
+{
+    <EditForm Model="_room" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name:</label>
+            <InputText id="name" @bind-Value="_room.Name" class="form-control" />
+            <ValidationMessage For="@(() => _room.Name)" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label for="rows" class="form-label">Rows:</label>
+            <InputNumber id="rows" @bind-Value="_room.Rows" class="form-control" />
+            <ValidationMessage For="@(() => _room.Rows)" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label for="columns" class="form-label">Columns:</label>
+            <InputNumber id="columns" @bind-Value="_room.Columns" class="form-control" />
+            <ValidationMessage For="@(() => _room.Columns)" class="text-danger" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+    </EditForm>
+}
+else
+{
+    <p>Room loading...</p>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private RoomViewModel? _room;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _room = await RoomService.GetRoomByIdAsync(Id);
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_room == null)
+            throw new MissingMemberException(nameof(_room));
+
+        await RoomService.UpdateRoomAsync(_room);
+        NavigationManager.NavigateTo("/rooms");
+    }
+}

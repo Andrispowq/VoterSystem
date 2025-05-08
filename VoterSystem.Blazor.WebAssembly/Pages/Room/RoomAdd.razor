@@ -1,0 +1,43 @@
+﻿@page "/rooms/add"
+@using ELTE.Cinema.Blazor.WebAssembly.Services
+@using ELTE.Cinema.Blazor.WebAssembly.ViewModels
+@inject IRoomService RoomService
+@inject NavigationManager NavigationManager
+
+
+<h1>Create new Room</h1>
+
+<EditForm Model="_room" OnValidSubmit="SaveRoomAsync">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label for="name" class="form-label">Name:</label>
+        <InputText id="name" @bind-Value="_room.Name" class="form-control" />
+        <ValidationMessage For="@(() => _room.Name)" class="text-danger" />
+    </div>
+
+    <div class="mb-3">
+        <label for="rows" class="form-label">Rows:</label>
+        <InputNumber id="rows" @bind-Value="_room.Rows" class="form-control" />
+        <ValidationMessage For="@(() => _room.Rows)" class="text-danger" />
+    </div>
+
+    <div class="mb-3">
+        <label for="columns" class="form-label">Columns:</label>
+        <InputNumber id="columns" @bind-Value="_room.Columns" class="form-control" />
+        <ValidationMessage For="@(() => _room.Columns)" class="text-danger" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</EditForm>
+
+@code {
+    private readonly RoomViewModel _room = new();
+
+
+    private async Task SaveRoomAsync()
+    {
+        await RoomService.CreateRoomAsync(_room);
+        NavigationManager.NavigateTo("/rooms");
+    }
+}

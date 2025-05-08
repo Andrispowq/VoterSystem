@@ -1,0 +1,87 @@
+@page "/users"
+@layout MainLayout
+@using VoterSystem.DataAccess.Model
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Dto
+@using VoterSystem.Web.Admin.Layout
+@inject IAuthenticationService AuthenticationService
+
+<h1 class="my-4">User Management</h1>
+
+@if (_users is null)
+{
+    <p>Loading users...</p>
+}
+else if (!_users.Any())
+{
+    <p>No other users found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var user in _users)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>@user.Role</td>
+                <td>
+                    @if (user.Role == Role.User)
+                    {
+                        <button class="btn btn-sm btn-outline-success"
+                                @onclick="() => PromoteUser(user.Id)">
+                            Promote to Admin
+                        </button>
+                    }
+                    else if (user.Role == Role.Admin)
+                    {
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DemoteUser(user.Id)">
+                            Demote to User
+                        </button>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<UserDto>? _users;
+    private Guid? _currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUser = await AuthenticationService.GetCurrentUserAsync();
+        _currentUserId = currentUser?.Id;
+
+        var allUsers = await AuthenticationService.GetUsersAsync();
+        _users = allUsers.Where(u => u.Id != _currentUserId).ToList();
+    }
+
+    private async Task PromoteUser(Guid userId)
+    {
+        await AuthenticationService.PromoteUserToAdminAsync(userId);
+        await RefreshUsersAsync();
+    }
+
+    private async Task DemoteUser(Guid userId)
+    {
+        await AuthenticationService.DemoteAdminToUserAsync(userId);
+        await RefreshUsersAsync();
+    }
+
+    private async Task RefreshUsersAsync()
+    {
+        var allUsers = await AuthenticationService.GetUsersAsync();
+        _users = allUsers.Where(u => u.Id != _currentUserId).ToList();
+    }
+}

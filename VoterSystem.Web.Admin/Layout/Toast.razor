@@ -1,0 +1,27 @@
+﻿@using ELTE.Cinema.Blazor.WebAssembly.Services
+@inject IToastService ToastService
+
+<div class="toast-container position-fixed top-0 end-0 mt-5 p-3">
+    @foreach (var toast in ToastService.Toasts)
+    {
+        <div class="toast show align-items-center text-bg-dark bg-danger border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    @toast
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ToastService.OnToastChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnToastChanged -= StateHasChanged;
+    }
+}

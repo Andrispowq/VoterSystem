@@ -1,17 +1,38 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace VoterSystem.DataAccess.Model;
 
-public class User : ITimestamped
+public class User : IdentityUser<Guid>, ISoftDeletable, IRoleControlled
 {
-    public long UserId { get; set; }
-    [MaxLength(50)] public required string Name { get; set; }
-    [MaxLength(50)] public required string Email { get; set; }
-    [MaxLength(100)] public required string PasswordHash { get; set; }
-    public required UserLevel UserLevel { get; init; }
+    [MaxLength(50)] public string Name { get; set; } = null!;
+    public Guid? RefreshToken { get; set; }
+    public DateTime? DeletedAt { get; set; }
     
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime LastLoginAt { get; internal set; }
-    
+    public virtual ICollection<Voting> Votings { get; set; } = [];
     public virtual ICollection<Vote> Votes { get; set; } = [];
+    
+    //We can access users as an admin or ourselves
+    public bool CanAccessById(bool isAdmin, Guid userId)
+    {
+        return isAdmin || Id == userId;
+    }
+
+    //Creation is allowed
+    public bool CanCreate(bool isAdmin, Guid userId)
+    {
+        return true;
+    }
+
+    //Update is allowed for admins and ourselves
+    public bool CanUpdate(bool isAdmin, Guid userId)
+    {
+        return isAdmin || Id == userId;
+    }
+
+    //Delete is allowed for admins and ourselves
+    public bool CanDelete(bool isAdmin, Guid userId)
+    {
+        return isAdmin || Id == userId;
+    }
 }

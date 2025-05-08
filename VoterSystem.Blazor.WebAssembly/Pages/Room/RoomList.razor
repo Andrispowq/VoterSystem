@@ -1,0 +1,83 @@
+﻿@page "/rooms"
+@using ELTE.Cinema.Blazor.WebAssembly.Layout
+@using ELTE.Cinema.Blazor.WebAssembly.Services
+@using ELTE.Cinema.Blazor.WebAssembly.ViewModels
+@inject IRoomService RoomService
+@inject NavigationManager NavigationManager
+
+<h1>Rooms</h1>
+
+<div class="text-end">
+    <button class="btn btn-primary" @onclick="AddRoom">New Room</button>
+</div>
+
+<CustomConfirmModal T="int" @ref="_modal" Title="Confirm Deletion" Body="Are you sure you want to delete this room?" OnConfirm="DeleteRoomAsync" OnCancel="CancelDelete" />
+
+@if (_rooms is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="my-4 container">
+        <div class="g-4 row row-cols-md-5 row-cols-1">
+            @foreach (var room in _rooms)
+            {
+                <div class="col">
+                    <div class="h-100 card" @onclick="() => EditRoom(room.Id)" style="cursor: pointer;">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">@room.Name</h5>
+                            <p class="card-text mb-1">Rows: @room.Rows</p>
+                            <p class="card-text">Columns: @room.Columns</p>
+                        </div>
+                        <div class="d-flex justify-content-end me-2 mb-2">
+                            <button class="btn btn-danger" @onclick:stopPropagation="true" @onclick="() => ShowDeleteConfirmModal(room.Id)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+
+@code {
+    private List<RoomViewModel>? _rooms;
+    private CustomConfirmModal<int>? _modal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rooms = await RoomService.GetRoomsAsync();
+    }
+
+    private void AddRoom()
+    {
+        NavigationManager.NavigateTo($"/rooms/add");
+    }
+
+    private void EditRoom(int id)
+    {
+        NavigationManager.NavigateTo($"/rooms/edit/{id}");
+    }
+
+    private void ShowDeleteConfirmModal(int movieId)
+    {
+        _modal!.Show(movieId);
+    }
+
+    private async Task DeleteRoomAsync(int roomId)
+    {
+        await RoomService.DeleteRoomAsync(roomId);
+        _rooms = await RoomService.GetRoomsAsync();
+        _modal!.Hide();
+        StateHasChanged();
+    }
+
+    private void CancelDelete()
+    {
+        _modal!.Hide();
+    }
+
+}

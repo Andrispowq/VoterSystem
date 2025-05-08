@@ -1,0 +1,133 @@
+@page "/settings"
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Blazor.ViewModels
+@using VoterSystem.Shared.Dto
+@inject NavigationManager NavigationManager
+@inject IAuthenticationService AuthenticationService
+
+<h1 class="my-4">Settings</h1>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>User Data</strong>
+    </div>
+    <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+            <strong class="me-2">Role:</strong>
+            <span class="me-3">@_user?.Role</span>
+        </div>
+        
+        <div class="d-flex align-items-center mb-2">
+            <strong class="me-2">Email:</strong>
+            <span class="me-3">@_user?.Email</span>
+
+            @if (_user?.EmailConfirmed == true)
+            {
+                <span class="badge bg-success d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill me-1"></i> Email confirmed
+                </span>
+            }
+            else
+            {
+                <button class="btn btn-sm btn-outline-primary" @onclick="ConfirmEmailAsync">
+                    <i class="bi bi-envelope-fill me-1"></i> Confirm email
+                </button>
+            }
+        </div>
+
+        <div class="d-flex align-items-center">
+            @if (_user?.TwoFactorEnabled == true)
+            {
+                <span class="badge bg-success d-flex align-items-center">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Two-factor authentication set up
+                </span>
+            }
+            else
+            {
+                <button class="btn btn-sm btn-outline-secondary" @onclick="ConfigureTwoFactorAsync">
+                    <i class="bi bi-shield-lock me-1"></i> Configure two-factor authentication
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Change Password</strong>
+    </div>
+    <div class="card-body">
+        <EditForm Model="_passwordModel" OnValidSubmit="HandlePasswordChange">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Current Password</label>
+                <InputText type="password" class="form-control" @bind-Value="_passwordModel.OldPassword" />
+                <ValidationMessage For="@(() => _passwordModel.OldPassword)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">New Password</label>
+                <InputText type="password" class="form-control" @bind-Value="_passwordModel.NewPassword" />
+                <ValidationMessage For="@(() => _passwordModel.NewPassword)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Confirm New Password</label>
+                <InputText type="password" class="form-control" @bind-Value="_passwordModel.ConfirmPassword" />
+                <ValidationMessage For="@(() => _passwordModel.ConfirmPassword)" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update Password</button>
+        </EditForm>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Forgot Password</strong>
+    </div>
+    <div class="card-body">
+        <p>If you've forgotten your password, click below and we'll email you a reset link (TODO).</p>
+        <button class="btn btn-outline-warning" @onclick="HandleForgotPassword">
+            <i class="bi bi-envelope me-1"></i> Forgot Password
+        </button>
+    </div>
+</div>
+
+@code {
+    private readonly ChangePasswordViewModel _passwordModel = new();
+    private UserDto? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await AuthenticationService.GetCurrentUserAsync();
+    }
+
+    private Task ConfirmEmailAsync()
+    {
+        Console.WriteLine("TODO: Send confirmation email");
+        return Task.CompletedTask;
+    }
+
+    private Task ConfigureTwoFactorAsync()
+    {
+        Console.WriteLine("TODO: Open 2FA config flow");
+        return Task.CompletedTask;
+    }
+
+    private async Task HandlePasswordChange()
+    {
+        var result = await AuthenticationService.ChangePasswordAsync(_passwordModel);
+        if (result)
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+    }
+
+    private void HandleForgotPassword()
+    {
+        Console.WriteLine("TODO: Trigger forgot password email");
+    }
+}

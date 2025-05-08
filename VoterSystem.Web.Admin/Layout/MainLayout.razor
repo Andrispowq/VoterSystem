@@ -1,0 +1,84 @@
+﻿@using VoterSystem.Shared.Blazor.Services
+@inject NavigationManager Navigation
+@inherits LayoutComponentBase
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+@inject NetworkService NetworkService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<div>
+    <main>
+        @if (!IsUriUnauthorized() && !_isOffline)
+        {
+            <MenuComponent />
+        }
+        <Toast />
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    private bool _isOffline;
+
+    private bool IsUriUnauthorized()
+    {
+        return Navigation.Uri.Contains("login") ||
+               Navigation.Uri.Contains("register") ||
+               Navigation.Uri.Contains("confirm-email") ||
+               Navigation.Uri.Contains("reset-password") ||
+               Navigation.Uri.Contains("forgot-password");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await HandleUnauthorizedUser();
+
+        await NetworkService.InitializeAsync();
+        NetworkService.OnConnectivityChanged += HandleConnectivityChange;
+    }
+
+    private async Task HandleUnauthorizedUser()
+    {
+        //if no stored refreshToken found user is unauthorized
+        if (await LocalStorage.GetItemAsync<string>("RefreshToken") == null
+            && !IsUriUnauthorized())
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        _isOffline = queryParams["offline"] == "true";
+        base.OnParametersSet();
+    }
+
+    private void HandleConnectivityChange(bool isOnline)
+    {
+        if (isOnline)
+        {
+            //become online navigate to login
+            //if previously login after autologin navigate to movies.
+            Navigation.NavigateTo("/login");
+        }
+        else if (Navigation.Uri.Contains("login"))
+        {
+            //become offline before login
+            Navigation.NavigateTo("/login?offline=true");
+        }
+        else
+        {
+            //become offline after login
+            Navigation.NavigateTo("/votings?offline=true");
+        }
+    }
+
+    public void Dispose()
+    {
+        NetworkService.OnConnectivityChanged -= HandleConnectivityChange;
+    }
+}

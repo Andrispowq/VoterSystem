@@ -1,0 +1,281 @@
+﻿@page "/rooms/{RoomId:int}/screening/{screeningId:int}/reservation"
+@using ELTE.Cinema.Blazor.WebAssembly.Services
+@using ELTE.Cinema.Blazor.WebAssembly.Layout
+@using ELTE.Cinema.Blazor.WebAssembly.ViewModels
+@inject IReservationService ReservationService
+@inject IJSRuntime Js
+
+<h1>Screening Reservation</h1>
+
+<CustomConfirmModal T="int" @ref="_deleteModal" Title="Confirm Deletion" Body="Are you sure you want to delete this reservation?" OnConfirm="DeleteSelectedReservationAsync" OnCancel="CancelReservationDelete" />
+<CustomConfirmModal T="int" @ref="_sellModal" Title="Confirm Sell" Body="Are you sure you want to sell this seat?" OnConfirm="SellSelectedSeatAsync" OnCancel="CancelSellSeat" />
+
+@if (_seats is null || _room is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="mb-3">
+        <label class="form-label">Seats:</label>
+        <table class="table table-bordered table-secondary fw-bold" style="table-layout: fixed; width: 100%;">
+            <thead>
+                <tr class="text-center">
+                    <td></td>
+                    @for (int i = 1; i <= _room.Columns; i++)
+                    {
+                        <td>@i</td>
+                        @if (i == _room.Columns / 2)
+                        {
+                            <td></td>
+                        }
+                    }
+                    <td></td>
+                </tr>
+            </thead>
+
+            <tbody>
+                @for (int i = 1; i <= _room.Rows; i++)
+                {
+                    <tr>
+                        <td class="text-start">@i</td>
+                        @for (int j = 1; j <= _room.Columns; j++)
+                        {
+                            var seat = _seats?.FirstOrDefault(s => s.Row == i && s.Column == j) ??
+                            throw new ArgumentNullException("Seat must have value");
+
+                            <td class="@GetSeatCssClass(seat.IsSelected, seat.Status)"
+                            title="@GetSeatTooltip(i, j, seat.Status)"
+                            data-seatRow="@i"
+                            data-seatColumn="@j"
+                            data-status="@seat.Status"
+                            @onclick="() => LoadSelectedSeatDataAsync(seat)">
+                            </td>
+
+                            @if (j == _room.Columns / 2)
+                            {
+                                <td></td>
+                            }
+                        }
+                        <td class="text-end">@i</td>
+                    </tr>
+                }
+            </tbody>
+
+            <tfoot>
+                <tr class="text-center">
+                    <td></td>
+                    @for (int i = 1; i <= _room.Columns; i++)
+                    {
+                        <td>@i</td>
+                        @if (i == _room.Columns / 2)
+                        {
+                            <td></td>
+                        }
+                    }
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+
+    <div class="d-flex justify-content-start mt-4">
+        <div class="d-flex align-items-center me-3">
+            <div class="bg-primary" style="width: 20px; height: 20px;"></div>
+            <span class="ms-2">Selected</span>
+        </div>
+        <div class="d-flex align-items-center me-3">
+            <div class="bg-warning" style="width: 20px; height: 20px;"></div>
+            <span class="ms-2">Reserved</span>
+        </div>
+        <div class="d-flex align-items-center me-3">
+            <div class="bg-success" style="width: 20px; height: 20px;"></div>
+            <span class="ms-2">Sold</span>
+        </div>
+        <div class="d-flex align-items-center me-3">
+            <div class="bg-light border" style="width: 20px; height: 20px;"></div>
+            <span class="ms-2">Free</span>
+        </div>
+    </div>
+
+}
+
+<!-- Selected seat data -->
+@if (_selectedSeat != null)
+{
+    <div id="divSelectedSeat" class="my-4">
+        <h4>Selected seat data</h4>
+        <div class="g-4 row row-cols-md-3 row-cols-1">
+            <div class="col">
+                <div class="h-100 card bg-light position-relative">
+                    @if (_selectedSeat.Seat.Status != SeatStatusViewModel.Sold)
+                    {
+                        <button class="btn btn-success position-absolute top-0 end-0 m-2" @onclick="ShowSellConfirmModal">
+                            <i class="bi bi-cart-check"></i> Sell
+                        </button>
+                    }
+
+                    <div class="card-body">
+                        <h5 class="card-title">Row: @_selectedSeat.Seat.Row - Column: @_selectedSeat.Seat.Column</h5>
+                        <p class="card-text"><strong>Status:</strong> @GetSeatStatusText(_selectedSeat.Seat.Status)</p>
+
+                        @if (_selectedSeat.Reservation != null)
+                        {
+                            <hr />
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6>Reservation data:</h6>
+                                <button class="btn btn-danger" @onclick="ShowConfirmDeleteReservationModal" data-testid="delete-button">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </div>
+
+
+                            <p><strong>Name:</strong> @_selectedSeat.Reservation.Name</p>
+                            <p><strong>Email:</strong> @_selectedSeat.Reservation.Email</p>
+                            <p><strong>Phone:</strong> @_selectedSeat.Reservation.Phone</p>
+                            <p><strong>Comment:</strong> @_selectedSeat.Reservation.Comment</p>
+
+                            <h6>Additional seats for reservation:</h6>
+                            <ul>
+                                @foreach (var s in _selectedSeat.Reservation.Seats)
+                                {
+                                    <li>@s.Row. row, @s.Column. column</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p><em>No reservation</em></p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public int RoomId { get; set; }
+
+    [Parameter]
+    public int ScreeningId { get; set; }
+
+    private CustomConfirmModal<int>? _sellModal;
+    private CustomConfirmModal<int>? _deleteModal;
+
+    private List<SeatViewModel>? _seats;
+    private RoomViewModel? _room;
+    private SeatDetailViewModel? _selectedSeat;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadScreen();
+    }
+
+    private async Task LoadScreen()
+    {
+        (_room, _seats) = await ReservationService.GetSeatsByScreeningAsync(ScreeningId, RoomId);
+    }
+
+
+    private string GetSeatCssClass(bool isSelected, SeatStatusViewModel status)
+    {
+        if (isSelected)
+        {
+            return "bg-primary text-center";
+        }
+
+        return status switch
+        {
+            SeatStatusViewModel.Reserved => "bg-warning text-center",
+            SeatStatusViewModel.Sold => "bg-success text-center",
+            _ => "bg-light text-center"
+        };
+    }
+
+    private string GetSeatTooltip(int row, int col, SeatStatusViewModel status)
+    {
+        string statusText = GetSeatStatusText(status);
+        return $"Row: {row} Column: {col} Status: {statusText}";
+    }
+
+    private string GetSeatStatusText(SeatStatusViewModel status)
+    {
+        return status switch
+        {
+            SeatStatusViewModel.Free => "Free",
+            SeatStatusViewModel.Reserved => "Reserved",
+            SeatStatusViewModel.Sold => "Sold",
+            _ => "Unknown"
+        };
+    }
+
+    private async Task LoadSelectedSeatDataAsync(SeatViewModel seat)
+    {
+        _selectedSeat = await ReservationService.LoadSelectedSeatDataAsync(seat);
+        SetSelectedSeatInGrid();
+        StateHasChanged();
+        await Js.InvokeVoidAsync("scrollToElement", "divSelectedSeat");
+    }
+
+    private void SetSelectedSeatInGrid()
+    {
+        _seats!.ForEach(s => s.IsSelected = false);
+
+        if (_selectedSeat!.Reservation != null)
+        {
+            foreach (var seatInReservation in _selectedSeat.Reservation.Seats)
+            {
+                _seats.First(s => s.Row == seatInReservation.Row && s.Column == seatInReservation.Column).IsSelected = true;
+            }
+        }
+        else
+        {
+            _seats.First(s => s.Row == _selectedSeat.Seat.Row && s.Column == _selectedSeat.Seat.Column).IsSelected = true;
+        }
+
+    }
+
+    private void ShowSellConfirmModal()
+    {
+        _sellModal!.Show();
+    }
+
+    private void CancelSellSeat()
+    {
+        _sellModal!.Hide();
+    }
+
+    private async Task SellSelectedSeatAsync()
+    {
+        var soldSeat = await ReservationService.SellSeatAsync(ScreeningId, _selectedSeat!.Seat);
+
+        if (soldSeat == null)
+            return;
+
+
+        _seats!.First(s => s.Row == soldSeat.Row && s.Column == soldSeat.Column).Status = soldSeat.Status;
+        StateHasChanged();
+    }
+
+    private void ShowConfirmDeleteReservationModal()
+    {
+        _deleteModal!.Show();
+    }
+
+    private void CancelReservationDelete()
+    {
+        _deleteModal!.Hide();
+    }
+
+    private async Task DeleteSelectedReservationAsync()
+    {
+        _deleteModal!.Hide();
+        await ReservationService.DeleteReservationAsync(_selectedSeat!.Reservation!.Id);
+        await LoadScreen();
+    }
+}

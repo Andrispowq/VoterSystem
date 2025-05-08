@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using System.Text;
 
 namespace VoterSystem.DataAccess.Util;
 
@@ -42,20 +43,20 @@ internal static class Utils
 
     public static string GeneratePassword(int groups, int groupSize, string alphabet = DefaultAlphabet)
     {
-        string pw = "";
+        var pw = new StringBuilder();
         for(int i = 0; i < groups; i++)
         {
             for(int j = 0; j < groupSize; j++)
             {
-                pw += alphabet[RandomNumberGenerator.GetInt32(0, alphabet.Length)];
+                pw.Append(alphabet[RandomNumberGenerator.GetInt32(0, alphabet.Length)]);
             }
 
             if(i != groups - 1)
             {
-                pw += ":";
+                pw.Append(":");
             }
         }
 
-        return pw;
+        return pw.ToString();
     }
 }

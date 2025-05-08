@@ -1,5 +1,0 @@
-{
-  "ApiBaseUrl": "${API_HTTP}",
-  "AdminBaseUrl": "${ADMIN_HTTP}",
-  "WebBaseUrl": "${WEB_HTTP}"
-}

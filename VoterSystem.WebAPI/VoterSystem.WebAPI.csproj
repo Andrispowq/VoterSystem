@@ -33,7 +33,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\VoterSystem.DataAccess\VoterSystem.DataAccess.csproj" />
-      <ProjectReference Include="..\VoterSystem.Shared\VoterSystem.Shared.csproj" />
       <ProjectReference Include="..\VoterSystem.SignalR\VoterSystem.SignalR.csproj" />
     </ItemGroup>
 

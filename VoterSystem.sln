@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.Shared.Blazor",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.Web", "VoterSystem.Web\VoterSystem.Web.csproj", "{15CDBA5E-1489-42DF-A351-8BBAA1B987B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.SignalR", "VoterSystem.SignalR\VoterSystem.SignalR.csproj", "{31AE5D6D-88D5-406C-8D8A-E45D0B0E1598}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.Tests", "VoterSystem.Tests\VoterSystem.Tests.csproj", "{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,5 +51,13 @@ Global
 		{15CDBA5E-1489-42DF-A351-8BBAA1B987B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15CDBA5E-1489-42DF-A351-8BBAA1B987B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15CDBA5E-1489-42DF-A351-8BBAA1B987B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31AE5D6D-88D5-406C-8D8A-E45D0B0E1598}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31AE5D6D-88D5-406C-8D8A-E45D0B0E1598}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31AE5D6D-88D5-406C-8D8A-E45D0B0E1598}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31AE5D6D-88D5-406C-8D8A-E45D0B0E1598}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

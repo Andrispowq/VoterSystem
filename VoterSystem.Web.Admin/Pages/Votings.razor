@@ -1,10 +1,13 @@
 @page "/votings"
 @using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Blazor.Services.SignalR
 @using VoterSystem.Shared.Blazor.ViewModels
 @using VoterSystem.Shared.Dto
 @using VoterSystem.Web.Admin.Layout
 @inject IVotingsService VotingsService
 @inject NavigationManager NavigationManager
+@inject IVoteHubService VoteHubService
+@implements IAsyncDisposable
 
 <div class="my-4 container">
 
@@ -101,6 +104,19 @@
                 await LoadVotingResult(voting.VotingId); // fire and forget
             }
         }
+        
+        VoteHubService.OnVotingResultUpdated += async voting =>
+        {
+            VotingResults[voting.VotingId] = voting.VotingResults;
+            StateHasChanged();
+        };
+
+        await VoteHubService.StartHubAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await VoteHubService.DisconnectHubAsync();
     }
     
     private void ShowDeleteConfirm(VotingDto voting)
@@ -195,9 +211,11 @@
 
                                 @if (result.ChoiceResults.Any())
                                 {
-                                    <VotePieChart VotingId="@voting.VotingId"
-                                                  Choices="@voting.VoteChoices"
-                                                  Results="@result" />
+                                    <div @key="result">
+                                        <VotePieChart VotingId="@voting.VotingId"
+                                                      Choices="@voting.VoteChoices"
+                                                      Results="@result" />
+                                    </div>
                                 }
                                 else
                                 {

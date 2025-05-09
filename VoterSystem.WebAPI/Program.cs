@@ -2,7 +2,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using VoterSystem.DataAccess;
@@ -10,10 +9,20 @@ using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared;
+using VoterSystem.SignalR;
+using VoterSystem.SignalR.Hubs;
 using VoterSystem.WebAPI.Config;
 using VoterSystem.WebAPI.Controllers;
+using DependencyInjection = VoterSystem.WebAPI.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//load from user secrets in dev
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+{
+    DependencyInjection.LoadDotEnv(builder.Configuration);
+}
 
 builder.Services.AddDataAccess(builder.Configuration);
 
@@ -23,12 +32,8 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.Configure<BlazorSettings>(
-    builder.Configuration.GetSection("BlazorSettings"));
-
-var jwtSection = builder.Configuration.GetSection("JwtSettings");
-var jwtSettings = jwtSection.Get<JwtSettings>() ?? throw new ArgumentNullException(nameof(JwtSettings));
-builder.Services.Configure<JwtSettings>(jwtSection);
+builder.Services.BindWithEnvSubstitution<BlazorSettings>(builder.Configuration, "BlazorSettings");
+var jwtSettings = builder.Services.BindWithEnvSubstitution<JwtSettings>(builder.Configuration, "JwtSettings");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -76,8 +81,6 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
-builder.Services.AddAutoMapper(_ => {});
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("BlazorPolicy",
@@ -85,7 +88,7 @@ builder.Services.AddCors(options =>
         {
             var urls = builder.Configuration
                 .GetSection("BlazorUrls")
-                .Get<List<string>>();
+                .Get<List<string>>()?.Select(Utils.ReplaceFromEnv).ToList();
 
             if (urls == null || !urls.Any())
                 throw new ArgumentNullException(
@@ -104,6 +107,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddHealthChecks()
     .AddCheck<HealthController>("apple-maps");
 
+builder.Services.AddSignalR();
+builder.Services.AddSignalRServices();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -115,32 +121,27 @@ if (/*app.Environment.IsDevelopment()*/true)
     app.MapScalarApiReference();
     app.UseCors("BlazorPolicy");
 }
-    
 
 app.UseHsts();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
 app.MapControllers();
 
 app.UseHealthChecks("/api/v1/health");
+app.MapHub<VotesHub>($"/{nameof(VotesHub)}");
 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var database = services.GetService<VoterSystemDbContext>()!;
-    await database.Database.MigrateAsync();
 
-    var voteService = services.GetService<IVoteService>()!;
-    var votingService = services.GetService<IVotingService>()!;
     var userService = services.GetService<IUserService>()!;
-    var voteChoiceService = services.GetService<IVoteChoiceService>()!;
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();
     
-    await DbInitializer.InitialiseAsync(database, userService,
-        votingService, voteChoiceService, voteService, roleManager);
+    await DbInitializer.InitialiseAsync(database, userService, roleManager);
 }
 
 app.Run();

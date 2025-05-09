@@ -6,6 +6,7 @@ using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared;
 
 namespace VoterSystem.DataAccess;
 
@@ -20,6 +21,7 @@ public static class DependencyInjection
         
         // Database
         var connectionString = config.GetConnectionString("VoterSystemConnection");
+        connectionString = Utils.ReplaceFromEnv(connectionString ?? "");
         services.AddDbContext<VoterSystemDbContext>(options => options
             .UseNpgsql(connectionString)
             .UseLazyLoadingProxies()
@@ -52,5 +54,35 @@ public static class DependencyInjection
         services.AddSingleton<IEmailService, EmailService>();
 
         return services;
+    }
+    
+    public static T BindWithEnvSubstitution<T>(this IServiceCollection services, IConfiguration config,
+        string sectionName)
+        where T : class, new()
+    {
+        var section = config.GetSection(sectionName);
+        var raw = new ConfigurationBuilder()
+            .AddInMemoryCollection(section.AsEnumerable()
+                .Where(pair => pair.Value is not null)
+                .Select(pair => new KeyValuePair<string, string>(
+                    pair.Key,
+                    Utils.ReplaceFromEnv(pair.Value!)))!)
+            .Build();
+
+        var instance = new T();
+        raw.Bind(sectionName, instance);
+
+        services.Configure<T>(options =>
+        {
+            foreach (var prop in typeof(T).GetProperties())
+            {
+                if (prop.CanWrite)
+                {
+                    prop.SetValue(options, prop.GetValue(instance));
+                }
+            }
+        });
+
+        return instance;
     }
 }

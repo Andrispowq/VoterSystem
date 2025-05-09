@@ -2,8 +2,8 @@ namespace VoterSystem.DataAccess.Config;
 
 public record JwtSettings
 {
-    public required string SecretKey { get; init; }
-    public required string Audience { get; init; }
-    public required string Issuer { get; init; }
-    public required int AccessTokenExpirationMinutes { get; init; }
+    public string SecretKey { get; init; }
+    public string Audience { get; init; }
+    public string Issuer { get; init; }
+    public int AccessTokenExpirationMinutes { get; init; }
 }

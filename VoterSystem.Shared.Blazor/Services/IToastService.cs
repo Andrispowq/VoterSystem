@@ -1,4 +1,4 @@
-﻿namespace ELTE.Cinema.Blazor.WebAssembly.Services
+﻿namespace VoterSystem.Shared.Blazor.Services
 {
     public interface IToastService
     {

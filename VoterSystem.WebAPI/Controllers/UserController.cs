@@ -194,7 +194,7 @@ public class UserController(IUserService userService, IEmailService emailService
         if (user.IsError) return user.ToHttpResult();
         var userValue = user.Value;
         if (!userValue.EmailConfirmed)
-        {
+        { 
             return Unauthorized("Email is not confirmed");
         }
         

@@ -22,11 +22,8 @@
         {
             _chartModule = await Js.InvokeAsync<IJSObjectReference>("import", "./js/votePieChart.js");
 
-
-            var labels = Results.ChoiceResults
-                .Select(c =>
-                    Choices.FirstOrDefault(c1 => c.ChoiceId == c1.ChoiceId)?.Name ?? "");
-            var data = Results.ChoiceResults.Select(c => c.VoteCount);
+            var labels = Choices.OrderBy(c => c.ChoiceId);
+            var data = Results.ChoiceResults.OrderBy(c => c.ChoiceId).Select(c => c.VoteCount);
 
             _chartInstance = await _chartModule.InvokeAsync<IJSObjectReference>(
                 "renderVotePieChart",

@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Json;
 using Blazored.LocalStorage;
-using ELTE.Cinema.Blazor.WebAssembly.Services;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.Shared.Blazor.Exception;
 using VoterSystem.Shared.Blazor.Infrastructure;

@@ -1,11 +1,11 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Blazored.LocalStorage;
-using ELTE.Cinema.Blazor.WebAssembly.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VoterSystem.Shared.Blazor.Config;
 using VoterSystem.Shared.Blazor.Services;
+using VoterSystem.Shared.Blazor.Services.SignalR;
 
 namespace VoterSystem.Shared.Blazor.Infrastructure;
 
@@ -13,7 +13,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddSharedBlazorServices(this IServiceCollection services, IConfiguration config)
     {
-        var appConfig = services.BindWithEnvSubstitution<AppConfig>(config, "AppConfig");
+        var appConfig = config.GetSection("AppConfig").Get<AppConfig>()
+            ?? throw new NullReferenceException("AppConfig is null");
 
         services.AddSingleton(appConfig);
         services.AddSingleton<IToastService, ToastService>();
@@ -44,39 +45,10 @@ public static class DependencyInjection
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IHttpRequestUtility, HttpRequestUtility>();
         services.AddScoped<IVotingsService, VotingsService>();
+        services.AddScoped<IVoteHubService, VoteHubService>();
         
         services.AddScoped<NetworkService>();
 
         return services;
-    }
-    
-    private static T BindWithEnvSubstitution<T>(this IServiceCollection services, IConfiguration config,
-        string sectionName)
-        where T : class, new()
-    {
-        var section = config.GetSection(sectionName);
-        var raw = new ConfigurationBuilder()
-            .AddInMemoryCollection(section.AsEnumerable()
-                .Where(pair => pair.Value is not null)
-                .Select(pair => new KeyValuePair<string, string>(
-                    pair.Key,
-                    Utils.ReplaceFromEnv(pair.Value!)))!)
-            .Build();
-
-        var instance = new T();
-        raw.Bind(sectionName, instance);
-
-        services.Configure<T>(options =>
-        {
-            foreach (var prop in typeof(T).GetProperties())
-            {
-                if (prop.CanWrite)
-                {
-                    prop.SetValue(options, prop.GetValue(instance));
-                }
-            }
-        });
-
-        return instance;
     }
 }

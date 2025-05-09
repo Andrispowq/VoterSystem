@@ -2,7 +2,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using VoterSystem.DataAccess;
@@ -11,6 +10,8 @@ using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared;
+using VoterSystem.SignalR;
+using VoterSystem.SignalR.Hubs;
 using VoterSystem.WebAPI.Config;
 using VoterSystem.WebAPI.Controllers;
 using DependencyInjection = VoterSystem.WebAPI.DependencyInjection;
@@ -80,8 +81,6 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
-builder.Services.AddAutoMapper(_ => {});
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("BlazorPolicy",
@@ -108,6 +107,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddHealthChecks()
     .AddCheck<HealthController>("apple-maps");
 
+builder.Services.AddSignalR();
+builder.Services.AddSignalRServices();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -129,6 +131,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.UseHealthChecks("/api/v1/health");
+app.MapHub<VotesHub>($"/{nameof(VotesHub)}");
 
 using (var scope = app.Services.CreateScope())
 {

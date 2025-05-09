@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Headers;
 using System.Text.Json;
-using ELTE.Cinema.Blazor.WebAssembly.Services;
 
 namespace VoterSystem.Shared.Blazor.Services;
 

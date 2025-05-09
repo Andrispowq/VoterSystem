@@ -2,5 +2,6 @@
 
 public class AppConfig
 {
-    public long ToastDurationInMillis { get; init; }
+    public required long ToastDurationInMillis { get; init; }
+    public required string HubBaseUrl { get; init; }
 }

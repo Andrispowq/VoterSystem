@@ -1,5 +1,4 @@
-﻿using ELTE.Cinema.Blazor.WebAssembly.Services;
-using VoterSystem.Shared.Blazor.Config;
+﻿using VoterSystem.Shared.Blazor.Config;
 using Timer = System.Timers.Timer;
 
 namespace VoterSystem.Shared.Blazor.Services;

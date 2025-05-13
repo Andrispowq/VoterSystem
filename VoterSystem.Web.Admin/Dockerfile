@@ -32,7 +32,7 @@ RUN rm ./wwwroot/appsettings.json
 RUN apt-get update && apt-get install -y gettext && \
     envsubst < ./wwwroot/appsettings.temp.json > ./wwwroot/appsettings.json.tmp && \
     mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
-	
+
 RUN dotnet build "VoterSystem.Web.Admin.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

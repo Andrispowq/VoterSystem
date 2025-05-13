@@ -17,12 +17,6 @@ ENV WEB_HTTPS=$WEB_HTTPS
 ENV ADMIN_HTTP=$ADMIN_HTTP
 ENV ADMIN_HTTPS=$ADMIN_HTTPS
 
-# Install gettext for envsubst and do the replacement
-RUN rm appsettings.json
-RUN apt-get update && apt-get install -y gettext && \
-    envsubst < appsettings.temp.json > appsettings.json.tmp && \
-    mv appsettings.json.tmp appsettings.json
-	
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
@@ -32,6 +26,13 @@ COPY ["VoterSystem.Shared/VoterSystem.Shared.csproj", "VoterSystem.Shared/"]
 RUN dotnet restore "VoterSystem.Web.Admin/VoterSystem.Web.Admin.csproj"
 COPY . .
 WORKDIR "/src/VoterSystem.Web.Admin"
+
+# Install gettext for envsubst and do the replacement
+RUN rm appsettings.json
+RUN apt-get update && apt-get install -y gettext && \
+    envsubst < appsettings.temp.json > appsettings.json.tmp && \
+    mv appsettings.json.tmp appsettings.json
+	
 RUN dotnet build "VoterSystem.Web.Admin.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

@@ -32,19 +32,33 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "VoterSystem.Web.Admin.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
-WORKDIR /apps
+# FROM base AS final
+# WORKDIR /app
+# COPY --from=publish /app/publish .
+# WORKDIR /app
 
 # Copy file
-COPY ./wwwroot/appsettings.temp.json ./wwwroot/appsettings.json
+# COPY ./wwwroot/appsettings.temp.json ./wwwroot/appsettings.json
 
 # Replace with env value using envsubst
-RUN apt-get update && apt-get install -y gettext
+# RUN apt-get update && apt-get install -y gettext
 
-CMD envsubst < ./wwwroot/appsettings.temp.json > ./wwwroot/appsettings.json.tmp && \
-	mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
+# CMD envsubst < ./wwwroot/appsettings.temp.json > ./wwwroot/appsettings.json.tmp && \
+# 	mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
+
+# Copy the published files from the publish stage
+COPY --from=publish /app/publish . 
+
+# Move to the directory where the appsettings.json is located and replace with envsubst
+WORKDIR /app/wwwroot
+
+# Replace placeholders in appsettings.temp.json and rename the file to appsettings.json
+RUN apt-get update && apt-get install -y gettext && \
+    envsubst < ./appsettings.temp.json > ./appsettings.json.tmp && \
+    mv ./appsettings.json.tmp ./appsettings.json
+
+# Now copy all files from /app to the working directory
+COPY --from=publish /app/publish . 
 
 FROM nginx:alpine
 COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf

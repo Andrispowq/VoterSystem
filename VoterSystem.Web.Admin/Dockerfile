@@ -17,6 +17,12 @@ ENV WEB_HTTPS=$WEB_HTTPS
 ENV ADMIN_HTTP=$ADMIN_HTTP
 ENV ADMIN_HTTPS=$ADMIN_HTTPS
 
+# Install gettext for envsubst and do the replacement
+RUN rm appsettings.json
+RUN apt-get update && apt-get install -y gettext && \
+    envsubst < appsettings.temp.json > appsettings.json.tmp && \
+    mv appsettings.json.tmp appsettings.json
+	
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
@@ -32,23 +38,9 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "VoterSystem.Web.Admin.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# 2. FINAL STAGE: Move to the publish directory and do the replacement with envsubst
 FROM base AS final
 WORKDIR /app
-
-# Copy the published files from the publish stage
 COPY --from=publish /app/publish . 
-
-# Move to the directory where the appsettings.json is located and replace with envsubst
-WORKDIR /app/wwwroot
-
-# Copy appsettings.temp.json to appsettings.json in the final image
-COPY --from=publish /app/publish/wwwroot/appsettings.temp.json /app/wwwroot/appsettings.json
-
-# Install gettext for envsubst and do the replacement
-RUN apt-get update && apt-get install -y gettext && \
-    envsubst < ./appsettings.json > ./appsettings.json.tmp && \
-    mv ./appsettings.json.tmp ./appsettings.json
 
 FROM nginx:alpine
 COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf

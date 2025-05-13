@@ -37,16 +37,15 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 WORKDIR /app
 
-FROM nginx:alpine AS runtime
+# Copy file
+COPY ./wwwroot/appsettings.temp.json ./wwwroot/appsettings.json
 
-# install envsubst (part of gettext)
-RUN apk add --no-cache gettext
+# Replace with env value using envsubst
+RUN apt-get update && apt-get install -y gettext
 
-# copy compiled site
-COPY --from=build /app/publish/wwwroot/ /usr/share/nginx/html/
+CMD envsubst < ./wwwroot/appsettings.temp.json > ./wwwroot/appsettings.json.tmp && \
+	mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
 
-# optional: custom nginx.conf
+FROM nginx:alpine
 COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf
-
-CMD /bin/sh -c 'envsubst < /usr/share/nginx/html/appsettings.temp.json \
-      > /usr/share/nginx/html/appsettings.json
+COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/

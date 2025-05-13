@@ -38,7 +38,7 @@ COPY --from=publish /app/publish .
 WORKDIR /app
 
 # Copy file
-RM ./wwwroot/appsettings.json
+RUN rm ./wwwroot/appsettings.json
 COPY ./wwwroot/appsettings.temp.json ./wwwroot/appsettings.json
 
 # Replace with env value using envsubst

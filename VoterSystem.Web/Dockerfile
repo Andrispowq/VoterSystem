@@ -37,16 +37,16 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 WORKDIR /app
 
+FROM nginx:alpine
+COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf
+COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/
+
 # Copy file
-RUN rm ./wwwroot/appsettings.json
-COPY ./wwwroot/appsettings.temp.json ./wwwroot/appsettings.json
+RUN rm /app/publish/wwwroot/appsettings.json
+COPY /app/publish/wwwroot/appsettings.temp.json /app/publish/wwwroot/appsettings.json
 
 # Replace with env value using envsubst
 RUN apt-get update && apt-get install -y gettext
 
-CMD envsubst < ./wwwroot/appsettings.temp.json > ./wwwroot/appsettings.json.tmp && \
-	mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
-
-FROM nginx:alpine
-COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf
-COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/
+CMD envsubst < /app/publish/wwwroot/appsettings.temp.json > /app/publish/wwwroot/appsetting.json.tmp && \
+	mv /app/publish/wwwroot/appsettings.json.tmp /app/publish/wwwroot/appsettings.json

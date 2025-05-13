@@ -32,22 +32,23 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "VoterSystem.Web.Admin.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Copy file
-COPY /app/publish/wwwroot/appsettings.temp.json /app/publish/wwwroot/appsettings.json
-
-# Replace with env value using envsubst
-RUN apt-get update && apt-get install -y gettext
-
-CMD envsubst < /app/publish/wwwroot/appsettings.temp.json > /app/publish/wwwroot/appsettings.json.tmp && \
-	mv /app/publish/wwwroot/appsettings.json.tmp /app/publish/wwwroot/appsettings.json
-
+# 2. FINAL STAGE: Move to the publish directory and do the replacement with envsubst
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
-WORKDIR /app
 
-# Now copy all files from /app to the working directory
+# Copy the published files from the publish stage
 COPY --from=publish /app/publish . 
+
+# Move to the directory where the appsettings.json is located and replace with envsubst
+WORKDIR /app/wwwroot
+
+# Copy appsettings.temp.json to appsettings.json in the final image
+COPY --from=publish /app/publish/wwwroot/appsettings.temp.json /app/wwwroot/appsettings.json
+
+# Install gettext for envsubst and do the replacement
+RUN apt-get update && apt-get install -y gettext && \
+    envsubst < ./appsettings.json > ./appsettings.json.tmp && \
+    mv ./appsettings.json.tmp ./appsettings.json
 
 FROM nginx:alpine
 COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf

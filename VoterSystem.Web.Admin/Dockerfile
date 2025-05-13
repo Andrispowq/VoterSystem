@@ -43,7 +43,7 @@ COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/
 
 # Copy file
 RUN rm /app/publish/wwwroot/appsettings.json
-COPY /app/publish/wwwroot/appsettings.temp.json /app/publish/wwwroot/appsettings.json
+COPY ./wwwroot/appsettings.temp.json /app/publish/wwwroot/appsettings.json
 
 # Replace with env value using envsubst
 RUN apt-get update && apt-get install -y gettext

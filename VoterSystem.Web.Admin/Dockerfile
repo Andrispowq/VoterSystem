@@ -28,10 +28,10 @@ COPY . .
 WORKDIR "/src/VoterSystem.Web.Admin"
 
 # Install gettext for envsubst and do the replacement
-RUN rm appsettings.json
+RUN rm ./wwwroot/appsettings.json
 RUN apt-get update && apt-get install -y gettext && \
-    envsubst < appsettings.temp.json > appsettings.json.tmp && \
-    mv appsettings.json.tmp appsettings.json
+    envsubst < ./wwwroot/appsettings.temp.json > ./wwwroot/appsettings.json.tmp && \
+    mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
 	
 RUN dotnet build "VoterSystem.Web.Admin.csproj" -c $BUILD_CONFIGURATION -o /app/build
 

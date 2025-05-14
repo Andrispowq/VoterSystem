@@ -2,9 +2,15 @@ namespace VoterSystem.DataAccess.Functional;
 
 public abstract record Option<T>
 {
-    public sealed record None : Option<T>;
+    public sealed record None : Option<T>
+    {
+        public override string ToString() => "None";
+    }
 
-    public sealed record Some(T Value) : Option<T>;
+    public sealed record Some(T Value) : Option<T>
+    {
+        public override string ToString() => $"Some({Value})";
+    }
     
     private Option() { }
 

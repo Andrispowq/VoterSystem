@@ -31,14 +31,15 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     {
         // Arrange
         var user = new User { Id = Guid.NewGuid(), UserName = "admin@example.com" }; // Simulate an admin user
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(user);
+        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(user.Id);
+        _mockUserService.Setup(x => x.GetUserRoleByIdAsync(user.Id)).ReturnsAsync(Role.Admin);
         
         // Act
         var result = await _voteService.CastVote(user, _voteChoice);
 
         // Assert
         Assert.True(result.IsSome);
-        Assert.IsType<UnauthorizedError>(result.AsSome);
+        Assert.IsType<UnauthorizedError>(result.AsSome.Value);
     }
 
     [Fact]
@@ -49,14 +50,16 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         {
             Id = _voting.CreatedByUserId, UserName = "owner@example.com"
         }; // Simulate the owner of the voting
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(user);
+        
+        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(user.Id);
+        _mockUserService.Setup(x => x.GetUserRoleByIdAsync(user.Id)).ReturnsAsync(Role.User);
 
         // Act
         var result = await _voteService.CastVote(user, _voteChoice);
 
         // Assert
         Assert.True(result.IsSome);
-        Assert.IsType<UnauthorizedError>(result.AsSome);
+        Assert.IsType<UnauthorizedError>(result.AsSome.Value);
     }
 
     [Fact]
@@ -73,7 +76,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         var result = await _voteService.CastVote(anotherUser, _voteChoice);
 
         // Assert
-        Assert.True(result.IsNone, result.ToString()); // Vote is cast successfully, no error
+        Assert.True(result.IsNone); // Vote is cast successfully, no error
     }
 
     #endregion

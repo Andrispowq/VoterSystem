@@ -85,9 +85,9 @@ public sealed class Result<T, TE>
     public override string ToString()
     {
         if (HasValue)
-            return $"Success: {_result}";
+            return $"Value({_result})";
         if (IsError)
-            return $"Error: {_error}";
+            return $"Error({_error})";
         return "Invalid Result";
     }
 

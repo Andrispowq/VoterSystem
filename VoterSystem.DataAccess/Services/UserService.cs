@@ -64,6 +64,9 @@ public class UserService(
         if (!result.Succeeded) return new UnauthorizedError("Unsuccessful login attempt");
 
         var accessToken = await tokenIssuer.GenerateJwtTokenAsync(user, userManager);
+
+        //Regenerate refresh token on login
+        user.RefreshToken = Guid.NewGuid();
         
         return new Tokens
         {
@@ -79,6 +82,9 @@ public class UserService(
         if (user is null) return new NotFoundError("Invalid refresh token");
 
         var accessToken = await tokenIssuer.GenerateJwtTokenAsync(user, userManager);
+
+        //Regenerate refresh token on redeeming
+        user.RefreshToken = Guid.NewGuid();
         
         return new Tokens
         {

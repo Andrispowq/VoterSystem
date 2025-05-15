@@ -22,10 +22,15 @@ public static class DependencyInjection
         // Database
         var connectionString = config.GetConnectionString("VoterSystemConnection");
         connectionString = Utils.ReplaceFromEnv(connectionString ?? "");
-        services.AddDbContext<VoterSystemDbContext>(options => options
-            .UseNpgsql(connectionString)
-            .UseLazyLoadingProxies()
-        );
+
+        //For integration tests, don't even register the regular DB
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "IntegrationTest")
+        {
+            services.AddDbContext<VoterSystemDbContext>(options => options
+                .UseNpgsql(connectionString)
+                .UseLazyLoadingProxies()
+            );
+        }
 
         //Identity
         services.AddIdentity<User, UserRole>(options =>

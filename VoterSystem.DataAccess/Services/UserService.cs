@@ -177,10 +177,10 @@ public class UserService(
 
     public Result<Guid, ServiceError> GetCurrentUserId()
     {
-        var id = httpContextAccessor.HttpContext?.User.FindFirstValue("id");
+        var id = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(k => k.Type == "id")?.Value;
         if (id is null) return new NotFoundError("No ID found");
 
-        if (Guid.TryParse(id, out Guid userId)) return userId;
+        if (Guid.TryParse(id, out var userId)) return userId;
         return new BadRequestError("Invalid GUID as ID");
     }
 

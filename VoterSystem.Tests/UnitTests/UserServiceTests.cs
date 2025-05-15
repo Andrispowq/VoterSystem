@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using MockQueryable;
 using Moq;
 using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
@@ -202,7 +203,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
     public async Task GetAllUsersAsync_ReturnsUsers_WhenAdmin()
     {
         var users = new List<User> { NextValidUser, NextValidUser };
-        _mockUserManager.Setup(x => x.Users).Returns(users.AsQueryable());
+        _mockUserManager.Setup(x => x.Users).Returns(users.AsQueryable().BuildMock());
         _mockUserService_IsCurrentUserAdmin_Returns(true);
 
         var result = await _userService.GetAllUsersAsync();
@@ -306,7 +307,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
         var token = "token";
 
         _mockUserManager.Setup(x => x.Users)
-            .Returns(new List<User> { new User { Email = email } }.AsQueryable());
+            .Returns(new List<User> { new User { Email = email } }.AsQueryable().BuildMock());
         _mockUserManager.Setup(x => x.ConfirmEmailAsync(It.IsAny<User>(), token)).ReturnsAsync(IdentityResult.Success);
 
         var result = await _userService.ConfirmEmailAsync(email, token);
@@ -321,7 +322,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
         var token = "token";
 
         _mockUserManager.Setup(x => x.Users)
-            .Returns(new List<User> { new User { Email = email } }.AsQueryable());
+            .Returns(new List<User> { new User { Email = email } }.AsQueryable().BuildMock());
         _mockUserManager.Setup(x => x.ConfirmEmailAsync(It.IsAny<User>(), token))
             .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Error" }));
 

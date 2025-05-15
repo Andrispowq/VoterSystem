@@ -14,134 +14,136 @@ using VoterSystem.SignalR;
 using VoterSystem.SignalR.Hubs;
 using VoterSystem.WebAPI.Config;
 using VoterSystem.WebAPI.Controllers;
-using DependencyInjection = VoterSystem.WebAPI.DependencyInjection;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace VoterSystem.WebAPI;
 
-//load from user secrets in dev
-if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+public class Program
 {
-    DependencyInjection.LoadDotEnv(builder.Configuration);
-}
-
-builder.Services.AddDataAccess(builder.Configuration);
-
-builder.Services.AddControllers();
-
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-
-builder.Services.BindWithEnvSubstitution<BlazorSettings>(builder.Configuration, "BlazorSettings");
-var jwtSettings = builder.Services.BindWithEnvSubstitution<JwtSettings>(builder.Configuration, "JwtSettings");
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+    public static async Task Main(string[] args)
     {
-        ValidAudience = jwtSettings.Audience,
-        ValidIssuer = jwtSettings.Issuer,
-        ClockSkew = TimeSpan.Zero,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
-    };
-    
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
+        var builder = WebApplication.CreateBuilder(args);
+
+        //load from user secrets in dev
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
         {
-            if (context.Request.Cookies.ContainsKey(TokenIssuer.AuthTokenKey))
-            {
-                context.Token = context.Request.Cookies[TokenIssuer.AuthTokenKey];
-            }
-            if (context.Request.Cookies.ContainsKey(TokenIssuer.RefreshTokenName))
-            {
-                context.Token = context.Request.Cookies[TokenIssuer.RefreshTokenName];
-            }
-
-            return Task.CompletedTask;
+            DependencyInjection.LoadDotEnv(builder.Configuration);
         }
-    };
-});
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOnly",policy =>
-    {
-        policy.RequireClaim(ClaimTypes.Role, "Admin");
-    });
-    
-    options.AddPolicy("UserOnly",policy =>
-    {
-        policy.RequireClaim(ClaimTypes.Role, "User");
-    });
-});
+        builder.Services.AddDataAccess(builder.Configuration);
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("BlazorPolicy",
-        policy =>
+        builder.Services.AddControllers();
+
+        // Add services to the container.
+        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+        builder.Services.AddOpenApi();
+
+        builder.Services.BindWithEnvSubstitution<BlazorSettings>(builder.Configuration, "BlazorSettings");
+        var jwtSettings = builder.Services.BindWithEnvSubstitution<JwtSettings>(builder.Configuration, "JwtSettings");
+
+        builder.Services.AddAuthentication(options =>
         {
-            var urls = builder.Configuration
-                .GetSection("BlazorUrls")
-                .Get<List<string>>()?.Select(Utils.ReplaceFromEnv).ToList();
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidAudience = jwtSettings.Audience,
+                ValidIssuer = jwtSettings.Issuer,
+                ClockSkew = TimeSpan.Zero,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+            };
 
-            if (urls == null || !urls.Any())
-                throw new ArgumentNullException(
-                    nameof(urls),
-                    "Must set BlazorUrls (as a JSON array of strings) in appsettings!"
-                );
-            
-            // Enable Blazor ports
-            policy.WithOrigins(urls.ToArray()) 
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    if (context.Request.Cookies.ContainsKey(TokenIssuer.AuthTokenKey))
+                    {
+                        context.Token = context.Request.Cookies[TokenIssuer.AuthTokenKey];
+                    }
+
+                    if (context.Request.Cookies.ContainsKey(TokenIssuer.RefreshTokenName))
+                    {
+                        context.Token = context.Request.Cookies[TokenIssuer.RefreshTokenName];
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
         });
-});
 
-builder.Services.AddHealthChecks()
-    .AddCheck<HealthController>("apple-maps");
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("AdminOnly", policy => { policy.RequireClaim(ClaimTypes.Role, "Admin"); });
 
-builder.Services.AddSignalR();
-builder.Services.AddSignalRServices();
+            options.AddPolicy("UserOnly", policy => { policy.RequireClaim(ClaimTypes.Role, "User"); });
+        });
 
-var app = builder.Build();
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("BlazorPolicy",
+                policy =>
+                {
+                    var urls = builder.Configuration
+                        .GetSection("BlazorUrls")
+                        .Get<List<string>>()?.Select(Utils.ReplaceFromEnv).ToList();
+
+                    if (urls == null || !urls.Any())
+                        throw new ArgumentNullException(
+                            nameof(urls),
+                            "Must set BlazorUrls (as a JSON array of strings) in appsettings!"
+                        );
+
+                    // Enable Blazor ports
+                    policy.WithOrigins(urls.ToArray())
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+        });
+
+        builder.Services.AddHealthChecks()
+            .AddCheck<HealthController>("apple-maps");
+
+        builder.Services.AddSignalR();
+        builder.Services.AddSignalRServices();
+
+        var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseExceptionHandler("/Home/Error");
+        app.UseExceptionHandler("/Home/Error");
 
-if (/*app.Environment.IsDevelopment()*/true)
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-    app.UseCors("BlazorPolicy");
-}
+        if ( /*app.Environment.IsDevelopment()*/true)
+        {
+            app.MapOpenApi();
+            app.MapScalarApiReference();
+            app.UseCors("BlazorPolicy");
+        }
 
-app.UseHsts();
+        app.UseHsts();
 
 //app.UseHttpsRedirection();
-app.UseRouting();
+        app.UseRouting();
 
-app.UseAuthorization();
-app.MapControllers();
+        app.UseAuthorization();
+        app.MapControllers();
 
-app.UseHealthChecks("/api/v1/health");
-app.MapHub<VotesHub>($"/{nameof(VotesHub)}");
+        app.UseHealthChecks("/api/v1/health");
+        app.MapHub<VotesHub>($"/{nameof(VotesHub)}");
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var database = services.GetService<VoterSystemDbContext>()!;
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            var database = services.GetService<VoterSystemDbContext>()!;
 
-    var userService = services.GetService<IUserService>()!;
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();
-    
-    await DbInitializer.InitialiseAsync(database, userService, roleManager);
+            var userService = services.GetService<IUserService>()!;
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();
+
+            await DbInitializer.InitialiseAsync(database, userService, roleManager);
+        }
+
+        await app.RunAsync();
+    }
 }
-
-app.Run();

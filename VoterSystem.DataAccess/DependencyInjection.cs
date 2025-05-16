@@ -15,9 +15,9 @@ public static class DependencyInjection
     public static IServiceCollection AddDataAccess(this IServiceCollection services, IConfiguration config)
     {
         // Options
-        services.Configure<JwtSettings>(config.GetSection("JwtSettings"));
-        services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
-        services.Configure<UserSettings>(config.GetSection("UserSettings"));
+        services.BindWithEnvSubstitution<JwtSettings>(config, "JwtSettings");
+        services.BindWithEnvSubstitution<EmailSettings>(config, "EmailSettings");
+        services.BindWithEnvSubstitution<UserSettings>(config, "UserSettings");
         
         // Database
         var connectionString = config.GetConnectionString("VoterSystemConnection");

@@ -1,6 +1,6 @@
 using VoterSystem.Shared.SignalR.Models;
 
-namespace VoterSystem.SignalR.Services;
+namespace VoterSystem.Shared.SignalR.Interfaces;
 
 public interface IVoteNotificationService
 {

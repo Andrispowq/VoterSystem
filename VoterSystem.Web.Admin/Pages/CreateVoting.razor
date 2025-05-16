@@ -47,16 +47,23 @@
     private readonly VotingCreateRequestDto _model = new()
     {
         Name = string.Empty,
-        StartsAt = DateTime.UtcNow.AddHours(1),
-        EndsAt = DateTime.UtcNow.AddDays(1).AddHours(1)
+        StartsAt = DateTime.Now.AddHours(1),
+        EndsAt = DateTime.Now.AddDays(1).AddHours(1)
     };
 
-    private string NowFormatted => DateTime.UtcNow.ToString("yyyy-MM-dd");
+    private string NowFormatted => DateTime.Now.ToString("yyyy-MM-dd");
     private string MinEndFormatted => _model.StartsAt.AddDays(1).ToString("yyyy-MM-dd");
 
     private async Task HandleCreateAsync()
     {
-        var newVoting = await VotingsService.CreateVotingAsync(_model);
+        VotingCreateRequestDto model = new()
+        {
+            Name = _model.Name,
+            StartsAt = _model.StartsAt.ToUniversalTime(),
+            EndsAt = _model.EndsAt.ToUniversalTime(),
+        };
+        
+        var newVoting = await VotingsService.CreateVotingAsync(model);
         if (newVoting is not null)
         {
             NavigationManager.NavigateTo($"/votings/{newVoting.VotingId}");

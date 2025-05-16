@@ -14,7 +14,6 @@ public class TokenIssuer(IOptions<JwtSettings> jwtSettingOptions) : ITokenIssuer
     private JwtSettings JwtSettings => jwtSettingOptions.Value;
     
     public static string AuthTokenKey => "VotingSystemAuthToken";
-    public static string RefreshTokenName => "VotingSystemRefreshToken";
     
     public async Task<string> GenerateJwtTokenAsync(User user, UserManager<User> userManager)
     {

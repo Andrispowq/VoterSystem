@@ -1,9 +1,11 @@
 @page "/votings/{VotingId:long}"
+@using VoterSystem.DataAccess.Model
 @using VoterSystem.Shared.Blazor.Services
 @using VoterSystem.Shared.Dto
 @using VoterSystem.Web.Admin.Layout
 @inject IVotingsService VotingsService
 @inject NavigationManager Navigation
+@inject IAuthenticationService AuthenticationService
 
 <h1 class="my-4">Edit Voting</h1>
 
@@ -27,11 +29,11 @@ else
                 <i class="bi bi-play-circle me-1"></i>
                 @if (!_isEditingStart)
                 {
-                    <span>From: @_voting.StartsAt</span>
+                    <span>From: @_voting.StartsAt.ToLocalTime()</span>
                     <button class="btn btn-sm btn-link text-primary" @onclick="() =>
                                                                      {
                                                                          _isEditingStart = true;
-                                                                         _newStartAt = DateTime.UtcNow > _voting.StartsAt ? DateTime.UtcNow : _voting.StartsAt;
+                                                                         _newStartAt = DateTime.UtcNow > _voting.StartsAt ? DateTime.Now : _voting.StartsAt.ToLocalTime();
                                                                      }">
                         <i class="bi bi-pencil"></i>
                     </button>
@@ -54,11 +56,11 @@ else
                 <i class="bi bi-stop-circle me-1"></i>
                 @if (!_isEditingEnd)
                 {
-                    <span>Until: @_voting.EndsAt</span>
+                    <span>Until: @_voting.EndsAt.ToLocalTime()</span>
                     <button class="btn btn-sm btn-link text-primary" @onclick="() =>
                                                                      {
                                                                          _isEditingEnd = true;
-                                                                         _newEndAt = _voting.EndsAt;
+                                                                         _newEndAt = _voting.EndsAt.ToLocalTime();
                                                                      }">
                         <i class="bi bi-pencil"></i>
                     </button>
@@ -175,6 +177,11 @@ else
     {
         _voting = await VotingsService.GetVotingByIdAsync(VotingId);
 
+        if (await AuthenticationService.GetCurrentRoleAsync() != Role.User)
+        {
+            Navigation.NavigateTo("/votings");
+        }
+
         if (_voting is null)
         {
             Navigation.NavigateTo("/notfound");
@@ -252,7 +259,7 @@ else
     {
         if (_voting is null) return;
         
-        var minEnd = _newStartAt?.AddDays(1) ?? _voting.StartsAt.AddDays(1);
+        var minEnd = _newStartAt?.AddDays(1) ?? _voting.StartsAt.ToLocalTime().AddDays(1);
         if (_newEndAt >= minEnd)
         {
             await VotingsService.UpdateEndTime(VotingId, _newEndAt.Value);

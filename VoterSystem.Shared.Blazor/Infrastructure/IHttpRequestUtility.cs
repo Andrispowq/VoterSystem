@@ -15,4 +15,5 @@ public interface IHttpRequestUtility
     Task ExecutePostHttpRequestAsync(string uri);
     Task ExecuteDeleteHttpRequestAsync(string uri);
     Task<TokensDto> RedeemTokenAsync(CancellationToken cancellationToken = default);
+    bool IsAccessTokenExpired(string token);
 }

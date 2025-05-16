@@ -1,13 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using VoterSystem.Shared.SignalR.Interfaces;
 using VoterSystem.Shared.SignalR.Models;
-using VoterSystem.SignalR.Services;
 
 namespace VoterSystem.SignalR.Hubs;
 
-public class VotesHub : Hub<IVoteNotificationService>
+[Authorize]
+public class VotesHub(IVoteNotificationService service) : Hub<IVoteNotificationService>
 {
     public async Task NotifyVotingResultChanged(VotingUpdatedDto voting)
     {
-        await Clients.All.NotifyVotingResultChanged(voting);
+        await service.NotifyVotingResultChanged(voting);
     }
 }

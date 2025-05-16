@@ -3,9 +3,9 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.Shared.Dto;
-using VoterSystem.Tests.IntegrationTests.Abstractions;
+using VoterSystem.Tests.Integration.Abstractions;
 
-namespace VoterSystem.Tests.IntegrationTests;
+namespace VoterSystem.Tests.Integration.IntegrationTests;
 
 [Collection("IntegrationTests")]
 public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(factory)
@@ -84,7 +84,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
     
     protected override void SeedRoles(RoleManager<UserRole> roleManager)
     {
-        string[] roleNames = ["Admin"];
+        string[] roleNames = ["User", "Admin"];
 
         foreach (var roleName in roleNames)
         {

@@ -8,7 +8,7 @@ using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
 
-namespace VoterSystem.Tests.UnitTests;
+namespace VoterSystem.Tests.Unit;
 
 public class UserServiceTests : UnitTestBase, IDisposable
 {

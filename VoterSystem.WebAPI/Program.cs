@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -22,9 +23,13 @@ public class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        
+        CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
         //load from user secrets in dev
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"
+            || Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
         {
             DependencyInjection.LoadDotEnv(builder.Configuration);
         }
@@ -54,7 +59,7 @@ public class Program
                 ClockSkew = TimeSpan.Zero,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
             };
-
+            
             options.Events = new JwtBearerEvents
             {
                 OnMessageReceived = context =>
@@ -63,10 +68,14 @@ public class Program
                     {
                         context.Token = context.Request.Cookies[TokenIssuer.AuthTokenKey];
                     }
-
-                    if (context.Request.Cookies.ContainsKey(TokenIssuer.RefreshTokenName))
+                    else
                     {
-                        context.Token = context.Request.Cookies[TokenIssuer.RefreshTokenName];
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/Hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
                     }
 
                     return Task.CompletedTask;
@@ -105,14 +114,14 @@ public class Program
         });
 
         builder.Services.AddHealthChecks()
-            .AddCheck<HealthController>("apple-maps");
+            .AddCheck<HealthController>("health");
 
         builder.Services.AddSignalR();
         builder.Services.AddSignalRServices();
 
         var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+        // Configure the HTTP request pipeline.
         app.UseExceptionHandler("/Home/Error");
 
         if ( /*app.Environment.IsDevelopment()*/true)
@@ -124,14 +133,17 @@ public class Program
 
         app.UseHsts();
 
-//app.UseHttpsRedirection();
+        //app.UseHttpsRedirection();
         app.UseRouting();
 
         app.UseAuthorization();
         app.MapControllers();
 
         app.UseHealthChecks("/api/v1/health");
-        app.MapHub<VotesHub>($"/{nameof(VotesHub)}");
+        app.MapHub<VotesHub>($"/Hubs/{nameof(VotesHub)}", options =>
+        {
+            options.CloseOnAuthenticationExpiration = true;
+        });
 
         using (var scope = app.Services.CreateScope())
         {

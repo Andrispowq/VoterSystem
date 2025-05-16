@@ -1,4 +1,4 @@
-namespace VoterSystem.Tests;
+namespace VoterSystem.Tests.Unit;
 
 public static class Helpers
 {

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using VoterSystem.DataAccess;
 using VoterSystem.DataAccess.Model;
 
-namespace VoterSystem.Tests.UnitTests;
+namespace VoterSystem.Tests.Unit;
 
 public class UnitTestBase
 {
@@ -11,7 +11,7 @@ public class UnitTestBase
     protected UnitTestBase()
     {
         var options = new DbContextOptionsBuilder<VoterSystemDbContext>()
-            .UseInMemoryDatabase("TestVotingDatabase")
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
         Context = new VoterSystemDbContext(options);

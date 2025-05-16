@@ -67,6 +67,8 @@ public class UserService(
 
         //Regenerate refresh token on login
         user.RefreshToken = Guid.NewGuid();
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded) return new BadRequestError("Login failed");
         
         return new Tokens
         {
@@ -85,12 +87,14 @@ public class UserService(
 
         //Regenerate refresh token on redeeming
         user.RefreshToken = Guid.NewGuid();
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded) return new BadRequestError("Login failed");
         
         return new Tokens
         {
             AuthToken = accessToken,
             RefreshToken = user.RefreshToken!.Value,
-            UserId = user.Id,
+            UserId = user.Id
         };
     }
 
@@ -143,10 +147,10 @@ public class UserService(
         var user = await GetUserByEmailAsync(email);
         if (user.IsError) return user.Error;
 
-        if (!user.Value.EmailConfirmed)
+        /*if (!user.Value.EmailConfirmed)
         {
             return new UnauthorizedError("Cannot reset password with unconfirmed email");
-        }
+        }*/
 
         var token = await userManager.GeneratePasswordResetTokenAsync(user.Value);
         return token;

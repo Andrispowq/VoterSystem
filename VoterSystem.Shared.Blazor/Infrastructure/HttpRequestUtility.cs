@@ -178,7 +178,7 @@ public class HttpRequestUtility(
         if (string.IsNullOrEmpty(refreshToken))
             throw new ArgumentException(nameof(refreshToken));
 
-        var content = new StringContent(JsonSerializer.Serialize(refreshToken, jsonOptions), Encoding.UTF8, "application/json");
+        var content = new StringContent(refreshToken, Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync("/api/v1/users/refresh-token", content, cancellationToken);
 
         if (response.IsSuccessStatusCode)
@@ -193,6 +193,22 @@ public class HttpRequestUtility(
         }
 
         throw new HttpRequestErrorException(response);
+    }
+
+    public bool IsAccessTokenExpired(string token)
+    {
+        try
+        {
+            var exp = JsonSerializer.Deserialize<JsonElement>(
+                    Convert.FromBase64String(token.Split('.')[1].PadRight(token.Split('.')[1].Length + (4 - token.Split('.')[1].Length % 4) % 4, '=')))
+                .GetProperty("exp").GetInt64();
+
+            return DateTimeOffset.FromUnixTimeSeconds(exp) <= DateTimeOffset.UtcNow.AddMinutes(1);
+        }
+        catch
+        {
+            return true;
+        }
     }
 
     private HttpContent CreateRequestBody<T>(T requestDto)

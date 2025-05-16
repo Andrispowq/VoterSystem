@@ -8,7 +8,7 @@ using Testcontainers.PostgreSql;
 using VoterSystem.DataAccess;
 using VoterSystem.WebAPI;
 
-namespace VoterSystem.Tests.IntegrationTests.Abstractions;
+namespace VoterSystem.Tests.Integration.Abstractions;
 
 public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {

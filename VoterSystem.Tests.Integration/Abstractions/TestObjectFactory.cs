@@ -6,7 +6,7 @@ using VoterSystem.DataAccess;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.Shared.Dto;
 
-namespace VoterSystem.Tests.IntegrationTests.Abstractions;
+namespace VoterSystem.Tests.Integration.Abstractions;
 
 public abstract class TestObjectFactory : BaseTest
 {
@@ -30,7 +30,7 @@ public abstract class TestObjectFactory : BaseTest
 
     protected async Task Login(UserLoginRequestDto loginRequest)
     {
-        var response = await HttpClient.PostAsJsonAsync("users/login", loginRequest);
+        var response = await HttpClient.PostAsJsonAsync("/api/v1/users/login", loginRequest);
         var loginResponse = await response.Content.ReadFromJsonAsync<TokensDto>();
 
         HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginResponse?.AuthToken);

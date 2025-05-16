@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using VoterSystem.Shared.SignalR.Interfaces;
 using VoterSystem.Shared.SignalR.Models;
 using VoterSystem.SignalR.Hubs;
 

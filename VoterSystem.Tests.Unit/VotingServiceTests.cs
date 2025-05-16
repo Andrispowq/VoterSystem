@@ -4,7 +4,7 @@ using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 
-namespace VoterSystem.Tests.UnitTests;
+namespace VoterSystem.Tests.Unit;
 
 public class VotingsServiceTests : UnitTestBase, IDisposable
 {

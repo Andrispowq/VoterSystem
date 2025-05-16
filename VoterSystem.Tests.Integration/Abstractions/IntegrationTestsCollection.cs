@@ -1,4 +1,4 @@
-namespace VoterSystem.Tests.IntegrationTests.Abstractions;
+namespace VoterSystem.Tests.Integration.Abstractions;
 
 [CollectionDefinition("IntegrationTests")]
 public class IntegrationTestsCollection : ICollectionFixture<TestWebAppFactory>;

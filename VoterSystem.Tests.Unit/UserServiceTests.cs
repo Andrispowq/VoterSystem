@@ -155,6 +155,8 @@ public class UserServiceTests : UnitTestBase, IDisposable
                 It.IsAny<bool>())).ReturnsAsync(SignInResult.Success);
         _mockTokenIssuer.Setup(x => x.GenerateJwtTokenAsync(It.IsAny<User>(), It.IsAny<UserManager<User>>()))
             .ReturnsAsync("accessToken");
+        _mockUserManager
+            .Setup(x => x.UpdateAsync(It.IsAny<User>())).ReturnsAsync(IdentityResult.Success);
 
         // Act
         var result = await _userService.LoginAsync(email, password);

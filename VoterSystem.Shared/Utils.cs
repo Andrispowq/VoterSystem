@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
 namespace VoterSystem.Shared;
@@ -15,5 +16,10 @@ public static class Utils
             var envValue = Environment.GetEnvironmentVariable(envKey);
             return envValue ?? match.Value; // keep original if not found
         });
+    }
+
+    public static string GenerateEncryptionKey(int bytes = 128)
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(bytes));
     }
 }

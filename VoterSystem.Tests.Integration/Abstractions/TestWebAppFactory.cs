@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using VoterSystem.DataAccess;
+using VoterSystem.Shared;
 using VoterSystem.WebAPI;
 
 namespace VoterSystem.Tests.Integration.Abstractions;
@@ -25,6 +26,7 @@ public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
         using var connection = new NpgsqlConnection(ConnectionString);
         
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
+        Environment.SetEnvironmentVariable("JWT_KEY", Utils.GenerateEncryptionKey());
 
         builder.ConfigureTestServices(services =>
         {

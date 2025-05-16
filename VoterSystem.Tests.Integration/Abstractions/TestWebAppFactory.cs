@@ -31,7 +31,7 @@ public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
             // Add an in-memory database
             var dataSourceProvider =
                 new NpgsqlDataSourceBuilder(ConnectionString.Replace("Database=postgres",
-                    "Database=VoterSystemDbContext"));
+                    $"Database={Guid.NewGuid().ToString()}"));
             dataSourceProvider.EnableDynamicJson();
             var dataSource = dataSourceProvider.Build();
             

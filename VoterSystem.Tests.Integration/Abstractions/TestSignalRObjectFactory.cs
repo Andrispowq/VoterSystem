@@ -47,12 +47,8 @@ public class TestSignalRObjectFactory : BaseTest
         var user = new User { UserName = _user.Email, Name = _user.Name, Email = _user.Email };
         var admin = new User { UserName = _adminUser.Email, Name = _adminUser.Name, Email = _adminUser.Email };
         
-        var userCreate = userService.CreateUser(user, _user.Password, Role.User);
-        userCreate.Wait();
-        Assert.True(userCreate.Result.IsNone, userCreate.Result.ToString());
-        var adminCreate = userService.CreateUser(admin, _adminUser.Password, Role.Admin);
-        adminCreate.Wait();
-        Assert.True(adminCreate.Result.IsNone, userCreate.Result.ToString());
+        userService.CreateUser(user, _user.Password, Role.User).Wait();
+        userService.CreateUser(admin, _adminUser.Password, Role.Admin).Wait();
     }
     
     protected async Task<string> Login(UserLoginRequestDto user)

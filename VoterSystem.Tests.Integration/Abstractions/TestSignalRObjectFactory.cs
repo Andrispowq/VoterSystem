@@ -71,7 +71,7 @@ public class TestSignalRObjectFactory : BaseTest
             Console.WriteLine(ex.Message);
             var message = await response.Content.ReadAsStringAsync();
             Console.WriteLine(message);
-            throw;
+            throw new Exception($"Request failed with {message}", ex);
         }
     }
     

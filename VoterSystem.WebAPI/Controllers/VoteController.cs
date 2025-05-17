@@ -4,7 +4,6 @@ using VoterSystem.DataAccess.Services;
 using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.SignalR.Interfaces;
 using VoterSystem.Shared.SignalR.Models;
-using VoterSystem.SignalR.Services;
 using VoterSystem.WebAPI.Dto;
 using VoterSystem.WebAPI.Functional;
 

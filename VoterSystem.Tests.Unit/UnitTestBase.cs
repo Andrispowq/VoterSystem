@@ -4,7 +4,7 @@ using VoterSystem.DataAccess.Model;
 
 namespace VoterSystem.Tests.Unit;
 
-public abstract class UnitTestBase : IAsyncDisposable
+public class UnitTestBase : IAsyncDisposable
 {
     protected readonly VoterSystemDbContext Context;
 

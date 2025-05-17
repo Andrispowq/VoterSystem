@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using VoterSystem.DataAccess;
@@ -30,6 +31,9 @@ public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<DbContextOptions<VoterSystemDbContext>>();
+            services.RemoveAll<VoterSystemDbContext>();
+            
             // Add an in-memory database
             var dataSourceProvider =
                 new NpgsqlDataSourceBuilder(ConnectionString.Replace("Database=postgres",
@@ -45,10 +49,10 @@ public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
             });
 
             //Seed the database with initial data
-            using var scope = services.BuildServiceProvider().CreateScope();
+            /*using var scope = services.BuildServiceProvider().CreateScope();
             var scopedServices = scope.ServiceProvider;
             var db = scopedServices.GetRequiredService<VoterSystemDbContext>();
-            db.Database.Migrate();
+            db.Database.Migrate();*/
         });
     }
 

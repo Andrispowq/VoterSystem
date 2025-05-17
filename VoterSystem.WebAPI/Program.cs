@@ -18,9 +18,7 @@ using VoterSystem.WebAPI.Controllers;
 
 namespace VoterSystem.WebAPI;
 
-#pragma warning disable S1118, RCS1102
 public class Program
-#pragma warning restore RCS1102, S1118
 {
     public static async Task Main(string[] args)
     {

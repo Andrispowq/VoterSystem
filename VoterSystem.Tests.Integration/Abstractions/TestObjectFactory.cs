@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using VoterSystem.DataAccess;
 using VoterSystem.DataAccess.Model;
@@ -15,9 +16,14 @@ public abstract class TestObjectFactory : BaseTest
     protected TestObjectFactory(TestWebAppFactory factory) : base(factory)
     {
         DbContext = Scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
+
+        DbContext.Votings.ExecuteDelete();
+        DbContext.VoteChoices.ExecuteDelete();
+        DbContext.Votes.ExecuteDelete();
+        DbContext.Users.ExecuteDelete();
         
-        DbContext.Database.EnsureDeleted();
-        DbContext.Database.EnsureCreated();
+        //DbContext.Database.EnsureDeleted();
+        //DbContext.Database.EnsureCreated();
 
         Init();
     }

@@ -24,10 +24,10 @@ public static class DbInitializer
         new() { Email = "example6@gmail.com", Password = "test_Str0ng_password", Role = Role.Admin },
         new() { Email = "akmeczo@gmail.com", Password = "1Password#", Role = Role.Admin }
     ];
-    
+
     public static async Task InitialiseAsync(
-        VoterSystemDbContext context, 
-        IUserService userService, 
+        VoterSystemDbContext context,
+        IUserService userService,
         RoleManager<UserRole> roleManager,
         bool prune = true)
     {
@@ -35,7 +35,7 @@ public static class DbInitializer
         {
             await context.Database.EnsureDeletedAsync();
         }
-        
+
         await context.Database.MigrateAsync();
 
         await SeedRolesAsync(roleManager);

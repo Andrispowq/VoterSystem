@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using VoterSystem.DataAccess;
 using VoterSystem.DataAccess.Model;
@@ -37,9 +38,14 @@ public class TestSignalRObjectFactory : BaseTest
         _hubName = hubName;
         
         var dbContext = Scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
+
+        dbContext.Votings.ExecuteDelete();
+        dbContext.VoteChoices.ExecuteDelete();
+        dbContext.Votes.ExecuteDelete();
+        dbContext.Users.ExecuteDelete();
         
-        dbContext.Database.EnsureDeleted();
-        dbContext.Database.EnsureCreated();
+        //dbContext.Database.EnsureDeleted();
+        //dbContext.Database.EnsureCreated();
         
         SeedDatabase(dbContext);
 

@@ -37,6 +37,10 @@ public class TestSignalRObjectFactory : BaseTest
         _hubName = hubName;
         
         var dbContext = Scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
+        
+        dbContext.Database.EnsureDeleted();
+        dbContext.Database.EnsureCreated();
+        
         SeedDatabase(dbContext);
 
         var roleManager = Scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();

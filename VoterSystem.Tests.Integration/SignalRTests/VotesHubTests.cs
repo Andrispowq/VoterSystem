@@ -168,7 +168,7 @@ public class VotesHubTests(TestWebAppFactory factory) : TestSignalRObjectFactory
             //Act
             await hubConnection1.InvokeAsync(nameof(IVoteNotificationService.NotifyVotingResultChanged), notification);
             
-            Assert.Fail("Should not get here");
+            Assert.Fail("Should not get here"); 
         }
         catch (HttpRequestException) {}
 

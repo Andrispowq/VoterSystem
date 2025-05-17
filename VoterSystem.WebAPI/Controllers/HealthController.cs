@@ -6,7 +6,7 @@ namespace VoterSystem.WebAPI.Controllers;
 
 public class HealthController(VoterSystemDbContext db) : IHealthCheck
 {
-    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new CancellationToken())
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new())
     {
         try
         {

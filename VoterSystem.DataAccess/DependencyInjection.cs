@@ -43,7 +43,14 @@ public static class DependencyInjection
             options.Password.RequiredUniqueChars = 1;
             
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+            
             options.Lockout.MaxFailedAccessAttempts = 5;
+
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
+            {
+                options.Lockout.MaxFailedAccessAttempts = 100;
+            }
+                
             options.Lockout.AllowedForNewUsers = true;
             options.User.RequireUniqueEmail = true;
         }).AddEntityFrameworkStores<VoterSystemDbContext>()

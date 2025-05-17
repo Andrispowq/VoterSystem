@@ -15,6 +15,9 @@ public abstract class TestObjectFactory : BaseTest
     protected TestObjectFactory(TestWebAppFactory factory) : base(factory)
     {
         DbContext = Scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
+        
+        DbContext.Database.EnsureDeleted();
+        DbContext.Database.EnsureCreated();
 
         Init();
     }
@@ -28,12 +31,16 @@ public abstract class TestObjectFactory : BaseTest
         SeedUsers(userManager);
     }
 
-    protected async Task Login(UserLoginRequestDto loginRequest)
+    protected async Task AuthenticateAsAsync(UserLoginRequestDto credentials)
     {
-        var response = await HttpClient.PostAsJsonAsync("/api/v1/users/login", loginRequest);
-        var loginResponse = await response.Content.ReadFromJsonAsync<TokensDto>();
+        var login = await HttpClient.PostAsJsonAsync("/api/v1/users/login", credentials);
+        login.EnsureSuccessStatusCode();
 
-        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginResponse?.AuthToken);
+        var tokens = await login.Content.ReadFromJsonAsync<Tokens>()
+                     ?? throw new InvalidOperationException("No token returned");
+
+        HttpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", tokens.AuthToken);
     }
 
     protected abstract void SeedRoles(RoleManager<UserRole> roleManager);

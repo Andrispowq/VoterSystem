@@ -4,7 +4,7 @@ using VoterSystem.DataAccess.Model;
 
 namespace VoterSystem.Tests.Unit;
 
-public class UnitTestBase
+public abstract class UnitTestBase : IAsyncDisposable
 {
     protected readonly VoterSystemDbContext Context;
 
@@ -51,5 +51,10 @@ public class UnitTestBase
             EndsAt = DateTime.UtcNow.AddHours(2),
             CreatedByUserId = creatorId,
         };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Context.DisposeAsync();
     }
 }

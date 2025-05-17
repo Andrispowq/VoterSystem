@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using Scalar.AspNetCore;
+using Microsoft.OpenApi.Models;
 using VoterSystem.DataAccess;
 using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
@@ -18,7 +18,9 @@ using VoterSystem.WebAPI.Controllers;
 
 namespace VoterSystem.WebAPI;
 
+#pragma warning disable S1118, RCS1102
 public class Program
+#pragma warning restore RCS1102, S1118
 {
     public static async Task Main(string[] args)
     {
@@ -40,7 +42,9 @@ public class Program
 
         // Add services to the container.
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
+#pragma warning disable S125
+        //builder.Services.MapOpenApi();
+#pragma warning restore S125
 
         builder.Services.BindWithEnvSubstitution<BlazorSettings>(builder.Configuration, "BlazorSettings");
         var jwtSettings = builder.Services.BindWithEnvSubstitution<JwtSettings>(builder.Configuration, "JwtSettings");
@@ -83,6 +87,36 @@ public class Program
             };
         });
 
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "VoterSystem.WebAPI",
+                Version = "v1",
+                Description = "Voter System API"
+            });
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 1safsfsdfdfd\"",
+            });
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                {
+                    new OpenApiSecurityScheme {
+                        Reference = new OpenApiReference {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+        });
+
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy("AdminOnly", policy => { policy.RequireClaim(ClaimTypes.Role, "Admin"); });
@@ -100,7 +134,7 @@ public class Program
                         .Get<List<string>>()?.Select(Utils.ReplaceFromEnv).ToList();
 
                     if (urls == null || !urls.Any())
-                        throw new ArgumentNullException(
+                        throw new MissingFieldException(
                             nameof(urls),
                             "Must set BlazorUrls (as a JSON array of strings) in appsettings!"
                         );
@@ -126,14 +160,20 @@ public class Program
 
         if ( /*app.Environment.IsDevelopment()*/true)
         {
-            app.MapOpenApi();
-            app.MapScalarApiReference();
+            app.UseSwagger();
+            app.UseSwaggerUI();
+            
+#pragma warning disable S125
+            //app.MapScalarApiReference(); 
+#pragma warning restore S125
             app.UseCors("BlazorPolicy");
         }
 
         app.UseHsts();
 
+#pragma warning disable S125
         //app.UseHttpsRedirection();
+#pragma warning restore S125
         app.UseRouting();
 
         app.UseAuthorization();

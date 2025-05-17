@@ -99,7 +99,7 @@
             }
         }
         
-        VoteHubService.OnVotingResultUpdated += async voting =>
+        VoteHubService.OnVotingResultUpdated += voting =>
         {
             VotingResults[voting.VotingId] = voting.VotingResults;
             StateHasChanged();

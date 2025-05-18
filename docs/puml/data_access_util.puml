@@ -1,0 +1,48 @@
+@startuml
+' Token issuer and configuration types diagram
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+package "VoterSystem.DataAccess.Token" {
+
+    interface ITokenIssuer {
+        +GenerateJwtTokenAsync(user : User, userManager : UserManager<User>) : Task<string>
+    }
+
+    class TokenIssuer {
+        +TokenIssuer(jwtSettingOptions : IOptions<JwtSettings>)
+        -jwtSettingOptions : IOptions<JwtSettings>
+        -JwtSettings : JwtSettings
+        {static}+AuthTokenKey : string
+        +GenerateJwtTokenAsync(user : User, userManager : UserManager<User>) : Task<string>
+    }
+
+    ITokenIssuer <|.. TokenIssuer
+}
+
+package "VoterSystem.DataAccess.Config" {
+
+    class EmailSettings {
+        +Host : string
+        +Port : int
+        +EnableSsl : bool
+        +UserName : string
+        +Password : string
+        +FromEmail : string
+    }
+
+    class JwtSettings <<record>> {
+        +SecretKey : string
+        +Audience : string
+        +Issuer : string
+        +AccessTokenExpirationMinutes : int
+    }
+
+    class UserSettings <<record>> {
+        +MinimumPasswordLength : int
+    }
+}
+
+' Dependencies
+TokenIssuer --> JwtSettings : «uses»
+@enduml

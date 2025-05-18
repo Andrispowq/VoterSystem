@@ -18,7 +18,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetChoices(long votingId)
     {
-        var voting  = await votingService.GetVotingById(votingId);
+        var voting = await votingService.GetVotingById(votingId);
         if (voting.IsError) return voting.Error.ToHttpResult();
         var value = voting.Value;
         
@@ -31,7 +31,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetChoiceById(long votingId, long choiceId)
     {
-        var voting  = await votingService.GetVotingById(votingId);
+        var voting = await votingService.GetVotingById(votingId);
         if (voting.IsError) return voting.Error.ToHttpResult();
         var value = voting.Value;
 
@@ -40,7 +40,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
             .Select(DtoExtensions.ToVoteChoiceDto)
             .FirstOrDefault();
 
-        return result is null ? Ok(result) : NotFound("Choice not found");
+        return result is null ? NotFound("Choice not found") : Ok(result);
     }
 
     [Authorize]

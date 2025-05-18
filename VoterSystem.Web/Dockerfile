@@ -10,6 +10,13 @@ ARG WEB_HTTPS
 ARG ADMIN_HTTP
 ARG ADMIN_HTTPS
 
+ENV API_HTTP=$API_HTTP
+ENV API_HTTPS=$API_HTTPS
+ENV WEB_HTTP=$WEB_HTTP
+ENV WEB_HTTPS=$WEB_HTTPS
+ENV ADMIN_HTTP=$ADMIN_HTTP
+ENV ADMIN_HTTPS=$ADMIN_HTTPS
+
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
@@ -19,6 +26,13 @@ COPY ["VoterSystem.Shared/VoterSystem.Shared.csproj", "VoterSystem.Shared/"]
 RUN dotnet restore "VoterSystem.Web/VoterSystem.Web.csproj"
 COPY . .
 WORKDIR "/src/VoterSystem.Web"
+
+# Install gettext for envsubst and do the replacement
+RUN rm ./wwwroot/appsettings.json
+RUN apt-get update && apt-get install -y gettext && \
+    envsubst < ./wwwroot/appsettings.temp.json > ./wwwroot/appsettings.json.tmp && \
+    mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
+
 RUN dotnet build "VoterSystem.Web.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
@@ -27,17 +41,7 @@ RUN dotnet publish "VoterSystem.Web.csproj" -c $BUILD_CONFIGURATION -o /app/publ
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
-WORKDIR /app
-
-# Copy file
-# COPY ./wwwroot/appsettings.template.json ./wwwroot/appsettings.json
-
-# Replace with env value using envsubst
-RUN apt-get update && apt-get install -y gettext
-
-CMD envsubst < ./wwwroot/appsettings.template.json > ./wwwroot/appsettings.json.tmp && \
-	mv ./wwwroot/appsettings.json.tmp ./wwwroot/appsettings.json
+COPY --from=publish /app/publish . 
 
 FROM nginx:alpine
 COPY ../../nginx/nginx.conf /etc/nginx/nginx.conf

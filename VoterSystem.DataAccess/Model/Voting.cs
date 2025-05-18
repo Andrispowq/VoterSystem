@@ -6,7 +6,7 @@ namespace VoterSystem.DataAccess.Model;
 public class Voting : ITimestamped, IRoleControlled
 {
     public long VotingId { get; set; }
-    [MaxLength(255)]
+    [MaxLength(255), MinLength(3)]
     public required string Name { get; init; }
     public DateTime CreatedAt { get; set;  } = DateTime.UtcNow;
     public required DateTime StartsAt { get; set; }

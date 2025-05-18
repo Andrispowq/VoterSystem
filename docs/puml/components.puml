@@ -1,0 +1,37 @@
+@startuml
+' Component diagram of the VoterSystem solution
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam dpi 120
+
+' ==================== COMPONENTS ====================
+package "VoterSystem" {
+
+  [VoterSystem.DataAccess] as DataAccess
+  [VoterSystem.Shared]      as Shared
+  [VoterSystem.WebAPI]      as WebAPI
+  [VoterSystem.SignalR]     as SignalR
+  [VoterSystem.Shared.Blazor] as SharedBlazor
+  [VoterSystem.Web]         as Web
+  [VoterSystem.Web.Admin]   as WebAdmin
+
+}
+
+' ==================== DEPENDENCIES ====================
+DataAccess  --> Shared        : uses
+
+Shared      <-- WebAPI        : uses
+DataAccess  <-- WebAPI        : uses
+WebAPI      --> SignalR       : uses
+SignalR     --> Shared        : uses
+
+SharedBlazor --> Shared       : uses
+
+Web     --> SharedBlazor      : includes
+WebAdmin --> SharedBlazor     : includes
+
+' HTTP‑only (looser) dependencies
+Web     ..> WebAPI : <<HTTP>> calls
+WebAdmin ..> WebAPI : <<HTTP>> calls
+
+@enduml

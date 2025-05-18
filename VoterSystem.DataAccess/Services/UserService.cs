@@ -2,9 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
 
@@ -64,6 +64,11 @@ public class UserService(
         if (!result.Succeeded) return new UnauthorizedError("Unsuccessful login attempt");
 
         var accessToken = await tokenIssuer.GenerateJwtTokenAsync(user, userManager);
+
+        //Regenerate refresh token on login
+        user.RefreshToken = Guid.NewGuid();
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded) return new BadRequestError("Login failed");
         
         return new Tokens
         {
@@ -79,12 +84,17 @@ public class UserService(
         if (user is null) return new NotFoundError("Invalid refresh token");
 
         var accessToken = await tokenIssuer.GenerateJwtTokenAsync(user, userManager);
+
+        //Regenerate refresh token on redeeming
+        user.RefreshToken = Guid.NewGuid();
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded) return new BadRequestError("Login failed");
         
         return new Tokens
         {
             AuthToken = accessToken,
             RefreshToken = user.RefreshToken!.Value,
-            UserId = user.Id,
+            UserId = user.Id
         };
     }
 
@@ -137,10 +147,10 @@ public class UserService(
         var user = await GetUserByEmailAsync(email);
         if (user.IsError) return user.Error;
 
-        if (!user.Value.EmailConfirmed)
+        /*if (!user.Value.EmailConfirmed)
         {
             return new UnauthorizedError("Cannot reset password with unconfirmed email");
-        }
+        }*/
 
         var token = await userManager.GeneratePasswordResetTokenAsync(user.Value);
         return token;
@@ -171,10 +181,10 @@ public class UserService(
 
     public Result<Guid, ServiceError> GetCurrentUserId()
     {
-        var id = httpContextAccessor.HttpContext?.User.FindFirstValue("id");
+        var id = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(k => k.Type == "id")?.Value;
         if (id is null) return new NotFoundError("No ID found");
 
-        if (Guid.TryParse(id, out Guid userId)) return userId;
+        if (Guid.TryParse(id, out var userId)) return userId;
         return new BadRequestError("Invalid GUID as ID");
     }
 

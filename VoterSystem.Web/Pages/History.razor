@@ -99,7 +99,7 @@
             }
         }
         
-        VoteHubService.OnVotingResultUpdated += async voting =>
+        VoteHubService.OnVotingResultUpdated += voting =>
         {
             VotingResults[voting.VotingId] = voting.VotingResults;
             StateHasChanged();
@@ -200,11 +200,11 @@
         @<div>
             <p class="mb-1">
                 <i class="bi bi-play-circle me-1"></i>
-                From: @voting.StartsAt
+                From: @voting.StartsAt.ToLocalTime()
             </p>
             <p class="mb-3">
                 <i class="bi bi-stop-circle me-1"></i>
-                Until: @voting.EndsAt
+                Until: @voting.EndsAt.ToLocalTime()
             </p>
 
             <ul class="list-group list-group-flush">

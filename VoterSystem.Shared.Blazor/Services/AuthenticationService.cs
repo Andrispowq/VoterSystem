@@ -182,7 +182,7 @@ public class AuthenticationService(
 
         try
         {
-            var response = await httpClient.PostAsJsonAsync("users/register", register);
+            var response = await httpClient.PostAsJsonAsync("/api/v1/users/register", register);
             return response.IsSuccessStatusCode;
         }
         catch (System.Exception)

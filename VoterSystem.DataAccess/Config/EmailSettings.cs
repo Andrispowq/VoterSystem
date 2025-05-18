@@ -2,11 +2,11 @@
 {
     public class EmailSettings
     {
-        public required string Host { get; init; }
+        public string Host { get; init; } = null!;
         public int Port { get; init; }
         public bool EnableSsl { get; init; }
-        public required string UserName { get; init; }
-        public required string Password { get; init; }
-        public required string FromEmail { get; init; }
+        public string UserName { get; init; } = null!;
+        public string Password { get; init; } = null!;
+        public string FromEmail { get; init; } = null!;
     }
 }

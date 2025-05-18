@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using VoterSystem.Shared.SignalR.Interfaces;
 using VoterSystem.SignalR.Services;
 
 namespace VoterSystem.SignalR;

@@ -1,4 +1,6 @@
 ﻿@page "/login"
+@using VoterSystem.DataAccess.Model
+@using VoterSystem.Shared.Blazor.Config
 @using VoterSystem.Shared.Blazor.Services
 @using VoterSystem.Shared.Blazor.ViewModels
 @using VoterSystem.Web.Layout
@@ -12,6 +14,11 @@
     <MessageComponent Condition="@Offline"
                       ConditionText="Offline mode"
                       AlertMessage="Switch to online mode to log in." />
+
+    <CustomAlertModal Title="This site is only for non-admin users."
+                      Body="You are an Admin, which means that you may only access the Admin site. The Ok button will take you there, where you can log in."
+                      OnOk="NavigateToAdmin"
+                      @ref="_adminLoginModal" />
 
     @if (!Offline)
     {
@@ -61,6 +68,8 @@
     [SupplyParameterFromQuery]
     public bool Offline { get; set; }
 
+    private CustomAlertModal? _adminLoginModal;
+
     private LoginViewModel LoginViewModel { get; set; } = new();
     private bool _tryAutoLogin = true;
     
@@ -81,7 +90,7 @@
         var success = await AuthenticationService.TryAutoLoginAsync();
         if (success)
         {
-            NavigationManager.NavigateTo("/home");
+            await GoToHome();
         }
         else
         {
@@ -94,8 +103,26 @@
         var success = await AuthenticationService.LoginAsync(LoginViewModel);
         if (success)
         {
-            NavigationManager.NavigateTo("/home");
+            await GoToHome();
         }
+    }
+
+    private async Task GoToHome()
+    {
+        var role = await AuthenticationService.GetCurrentRoleAsync();
+        if (role != Role.User)
+        {
+            _adminLoginModal?.Show();   
+            return;
+        }
+            
+        NavigationManager.NavigateTo("/home");
+    }
+
+    private Task NavigateToAdmin()
+    {
+        NavigationManager.NavigateTo($"{RedirectUrls.AdminBaseUrl}/login");
+        return Task.CompletedTask;
     }
     
     private async Task LoginAsUser()

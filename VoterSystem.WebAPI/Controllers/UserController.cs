@@ -2,11 +2,11 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared.Dto;
+using VoterSystem.Shared.Functional;
 using VoterSystem.WebAPI.Config;
 using VoterSystem.WebAPI.Dto;
 using VoterSystem.WebAPI.Functional;
@@ -54,7 +54,6 @@ public class UserController(IUserService userService, IEmailService emailService
         
         var tokens = result.Value;
         Response.Cookies.Append(TokenIssuer.AuthTokenKey, tokens.AuthToken);
-        Response.Cookies.Append(TokenIssuer.RefreshTokenName, tokens.RefreshToken.ToString());
         
         return result.ToHttpResult();
     }
@@ -193,10 +192,6 @@ public class UserController(IUserService userService, IEmailService emailService
         var user = await userService.GetUserByEmailAsync(email);
         if (user.IsError) return user.ToHttpResult();
         var userValue = user.Value;
-        if (!userValue.EmailConfirmed)
-        { 
-            return Unauthorized("Email is not confirmed");
-        }
         
         var code = await userService.GeneratePasswordResetTokenAsync(email);
         if (code.IsError) return code.ToHttpResult();
@@ -239,7 +234,6 @@ public class UserController(IUserService userService, IEmailService emailService
     public async Task<IActionResult> LogoutAsync()
     {
         Response.Cookies.Delete(TokenIssuer.AuthTokenKey);
-        Response.Cookies.Delete(TokenIssuer.RefreshTokenName);
         return (await userService.LogoutAsync()).ToHttpResult();
     }
 
@@ -268,8 +262,13 @@ public class UserController(IUserService userService, IEmailService emailService
     [HttpPost("refresh-token")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Tokens))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> RefreshTokenAsync([FromBody] Guid refreshToken)
+    public async Task<IActionResult> RefreshTokenAsync([FromBody] string refreshToken)
     {
-        return (await userService.RedeemRefreshTokenAsync(refreshToken)).ToHttpResult();
+        if (!Guid.TryParse(refreshToken, out var token))
+        {
+            return BadRequest("Mal-formatted Guid");
+        }
+        
+        return (await userService.RedeemRefreshTokenAsync(token)).ToHttpResult();
     }
 }

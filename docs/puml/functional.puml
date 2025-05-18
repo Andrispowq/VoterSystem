@@ -1,0 +1,81 @@
+@startuml
+' Shared functional types diagram – revised to avoid nested generic class names that PlantUML cannot parse.
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+package "VoterSystem.Shared.Functional" {
+
+  class Error {
+    +Message : string
+    +ToString() : string
+  }
+
+  abstract class "Option<T>" as OptionT {
+    +Map<TOut>(Func<T, TOut> someFunc, Func<TOut> noneFunc) : TOut
+    +MapOption<TOut>(Func<T, Option<TOut>> someFunc) : Option<TOut>
+    +IsNone : bool
+    +IsSome : bool
+    +AsNone : OptionNone<T>
+    +AsSome : OptionSome<T>
+    +ThrowIfNone() : void
+    +ThrowIfSome() : void
+    +"implicit operator" Option<T>(value : T)
+  }
+
+  class "OptionNone<T>" as OptionNoneT {
+    +ToString() : string
+  }
+
+  class "OptionSome<T>" as OptionSomeT {
+    -Value : T
+    +Value : T
+    +ToString() : string
+  }
+
+  OptionT <|-- OptionNoneT
+  OptionT <|-- OptionSomeT
+
+  class "Result<T, TE>" as ResultTE {
+    -_result : T
+    -_error : TE
+    +HasValue : bool
+    +IsError : bool
+    +Match(Action<T> result, Action<TE> error)
+    +Map<TU>(Func<T, TU> map) : Result<TU, TE>
+    +MapError<TF>(Func<TE, TF> map) : Result<T, TF>
+    +Map<TR>(Func<T, TR> action, Func<TE, TR> errorAction) : TR
+    +MapAsync<TR>(Func<T, Task<TR>> action, Func<TE, Task<TR>> errorAction) : Task<TR>
+    +Value : T
+    +Error : TE
+    +ToString() : string
+    +Equals(object? obj) : bool
+    +GetHashCode() : int
+    +"implicit operator" Result<T, TE>(T result)
+    +"implicit operator" Result<T, TE>(TE error)
+    +static Success(T result) : Result<T, TE>
+    +static Failure(TE error) : Result<T, TE>
+  }
+
+  class ResultExtensions {
+    +AsResult<T, TE>(T value) : Result<T, TE>
+    +AsError<T, TE>(TE error) : Result<T, TE>
+  }
+
+  class ServiceError {
+    +Message : string
+    +ToString() : string
+  }
+
+  class NotFoundError
+  class BadRequestError
+  class ConflictError
+  class UnauthorizedError
+  class UnprocessableEntityError
+
+  ServiceError <|-- NotFoundError
+  ServiceError <|-- BadRequestError
+  ServiceError <|-- ConflictError
+  ServiceError <|-- UnauthorizedError
+  ServiceError <|-- UnprocessableEntityError
+}
+@enduml

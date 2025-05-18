@@ -19,7 +19,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.Web", "VoterSys
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.SignalR", "VoterSystem.SignalR\VoterSystem.SignalR.csproj", "{31AE5D6D-88D5-406C-8D8A-E45D0B0E1598}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.Tests", "VoterSystem.Tests\VoterSystem.Tests.csproj", "{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.Tests.Unit", "VoterSystem.Tests.Unit\VoterSystem.Tests.Unit.csproj", "{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.Tests.Integration", "VoterSystem.Tests.Integration\VoterSystem.Tests.Integration.csproj", "{C5B754F4-57FE-4BCB-8C98-F2B0F086865F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoterSystem.Tests.Admin", "VoterSystem.Tests.Admin\VoterSystem.Tests.Admin.csproj", "{3C034ECF-505D-477B-B3C2-D789A34D0162}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,5 +63,13 @@ Global
 		{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C9EDC2A-95F5-43DB-ACF9-F1C93715D5E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5B754F4-57FE-4BCB-8C98-F2B0F086865F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5B754F4-57FE-4BCB-8C98-F2B0F086865F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5B754F4-57FE-4BCB-8C98-F2B0F086865F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5B754F4-57FE-4BCB-8C98-F2B0F086865F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C034ECF-505D-477B-B3C2-D789A34D0162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C034ECF-505D-477B-B3C2-D789A34D0162}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C034ECF-505D-477B-B3C2-D789A34D0162}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C034ECF-505D-477B-B3C2-D789A34D0162}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

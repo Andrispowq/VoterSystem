@@ -61,5 +61,6 @@
     private async Task AdminPage()
     {
         NavigationManager.NavigateTo($"{RedirectUrls.AdminBaseUrl}/login", forceLoad: true);
+        await Task.CompletedTask;
     }
 }

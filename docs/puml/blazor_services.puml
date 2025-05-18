@@ -1,0 +1,181 @@
+@startuml
+' Shared Blazor – Services & Infrastructure UML diagram
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam dpi 110
+
+' ==========================
+'  INFRASTRUCTURE PACKAGE
+' ==========================
+package "VoterSystem.Shared.Blazor.Infrastructure" {
+
+    interface IHttpRequestUtility {
+        +ExecuteGetHttpRequestAsync<T>(uri : string) : Task<HttpResponseWrapper<T>>
+        +ExecutePostHttpRequestAsync<T, TU>(uri : string, requestDto : T) : Task<TU?>
+        +ExecutePostHttpRequestAsync<T>(uri : string, requestDto : T?) : Task
+        +ExecutePostHttpRequestAsync(uri : string) : Task
+        +ExecutePutHttpRequestAsync<T, TU>(uri : string, requestDto : T) : Task<TU?>
+        +ExecutePutHttpRequestAsync<T>(uri : string, requestDto : T) : Task
+        +ExecutePatchHttpRequestAsync<T, TU>(uri : string, requestDto : T) : Task<TU?>
+        +ExecutePatchHttpRequestAsync(uri : string) : Task
+        +ExecuteDeleteHttpRequestAsync(uri : string) : Task
+        +RedeemTokenAsync(token?) : Task<TokensDto>
+        +IsAccessTokenExpired(token : string) : bool
+    }
+
+    class HttpRequestUtility {
+        -localStorageService : ILocalStorageService
+        -httpClient : HttpClient
+        -jsonOptions : JsonSerializerOptions
+        --
+        +HttpRequestUtility(localStorageService : ILocalStorageService, httpClient : HttpClient, jsonOptions : JsonSerializerOptions)
+        --
+        -ApiCallUri(uri : string) : string
+        +ExecuteGetHttpRequestAsync<T>(uri : string) : Task<HttpResponseWrapper<T>>
+        +ExecutePostHttpRequestAsync<T, TU>(uri : string, requestDto : T) : Task<TU?>
+        +ExecutePostHttpRequestAsync<T>(uri : string, requestDto : T?) : Task
+        +ExecutePostHttpRequestAsync(uri : string) : Task
+        +ExecutePutHttpRequestAsync<T, TU>(uri : string, requestDto : T) : Task<TU?>
+        +ExecutePutHttpRequestAsync<T>(uri : string, requestDto : T) : Task
+        +ExecutePatchHttpRequestAsync<T, TU>(uri : string, requestDto : T) : Task<TU?>
+        +ExecutePatchHttpRequestAsync(uri : string) : Task
+        +ExecuteDeleteHttpRequestAsync(uri : string) : Task
+        -HandleResponseObjectAsync<T>(response : HttpResponseMessage) : Task<T>
+        -SendRequestAsync(request : HttpRequestMessage, token : CancellationToken) : Task<HttpResponseMessage>
+        -CloneRequest(request : HttpRequestMessage) : HttpRequestMessage
+        +RedeemTokenAsync(token : CancellationToken) : Task<TokensDto>
+        +IsAccessTokenExpired(token : string) : bool
+        -CreateRequestBody<T>(requestDto : T) : HttpContent
+    }
+
+    HttpRequestUtility ..|> IHttpRequestUtility
+}
+
+' ==========================
+'  SERVICES  PACKAGE
+' ==========================
+package "VoterSystem.Shared.Blazor.Services" {
+
+    ' ----- Base class -----
+    abstract class BaseService {
+        +BaseService(toastService : IToastService)
+        --
+        #HandleHttpError(response : HttpResponseMessage) : Task
+        #ShowErrorMessage(message : string) : void
+        #GetPagedListTotalCount(headers : HttpResponseHeaders) : int
+    }
+
+    ' ----- ToastService & interface -----
+    interface IToastService {
+        {property} +Toasts : IReadOnlyList<string>
+        +ShowToast(message : string) : void
+        {event} +OnToastChanged
+    }
+    class ToastService {
+        +ToastService(appConfig : AppConfig)
+        --
+        {event} +OnToastChanged
+        {property} +Toasts : IReadOnlyList<string>
+        -_toasts : List<string>
+        +ShowToast(message : string) : void
+        -RemoveToast(message : string) : void
+    }
+    ToastService ..|> IToastService
+
+    ' ----- AuthenticationService & interface -----
+    interface IAuthenticationService {
+        +GetUsersAsync() : Task<List<UserDto>>
+        +PromoteUserToAdminAsync(userId : Guid) : Task<bool>
+        +DemoteAdminToUserAsync(userId : Guid) : Task<bool>
+        +LoginAsync(loginVM : LoginViewModel) : Task<bool>
+        +ChangePasswordAsync(changePwdVM : ChangePasswordViewModel) : Task<bool>
+        +GetCurrentRoleAsync() : Task<Role?>
+        +LogoutAsync() : Task
+        +TryAutoLoginAsync() : Task<bool>
+        +GetCurrentlyLoggedInUserAsync() : Task<string?>
+        +GetCurrentUserAsync() : Task<UserDto?>
+        +RegisterAsync(registerVM : RegisterViewModel) : Task<bool>
+        +RequestEmailConfirmationAsync() : Task<bool>
+        +ConfirmEmailAsync(dto : UserEmailConfirmRequestDto) : Task<bool>
+        +RequestPasswordResetAsync(email : string) : Task<bool>
+        +ResetPasswordAsync(dto : UserPasswordResetRequestDto) : Task<bool>
+    }
+
+    class AuthenticationService {
+        +AuthenticationService(httpClient : HttpClient, localStorageService : ILocalStorageService, toastService : IToastService, httpRequestUtility : IHttpRequestUtility)
+        --
+        +GetUsersAsync() : Task<List<UserDto>>
+        +PromoteUserToAdminAsync(userId : Guid) : Task<bool>
+        +DemoteAdminToUserAsync(userId : Guid) : Task<bool>
+        +LoginAsync(loginVM : LoginViewModel) : Task<bool>
+        +ChangePasswordAsync(changePwdVM : ChangePasswordViewModel) : Task<bool>
+        +GetCurrentRoleAsync() : Task<Role?>
+        +LogoutAsync() : Task
+        +TryAutoLoginAsync() : Task<bool>
+        +GetCurrentlyLoggedInUserAsync() : Task<string?>
+        +GetCurrentUserAsync() : Task<UserDto?>
+        +RegisterAsync(registerVM : RegisterViewModel) : Task<bool>
+        +RequestEmailConfirmationAsync() : Task<bool>
+        +ConfirmEmailAsync(dto : UserEmailConfirmRequestDto) : Task<bool>
+        +RequestPasswordResetAsync(email : string) : Task<bool>
+        +ResetPasswordAsync(dto : UserPasswordResetRequestDto) : Task<bool>
+        --
+        -SetCurrentUserNameAsync(currentUserId : Guid) : Task
+    }
+    AuthenticationService ..|> IAuthenticationService
+    AuthenticationService --|> BaseService
+    AuthenticationService --> IHttpRequestUtility : «uses»
+
+    ' ----- Voting services -----
+    interface IVotingsService {
+        +GetVotedVotingsAsync() : Task<VotingsViewModel?>
+        +GetVotableVotingsAsync() : Task<VotingsViewModel?>
+        +GetVotingsAsync() : Task<VotingsViewModel?>
+        +GetVotingByIdAsync(votingId : long) : Task<VotingDto?>
+        +GetVotingResultAsync(votingId : long) : Task<VotingResultsDto?>
+        +UpdateEndTime(votingId : long, newEndAt : DateTime) : Task
+        +UpdateStartTime(votingId : long, newStartAt : DateTime) : Task
+        +AddVoteChoice(votingId : long, name : string, description : string) : Task
+        +DeleteChoiceAsync(votingId : long, choiceId : long) : Task
+        +StartVotingAsync(votingId : long) : Task
+        +CreateVotingAsync(dto : VotingCreateRequestDto) : Task<VotingDto?>
+        +DeleteVotingAsync(votingId : long) : Task
+        +GetMyVotesAsync() : Task<List<VoteDto>?>
+        +VoteAsync(choiceId : long) : Task<bool>
+    }
+
+    class VotingsService {
+        +VotingsService(httpRequestUtility : IHttpRequestUtility)
+        --
+        +GetVotedVotingsAsync() : Task<VotingsViewModel?>
+        +GetVotableVotingsAsync() : Task<VotingsViewModel?>
+        +GetVotingsAsync() : Task<VotingsViewModel?>
+        +GetVotingByIdAsync(votingId : long) : Task<VotingDto?>
+        +GetVotingResultAsync(votingId : long) : Task<VotingResultsDto?>
+        +UpdateEndTime(votingId : long, newEndAt : DateTime) : Task
+        +UpdateStartTime(votingId : long, newStartAt : DateTime) : Task
+        +AddVoteChoice(votingId : long, name : string, description : string) : Task
+        +DeleteChoiceAsync(votingId : long, choiceId : long) : Task
+        +StartVotingAsync(votingId : long) : Task
+        +CreateVotingAsync(dto : VotingCreateRequestDto) : Task<VotingDto?>
+        +DeleteVotingAsync(votingId : long) : Task
+        +GetMyVotesAsync() : Task<List<VoteDto>?>
+        +VoteAsync(choiceId : long) : Task<bool>
+    }
+    VotingsService ..|> IVotingsService
+    VotingsService --> IHttpRequestUtility : «uses»
+
+    ' ----- NetworkService -----
+    class NetworkService {
+        +NetworkService(jsRuntime : IJSRuntime)
+        --
+        -_module : IJSObjectReference?
+        {event} +OnConnectivityChanged
+        +InitializeAsync() : Task
+        +UpdateConnectivity(isOnline : bool) : void
+        +DisposeAsync() : ValueTask
+    }
+
+}
+
+@enduml

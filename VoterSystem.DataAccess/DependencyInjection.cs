@@ -15,17 +15,22 @@ public static class DependencyInjection
     public static IServiceCollection AddDataAccess(this IServiceCollection services, IConfiguration config)
     {
         // Options
-        services.Configure<JwtSettings>(config.GetSection("JwtSettings"));
-        services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
-        services.Configure<UserSettings>(config.GetSection("UserSettings"));
+        services.BindWithEnvSubstitution<JwtSettings>(config, "JwtSettings");
+        services.BindWithEnvSubstitution<EmailSettings>(config, "EmailSettings");
+        services.BindWithEnvSubstitution<UserSettings>(config, "UserSettings");
         
         // Database
         var connectionString = config.GetConnectionString("VoterSystemConnection");
         connectionString = Utils.ReplaceFromEnv(connectionString ?? "");
-        services.AddDbContext<VoterSystemDbContext>(options => options
-            .UseNpgsql(connectionString)
-            .UseLazyLoadingProxies()
-        );
+
+        //For integration tests, don't even register the regular DB
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "IntegrationTest")
+        {
+            services.AddDbContext<VoterSystemDbContext>(options => options
+                .UseNpgsql(connectionString)
+                .UseLazyLoadingProxies()
+            );
+        }
 
         //Identity
         services.AddIdentity<User, UserRole>(options =>
@@ -38,7 +43,14 @@ public static class DependencyInjection
             options.Password.RequiredUniqueChars = 1;
             
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+            
             options.Lockout.MaxFailedAccessAttempts = 5;
+
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
+            {
+                options.Lockout.MaxFailedAccessAttempts = 100;
+            }
+                
             options.Lockout.AllowedForNewUsers = true;
             options.User.RequireUniqueEmail = true;
         }).AddEntityFrameworkStores<VoterSystemDbContext>()

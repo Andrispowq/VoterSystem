@@ -1,4 +1,3 @@
-using VoterSystem.Shared;
 using VoterSystem.Shared.DotEnv;
 
 namespace VoterSystem.WebAPI;

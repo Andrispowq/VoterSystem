@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
+using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.Tests.Unit;
 

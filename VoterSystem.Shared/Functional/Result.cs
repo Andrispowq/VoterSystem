@@ -1,4 +1,4 @@
-namespace VoterSystem.DataAccess.Functional;
+namespace VoterSystem.Shared.Functional;
 
 public sealed class Result<T, TE>
 {

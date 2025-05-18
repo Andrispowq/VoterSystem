@@ -1,0 +1,118 @@
+@startuml
+' Service layer UML diagram
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+package "VoterSystem.DataAccess.Services" {
+
+    class "BaseService<T>" {
+        # CanAccessAll(bool admin) : abstract bool
+        # CheckAccessOnAll() : bool
+        # CheckAccessOn(T resource, RoleControlAction action) : Task<Option<ServiceError>>
+    }
+
+    interface "IUserService" {
+        + GetAllUsersAsync() : Task<Result<List<User>, ServiceError>>
+        + CreateUser(User user, string password, Role? role = null) : Task<Option<ServiceError>>
+        + AnyAdmins() : Task<bool>
+        + LoginAsync(string email, string password) : Task<Result<Tokens, ServiceError>>
+        + RedeemRefreshTokenAsync(Guid refreshToken) : Task<Result<Tokens, ServiceError>>
+        + LogoutAsync() : Task<Option<ServiceError>>
+        + ChangePasswordAsync(string oldPassword, string newPassword) : Task<Option<ServiceError>>
+        + GenerateEmailConfirmTokenAsync() : Task<Result<string, ServiceError>>
+        + ConfirmEmailAsync(string email, string token) : Task<Option<ServiceError>>
+        + GeneratePasswordResetTokenAsync(string email) : Task<Result<string, ServiceError>>
+        + ResetPasswordAsync(string email, string token, string newPassword) : Task<Option<ServiceError>>
+        + GetCurrentUserAsync() : Task<Result<User, ServiceError>>
+        + GetCurrentUserId() : Result<Guid, ServiceError>
+        + GetUserByIdAsync(Guid id) : Task<Result<User, ServiceError>>
+        + GetUserByEmailAsync(string email) : Task<Result<User, ServiceError>>
+        + GetUserRoleByIdAsync(Guid id) : Task<Result<Role, ServiceError>>
+        + GetCurrentUserRole() : Result<Role, ServiceError>
+        + SetUserRoleAsync(Guid userId, Role role) : Task<Option<ServiceError>>
+        + IsCurrentUserAdmin() : bool
+    }
+
+    interface "IVoteChoiceService" {
+        + GetVoteChoices(Voting voting) : Task<List<VoteChoice>>
+        + GetChoiceById(long choiceId) : Task<Result<VoteChoice, ServiceError>>
+        + AddVotingChoice(Voting voting, VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+        + UpdateVotingChoice(VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+        + DeleteVotingChoice(VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+    }
+
+    interface "IVoteService" {
+        + GetVotesForVoting(Voting voting) : Task<Result<List<Vote>, ServiceError>>
+        + GetMyVotes() : Task<Result<List<Vote>, ServiceError>>
+        + CastVote(User user, VoteChoice voteChoice) : Task<Option<ServiceError>>
+    }
+
+    interface "IVotingService" {
+        + GetAllVotings() : Task<Result<List<Voting>, ServiceError>>
+        + GetVotingById(long id) : Task<Result<Voting, ServiceError>>
+        + CreateVoting(Voting voting, bool commit = true) : Task<Option<ServiceError>>
+        + UpdateVoting(Voting voting, bool commit = true) : Task<Option<ServiceError>>
+        + DeleteVoting(long id, bool commit = true) : Task<Option<ServiceError>>
+        + HasVotedOnVoting(Voting voting) : Task<bool>
+    }
+
+    class "UserService" {
+        + AnyAdmins() : Task<bool>
+        + GetAllUsersAsync() : Task<Result<List<User>, ServiceError>>
+        + CreateUser(User user, string password, Role? role = null) : Task<Option<ServiceError>>
+        + LoginAsync(string email, string password) : Task<Result<Tokens, ServiceError>>
+        + RedeemRefreshTokenAsync(Guid refreshToken) : Task<Result<Tokens, ServiceError>>
+        + LogoutAsync() : Task<Option<ServiceError>>
+        + ChangePasswordAsync(string oldPassword, string newPassword) : Task<Option<ServiceError>>
+        + GenerateEmailConfirmTokenAsync() : Task<Result<string, ServiceError>>
+        + ConfirmEmailAsync(string email, string token) : Task<Option<ServiceError>>
+        + GeneratePasswordResetTokenAsync(string email) : Task<Result<string, ServiceError>>
+        + ResetPasswordAsync(string email, string token, string newPassword) : Task<Option<ServiceError>>
+        + GetCurrentUserAsync() : Task<Result<User, ServiceError>>
+        + GetCurrentUserId() : Result<Guid, ServiceError>
+        + GetUserByIdAsync(Guid id) : Task<Result<User, ServiceError>>
+        + GetUserByEmailAsync(string email) : Task<Result<User, ServiceError>>
+        + GetUserRoleByIdAsync(Guid id) : Task<Result<Role, ServiceError>>
+        + GetCurrentUserRole() : Result<Role, ServiceError>
+        + SetUserRoleAsync(Guid userId, Role role) : Task<Option<ServiceError>>
+        + IsCurrentUserAdmin() : bool
+    }
+
+    class "VoteChoiceService" {
+        - _userService : readonly IUserService
+        # CanAccessAll(bool admin) : override bool
+        + GetVoteChoices(Voting voting) : Task<List<VoteChoice>>
+        + GetChoiceById(long choiceId) : Task<Result<VoteChoice, ServiceError>>
+        + AddVotingChoice(Voting voting, VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+        + UpdateVotingChoice(VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+        + DeleteVotingChoice(VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+    }
+
+    class "VoteService" {
+        - _userService : readonly IUserService
+        # CanAccessAll(bool admin) : override bool
+        + GetVotesForVoting(Voting voting) : Task<Result<List<Vote>, ServiceError>>
+        + GetMyVotes() : Task<Result<List<Vote>, ServiceError>>
+        + CastVote(User user, VoteChoice voteChoice) : Task<Option<ServiceError>>
+    }
+
+    class "VotingService" {
+        - _userService : readonly IUserService
+        # CanAccessAll(bool admin) : override bool
+        + GetAllVotings() : Task<Result<List<Voting>, ServiceError>>
+        + GetVotingById(long id) : Task<Result<Voting, ServiceError>>
+        + CreateVoting(Voting voting, bool commit = true) : Task<Option<ServiceError>>
+        + UpdateVoting(Voting voting, bool commit = true) : Task<Option<ServiceError>>
+        + DeleteVoting(long id, bool commit = true) : Task<Option<ServiceError>>
+        + HasVotedOnVoting(Voting voting) : Task<bool>
+    }
+
+    "UserService" ..|> "IUserService"
+    "VoteChoiceService" ..|> "IVoteChoiceService"
+    "VoteService" ..|> "IVoteService"
+    "VotingService" ..|> "IVotingService"
+    "VoteChoiceService" --|> "BaseService<T>"
+    "VoteService" --|> "BaseService<T>"
+    "VotingService" --|> "BaseService<T>"
+}
+@enduml

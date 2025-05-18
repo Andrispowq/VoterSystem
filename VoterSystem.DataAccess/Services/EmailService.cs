@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
 using VoterSystem.DataAccess.Config;
-using VoterSystem.DataAccess.Functional;
+using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
 

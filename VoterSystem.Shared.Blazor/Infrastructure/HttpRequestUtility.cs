@@ -28,20 +28,38 @@ public class HttpRequestUtility(
         return new HttpResponseWrapper<T>(responseObject, response.Headers);
     }
 
-    public async Task<TU?> ExecutePatchHttpRequestAsync<T, TU>(string uri, T requestDto)
+    public async Task<TU?> ExecutePostHttpRequestAsync<T, TU>(string uri, T requestDto) where T : class
     {
-        var request = new HttpRequestMessage(HttpMethod.Patch, ApiCallUri(uri))
+        var request = new HttpRequestMessage(HttpMethod.Post, ApiCallUri(uri))
         {
             Content = CreateRequestBody(requestDto)
         };
-        
         var response = await SendRequestAsync(request);
         return await HandleResponseObjectAsync<TU>(response);
     }
 
-    public async Task<TU?> ExecutePostHttpRequestAsync<T, TU>(string uri, T requestDto)
+    public async Task ExecutePostHttpRequestAsync<T>(string uri, T? requestDto = null) where T: class
     {
         var request = new HttpRequestMessage(HttpMethod.Post, ApiCallUri(uri))
+        {
+            Content = requestDto is null ? null : CreateRequestBody(requestDto)
+        };
+        var response = await SendRequestAsync(request);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestErrorException(response);
+    }
+
+    public async Task ExecutePostHttpRequestAsync(string uri)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, ApiCallUri(uri));
+        var response = await SendRequestAsync(request);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestErrorException(response);
+    }
+
+    public async Task<TU?> ExecutePutHttpRequestAsync<T, TU>(string uri, T requestDto) where TU : class
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, ApiCallUri(uri))
         {
             Content = CreateRequestBody(requestDto)
         };
@@ -60,15 +78,15 @@ public class HttpRequestUtility(
             throw new HttpRequestErrorException(response);
     }
 
-    public async Task ExecutePostHttpRequestAsync<T>(string uri, T requestDto)
+    public async Task<TU?> ExecutePatchHttpRequestAsync<T, TU>(string uri, T requestDto) where TU : class
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, ApiCallUri(uri))
+        var request = new HttpRequestMessage(HttpMethod.Patch, ApiCallUri(uri))
         {
             Content = CreateRequestBody(requestDto)
         };
+        
         var response = await SendRequestAsync(request);
-        if (!response.IsSuccessStatusCode)
-            throw new HttpRequestErrorException(response);
+        return await HandleResponseObjectAsync<TU>(response);
     }
 
     public async Task ExecutePatchHttpRequestAsync(string uri)
@@ -77,24 +95,6 @@ public class HttpRequestUtility(
         var response = await SendRequestAsync(request);
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestErrorException(response);
-    }
-
-    public async Task ExecutePostHttpRequestAsync(string uri)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Post, ApiCallUri(uri));
-        var response = await SendRequestAsync(request);
-        if (!response.IsSuccessStatusCode)
-            throw new HttpRequestErrorException(response);
-    }
-
-    public async Task<TU?> ExecutePutHttpRequestAsync<T, TU>(string uri, T requestDto)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Put, ApiCallUri(uri))
-        {
-            Content = CreateRequestBody(requestDto)
-        };
-        var response = await SendRequestAsync(request);
-        return await HandleResponseObjectAsync<TU>(response);
     }
 
     public async Task ExecuteDeleteHttpRequestAsync(string uri)

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using VoterSystem.DataAccess.Functional;
+using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.WebAPI.Functional;
 

@@ -1,5 +1,5 @@
-using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
+using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
 

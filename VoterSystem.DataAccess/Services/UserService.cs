@@ -2,9 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using VoterSystem.DataAccess.Functional;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
 

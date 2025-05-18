@@ -1,4 +1,4 @@
-namespace VoterSystem.DataAccess.Functional;
+namespace VoterSystem.Shared.Functional;
 
 public abstract record Option<T>
 {

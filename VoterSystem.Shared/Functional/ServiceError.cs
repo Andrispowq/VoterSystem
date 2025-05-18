@@ -1,4 +1,4 @@
-namespace VoterSystem.DataAccess.Functional;
+namespace VoterSystem.Shared.Functional;
 
 public abstract class ServiceError(string message) : Error(message)
 {

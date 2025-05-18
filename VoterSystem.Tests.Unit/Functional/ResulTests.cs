@@ -1,4 +1,4 @@
-using VoterSystem.DataAccess.Functional;
+using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.Tests.Unit.Functional;
 

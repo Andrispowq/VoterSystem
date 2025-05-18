@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 80
@@ -17,7 +17,22 @@ ENV WEB_HTTPS=$WEB_HTTPS
 ENV ADMIN_HTTP=$ADMIN_HTTP
 ENV ADMIN_HTTPS=$ADMIN_HTTPS
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+ARG API_HTTP
+ARG API_HTTPS
+ARG WEB_HTTP
+ARG WEB_HTTPS
+ARG ADMIN_HTTP
+ARG ADMIN_HTTPS
+
+ENV API_HTTP=$API_HTTP
+ENV API_HTTPS=$API_HTTPS
+ENV WEB_HTTP=$WEB_HTTP
+ENV WEB_HTTPS=$WEB_HTTPS
+ENV ADMIN_HTTP=$ADMIN_HTTP
+ENV ADMIN_HTTPS=$ADMIN_HTTPS
+
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["VoterSystem.Web/VoterSystem.Web.csproj", "VoterSystem.Web/"]

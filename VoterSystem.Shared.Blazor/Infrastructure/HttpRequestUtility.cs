@@ -115,6 +115,8 @@ public class HttpRequestUtility(
         }
         else
         {
+            var content = await response.Content.ReadAsStringAsync();
+            Console.WriteLine(content);
             throw new HttpRequestErrorException(response);
         }
     }

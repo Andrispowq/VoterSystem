@@ -147,7 +147,7 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
             return BadRequest("Vote cannot start one day before this time or before it ends");
         }
 
-        voting.StartsAt = startsAt;
+        voting.StartsAt = startsAt.ToUniversalTime();
         
         var error = await votingService.UpdateVoting(voting);
         return error.IsSome ? error.ToHttpResult() : Ok(voting.ToVotingDto());
@@ -174,7 +174,7 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
             return BadRequest("Vote cannot end one day before start or this time");
         }
 
-        voting.EndsAt = endsAt;
+        voting.EndsAt = endsAt.ToUniversalTime();
         
         var error = await votingService.UpdateVoting(voting);
         return error.IsSome ? error.ToHttpResult() : Ok(voting.ToVotingDto());

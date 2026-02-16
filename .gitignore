@@ -1,6 +1,7 @@
 ## Build Folders (bin, obj)
 [Bb]in/
 [Oo]bj/
+.DS_Store
 
 ##
 *.db

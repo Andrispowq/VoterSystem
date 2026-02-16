@@ -1,0 +1,2115 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dineug/erd-editor/main/json-schema/schema.json",
+  "version": "3.0.0",
+  "settings": {
+    "width": 8000,
+    "height": 5000,
+    "scrollTop": -1326.1667,
+    "scrollLeft": -2399,
+    "zoomLevel": 1,
+    "show": 511,
+    "database": 32,
+    "databaseName": "AnonymousVotingSystem_FromSQL",
+    "canvasType": "ERD",
+    "language": 2,
+    "tableNameCase": 1,
+    "columnNameCase": 1,
+    "bracketType": 1,
+    "relationshipDataTypeSync": false,
+    "relationshipOptimization": true,
+    "columnOrder": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "maxWidthComment": 200,
+    "ignoreSaveSettings": 0
+  },
+  "doc": {
+    "tableIds": [
+      "t_AspNetRoles",
+      "t_AspNetRoleClaims",
+      "t_AspNetUsers",
+      "t_AspNetUserRoles",
+      "t_AspNetUserClaims",
+      "t_AspNetUserLogins",
+      "t_AspNetUserTokens",
+      "t_Votings",
+      "t_VoteChoices",
+      "t_VotingParticipation",
+      "t_AnonymousBallot",
+      "t___EFMigrationsHistory"
+    ],
+    "relationshipIds": [
+      "r_UserRoles_User",
+      "r_UserRoles_Role",
+      "r_RoleClaims_Role",
+      "r_UserClaims_User",
+      "r_UserLogins_User",
+      "r_UserTokens_User",
+      "r_Votings_CreatedBy",
+      "r_VoteChoices_Voting",
+      "r_VotingParticipation_Voting",
+      "r_VotingParticipation_User",
+      "r_AnonymousBallot_Voting",
+      "r_AnonymousBallot_Choice"
+    ],
+    "indexIds": [],
+    "memoIds": []
+  },
+  "collections": {
+    "tableEntities": {
+      "t_AspNetRoles": {
+        "id": "t_AspNetRoles",
+        "name": "AspNetRoles",
+        "comment": "",
+        "columnIds": [
+          "c_t_AspNetRoles_Id",
+          "c_t_AspNetRoles_Name",
+          "c_t_AspNetRoles_NormalizedName",
+          "c_t_AspNetRoles_ConcurrencyStamp"
+        ],
+        "seqColumnIds": [
+          "c_t_AspNetRoles_Id",
+          "c_t_AspNetRoles_Name",
+          "c_t_AspNetRoles_NormalizedName",
+          "c_t_AspNetRoles_ConcurrencyStamp"
+        ],
+        "ui": {
+          "x": 6300,
+          "y": 300,
+          "zIndex": 1,
+          "widthName": 75,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241380656,
+          "createAt": 1771240701758
+        }
+      },
+      "t_AspNetRoleClaims": {
+        "id": "t_AspNetRoleClaims",
+        "name": "AspNetRoleClaims",
+        "comment": "",
+        "columnIds": [
+          "c_t_AspNetRoleClaims_Id",
+          "c_t_AspNetRoleClaims_RoleId",
+          "c_t_AspNetRoleClaims_ClaimType",
+          "c_t_AspNetRoleClaims_ClaimValue"
+        ],
+        "seqColumnIds": [
+          "c_t_AspNetRoleClaims_Id",
+          "c_t_AspNetRoleClaims_RoleId",
+          "c_t_AspNetRoleClaims_ClaimType",
+          "c_t_AspNetRoleClaims_ClaimValue"
+        ],
+        "ui": {
+          "x": 6300,
+          "y": 1100,
+          "zIndex": 1,
+          "widthName": 106,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "t_AspNetUsers": {
+        "id": "t_AspNetUsers",
+        "name": "AspNetUsers",
+        "comment": "",
+        "columnIds": [
+          "c_t_AspNetUsers_Id",
+          "c_t_AspNetUsers_Name",
+          "c_t_AspNetUsers_RefreshToken",
+          "c_t_AspNetUsers_DeletedAt",
+          "c_t_AspNetUsers_UserName",
+          "c_t_AspNetUsers_NormalizedUserName",
+          "c_t_AspNetUsers_Email",
+          "c_t_AspNetUsers_NormalizedEmail",
+          "c_t_AspNetUsers_EmailConfirmed",
+          "c_t_AspNetUsers_PasswordHash",
+          "c_t_AspNetUsers_SecurityStamp",
+          "c_t_AspNetUsers_ConcurrencyStamp",
+          "c_t_AspNetUsers_PhoneNumber",
+          "c_t_AspNetUsers_PhoneNumberConfirmed",
+          "c_t_AspNetUsers_TwoFactorEnabled",
+          "c_t_AspNetUsers_LockoutEnd",
+          "c_t_AspNetUsers_LockoutEnabled",
+          "c_t_AspNetUsers_AccessFailedCount"
+        ],
+        "seqColumnIds": [
+          "c_t_AspNetUsers_Id",
+          "c_t_AspNetUsers_Name",
+          "c_t_AspNetUsers_RefreshToken",
+          "c_t_AspNetUsers_DeletedAt",
+          "c_t_AspNetUsers_UserName",
+          "c_t_AspNetUsers_NormalizedUserName",
+          "c_t_AspNetUsers_Email",
+          "c_t_AspNetUsers_NormalizedEmail",
+          "c_t_AspNetUsers_EmailConfirmed",
+          "c_t_AspNetUsers_PasswordHash",
+          "c_t_AspNetUsers_SecurityStamp",
+          "c_t_AspNetUsers_ConcurrencyStamp",
+          "c_t_AspNetUsers_PhoneNumber",
+          "c_t_AspNetUsers_PhoneNumberConfirmed",
+          "c_t_AspNetUsers_TwoFactorEnabled",
+          "c_t_AspNetUsers_LockoutEnd",
+          "c_t_AspNetUsers_LockoutEnabled",
+          "c_t_AspNetUsers_AccessFailedCount"
+        ],
+        "ui": {
+          "x": 3600,
+          "y": 1500,
+          "zIndex": 1,
+          "widthName": 76,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "t_AspNetUserRoles": {
+        "id": "t_AspNetUserRoles",
+        "name": "AspNetUserRoles",
+        "comment": "",
+        "columnIds": [
+          "c_t_AspNetUserRoles_UserId",
+          "c_t_AspNetUserRoles_RoleId"
+        ],
+        "seqColumnIds": [
+          "c_t_AspNetUserRoles_UserId",
+          "c_t_AspNetUserRoles_RoleId"
+        ],
+        "ui": {
+          "x": 5200,
+          "y": 1500,
+          "zIndex": 1,
+          "widthName": 101,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241337669,
+          "createAt": 1771240701758
+        }
+      },
+      "t_AspNetUserClaims": {
+        "id": "t_AspNetUserClaims",
+        "name": "AspNetUserClaims",
+        "comment": "",
+        "columnIds": [
+          "c_t_AspNetUserClaims_Id",
+          "c_t_AspNetUserClaims_UserId",
+          "c_t_AspNetUserClaims_ClaimType",
+          "c_t_AspNetUserClaims_ClaimValue"
+        ],
+        "seqColumnIds": [
+          "c_t_AspNetUserClaims_Id",
+          "c_t_AspNetUserClaims_UserId",
+          "c_t_AspNetUserClaims_ClaimType",
+          "c_t_AspNetUserClaims_ClaimValue"
+        ],
+        "ui": {
+          "x": 3600,
+          "y": 500,
+          "zIndex": 1,
+          "widthName": 108,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "t_AspNetUserLogins": {
+        "id": "t_AspNetUserLogins",
+        "name": "AspNetUserLogins",
+        "comment": "",
+        "columnIds": [
+          "c_t_AspNetUserLogins_LoginProvider",
+          "c_t_AspNetUserLogins_ProviderKey",
+          "c_t_AspNetUserLogins_ProviderDisplayName",
+          "c_t_AspNetUserLogins_UserId"
+        ],
+        "seqColumnIds": [
+          "c_t_AspNetUserLogins_LoginProvider",
+          "c_t_AspNetUserLogins_ProviderKey",
+          "c_t_AspNetUserLogins_ProviderDisplayName",
+          "c_t_AspNetUserLogins_UserId"
+        ],
+        "ui": {
+          "x": 3600,
+          "y": 2600,
+          "zIndex": 1,
+          "widthName": 107,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "t_AspNetUserTokens": {
+        "id": "t_AspNetUserTokens",
+        "name": "AspNetUserTokens",
+        "comment": "",
+        "columnIds": [
+          "c_t_AspNetUserTokens_UserId",
+          "c_t_AspNetUserTokens_LoginProvider",
+          "c_t_AspNetUserTokens_Name",
+          "c_t_AspNetUserTokens_Value"
+        ],
+        "seqColumnIds": [
+          "c_t_AspNetUserTokens_UserId",
+          "c_t_AspNetUserTokens_LoginProvider",
+          "c_t_AspNetUserTokens_Name",
+          "c_t_AspNetUserTokens_Value"
+        ],
+        "ui": {
+          "x": 3600,
+          "y": 3500,
+          "zIndex": 1,
+          "widthName": 109,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "t_Votings": {
+        "id": "t_Votings",
+        "name": "Votings",
+        "comment": "",
+        "columnIds": [
+          "c_t_Votings_VotingId",
+          "c_t_Votings_Name",
+          "c_t_Votings_CreatedAt",
+          "c_t_Votings_StartsAt",
+          "c_t_Votings_EndsAt",
+          "c_t_Votings_CreatedByUserId",
+          "c_t_Votings_KeySalt"
+        ],
+        "seqColumnIds": [
+          "c_t_Votings_VotingId",
+          "c_t_Votings_Name",
+          "c_t_Votings_CreatedAt",
+          "c_t_Votings_StartsAt",
+          "c_t_Votings_EndsAt",
+          "c_t_Votings_CreatedByUserId",
+          "c_t_Votings_KeySalt"
+        ],
+        "ui": {
+          "x": 1900,
+          "y": 1500,
+          "zIndex": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "t_VoteChoices": {
+        "id": "t_VoteChoices",
+        "name": "VoteChoices",
+        "comment": "",
+        "columnIds": [
+          "c_t_VoteChoices_ChoiceId",
+          "c_t_VoteChoices_Name",
+          "c_t_VoteChoices_Description",
+          "c_t_VoteChoices_VotingId",
+          "c_t_VoteChoices_CreatedAt",
+          "c_t_VoteChoices_VoteCount"
+        ],
+        "seqColumnIds": [
+          "c_t_VoteChoices_ChoiceId",
+          "c_t_VoteChoices_Name",
+          "c_t_VoteChoices_Description",
+          "c_t_VoteChoices_VotingId",
+          "c_t_VoteChoices_CreatedAt",
+          "c_t_VoteChoices_VoteCount"
+        ],
+        "ui": {
+          "x": 700,
+          "y": 1500,
+          "zIndex": 1,
+          "widthName": 73,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241329243,
+          "createAt": 1771240701758
+        }
+      },
+      "t_VotingParticipation": {
+        "id": "t_VotingParticipation",
+        "name": "VotingParticipation",
+        "comment": "",
+        "columnIds": [
+          "c_t_VotingParticipation_VotingId",
+          "c_t_VotingParticipation_UserId",
+          "c_t_VotingParticipation_HasVoted",
+          "c_t_VotingParticipation_VotedBatchId",
+          "c_t_VotingParticipation_CreatedAt"
+        ],
+        "seqColumnIds": [
+          "c_t_VotingParticipation_VotingId",
+          "c_t_VotingParticipation_UserId",
+          "c_t_VotingParticipation_HasVoted",
+          "c_t_VotingParticipation_VotedBatchId",
+          "c_t_VotingParticipation_CreatedAt"
+        ],
+        "ui": {
+          "x": 2500,
+          "y": 3000,
+          "zIndex": 1,
+          "widthName": 109,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "t_AnonymousBallot": {
+        "id": "t_AnonymousBallot",
+        "name": "AnonymousBallot",
+        "comment": "",
+        "columnIds": [
+          "c_t_AnonymousBallot_AnonymousBallotId",
+          "c_t_AnonymousBallot_VotingId",
+          "c_t_AnonymousBallot_ChoiceId",
+          "c_t_AnonymousBallot_VoteTag",
+          "c_t_AnonymousBallot_BatchId",
+          "c_t_AnonymousBallot_CreatedAt"
+        ],
+        "seqColumnIds": [
+          "c_t_AnonymousBallot_AnonymousBallotId",
+          "c_t_AnonymousBallot_VotingId",
+          "c_t_AnonymousBallot_ChoiceId",
+          "c_t_AnonymousBallot_VoteTag",
+          "c_t_AnonymousBallot_BatchId",
+          "c_t_AnonymousBallot_CreatedAt"
+        ],
+        "ui": {
+          "x": 700,
+          "y": 3000,
+          "zIndex": 1,
+          "widthName": 100,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771242903537,
+          "createAt": 1771240701758
+        }
+      },
+      "t___EFMigrationsHistory": {
+        "id": "t___EFMigrationsHistory",
+        "name": "__EFMigrationsHistory",
+        "comment": "",
+        "columnIds": [
+          "c_t___EFMigrationsHistory_MigrationId",
+          "c_t___EFMigrationsHistory_ProductVersion"
+        ],
+        "seqColumnIds": [
+          "c_t___EFMigrationsHistory_MigrationId",
+          "c_t___EFMigrationsHistory_ProductVersion"
+        ],
+        "ui": {
+          "x": 300,
+          "y": 4200,
+          "zIndex": 1,
+          "widthName": 130,
+          "widthComment": 60,
+          "color": "#e6e6e6"
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      }
+    },
+    "tableColumnEntities": {
+      "c_t_AspNetUsers_Id": {
+        "id": "c_t_AspNetUsers_Id",
+        "tableId": "t_AspNetUsers",
+        "name": "Id",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 3,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_Name": {
+        "id": "c_t_AspNetUsers_Name",
+        "tableId": "t_AspNetUsers",
+        "name": "Name",
+        "comment": "",
+        "dataType": "nvarchar(256)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 82,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_RefreshToken": {
+        "id": "c_t_AspNetUsers_RefreshToken",
+        "tableId": "t_AspNetUsers",
+        "name": "RefreshToken",
+        "comment": "",
+        "dataType": "nvarchar(1024)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 78,
+          "widthComment": 60,
+          "widthDataType": 88,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_DeletedAt": {
+        "id": "c_t_AspNetUsers_DeletedAt",
+        "tableId": "t_AspNetUsers",
+        "name": "DeletedAt",
+        "comment": "",
+        "dataType": "datetime2(0)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 76,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_UserName": {
+        "id": "c_t_AspNetUsers_UserName",
+        "tableId": "t_AspNetUsers",
+        "name": "UserName",
+        "comment": "",
+        "dataType": "nvarchar(256)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 61,
+          "widthComment": 60,
+          "widthDataType": 82,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_NormalizedUserName": {
+        "id": "c_t_AspNetUsers_NormalizedUserName",
+        "tableId": "t_AspNetUsers",
+        "name": "NormalizedUserName",
+        "comment": "",
+        "dataType": "nvarchar(256)",
+        "default": "",
+        "options": 4,
+        "ui": {
+          "keys": 0,
+          "widthName": 126,
+          "widthComment": 60,
+          "widthDataType": 82,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_Email": {
+        "id": "c_t_AspNetUsers_Email",
+        "tableId": "t_AspNetUsers",
+        "name": "Email",
+        "comment": "",
+        "dataType": "nvarchar(256)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 82,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_NormalizedEmail": {
+        "id": "c_t_AspNetUsers_NormalizedEmail",
+        "tableId": "t_AspNetUsers",
+        "name": "NormalizedEmail",
+        "comment": "",
+        "dataType": "nvarchar(256)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 96,
+          "widthComment": 60,
+          "widthDataType": 82,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_EmailConfirmed": {
+        "id": "c_t_AspNetUsers_EmailConfirmed",
+        "tableId": "t_AspNetUsers",
+        "name": "EmailConfirmed",
+        "comment": "",
+        "dataType": "bit",
+        "default": "(0)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 92,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_PasswordHash": {
+        "id": "c_t_AspNetUsers_PasswordHash",
+        "tableId": "t_AspNetUsers",
+        "name": "PasswordHash",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 85,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_SecurityStamp": {
+        "id": "c_t_AspNetUsers_SecurityStamp",
+        "tableId": "t_AspNetUsers",
+        "name": "SecurityStamp",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 85,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_ConcurrencyStamp": {
+        "id": "c_t_AspNetUsers_ConcurrencyStamp",
+        "tableId": "t_AspNetUsers",
+        "name": "ConcurrencyStamp",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 111,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_PhoneNumber": {
+        "id": "c_t_AspNetUsers_PhoneNumber",
+        "tableId": "t_AspNetUsers",
+        "name": "PhoneNumber",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 83,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_PhoneNumberConfirmed": {
+        "id": "c_t_AspNetUsers_PhoneNumberConfirmed",
+        "tableId": "t_AspNetUsers",
+        "name": "PhoneNumberConfirmed",
+        "comment": "",
+        "dataType": "bit",
+        "default": "(0)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 142,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_TwoFactorEnabled": {
+        "id": "c_t_AspNetUsers_TwoFactorEnabled",
+        "tableId": "t_AspNetUsers",
+        "name": "TwoFactorEnabled",
+        "comment": "",
+        "dataType": "bit",
+        "default": "(0)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 106,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_LockoutEnd": {
+        "id": "c_t_AspNetUsers_LockoutEnd",
+        "tableId": "t_AspNetUsers",
+        "name": "LockoutEnd",
+        "comment": "",
+        "dataType": "datetimeoffset(7)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 69,
+          "widthComment": 60,
+          "widthDataType": 101,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_LockoutEnabled": {
+        "id": "c_t_AspNetUsers_LockoutEnabled",
+        "tableId": "t_AspNetUsers",
+        "name": "LockoutEnabled",
+        "comment": "",
+        "dataType": "bit",
+        "default": "(0)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 92,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUsers_AccessFailedCount": {
+        "id": "c_t_AspNetUsers_AccessFailedCount",
+        "tableId": "t_AspNetUsers",
+        "name": "AccessFailedCount",
+        "comment": "",
+        "dataType": "int",
+        "default": "(0)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 110,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetRoles_Id": {
+        "id": "c_t_AspNetRoles_Id",
+        "tableId": "t_AspNetRoles",
+        "name": "Id",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 3,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetRoles_Name": {
+        "id": "c_t_AspNetRoles_Name",
+        "tableId": "t_AspNetRoles",
+        "name": "Name",
+        "comment": "",
+        "dataType": "nvarchar(256)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 82,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetRoles_NormalizedName": {
+        "id": "c_t_AspNetRoles_NormalizedName",
+        "tableId": "t_AspNetRoles",
+        "name": "NormalizedName",
+        "comment": "",
+        "dataType": "nvarchar(256)",
+        "default": "",
+        "options": 4,
+        "ui": {
+          "keys": 0,
+          "widthName": 99,
+          "widthComment": 60,
+          "widthDataType": 82,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetRoles_ConcurrencyStamp": {
+        "id": "c_t_AspNetRoles_ConcurrencyStamp",
+        "tableId": "t_AspNetRoles",
+        "name": "ConcurrencyStamp",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 111,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserRoles_UserId": {
+        "id": "c_t_AspNetUserRoles_UserId",
+        "tableId": "t_AspNetUserRoles",
+        "name": "UserId",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserRoles_RoleId": {
+        "id": "c_t_AspNetUserRoles_RoleId",
+        "tableId": "t_AspNetUserRoles",
+        "name": "RoleId",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetRoleClaims_Id": {
+        "id": "c_t_AspNetRoleClaims_Id",
+        "tableId": "t_AspNetRoleClaims",
+        "name": "Id",
+        "comment": "",
+        "dataType": "int",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetRoleClaims_RoleId": {
+        "id": "c_t_AspNetRoleClaims_RoleId",
+        "tableId": "t_AspNetRoleClaims",
+        "name": "RoleId",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetRoleClaims_ClaimType": {
+        "id": "c_t_AspNetRoleClaims_ClaimType",
+        "tableId": "t_AspNetRoleClaims",
+        "name": "ClaimType",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetRoleClaims_ClaimValue": {
+        "id": "c_t_AspNetRoleClaims_ClaimValue",
+        "tableId": "t_AspNetRoleClaims",
+        "name": "ClaimValue",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 64,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserClaims_Id": {
+        "id": "c_t_AspNetUserClaims_Id",
+        "tableId": "t_AspNetUserClaims",
+        "name": "Id",
+        "comment": "",
+        "dataType": "int",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserClaims_UserId": {
+        "id": "c_t_AspNetUserClaims_UserId",
+        "tableId": "t_AspNetUserClaims",
+        "name": "UserId",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserClaims_ClaimType": {
+        "id": "c_t_AspNetUserClaims_ClaimType",
+        "tableId": "t_AspNetUserClaims",
+        "name": "ClaimType",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserClaims_ClaimValue": {
+        "id": "c_t_AspNetUserClaims_ClaimValue",
+        "tableId": "t_AspNetUserClaims",
+        "name": "ClaimValue",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 64,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserLogins_LoginProvider": {
+        "id": "c_t_AspNetUserLogins_LoginProvider",
+        "tableId": "t_AspNetUserLogins",
+        "name": "LoginProvider",
+        "comment": "",
+        "dataType": "nvarchar(128)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 80,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserLogins_ProviderKey": {
+        "id": "c_t_AspNetUserLogins_ProviderKey",
+        "tableId": "t_AspNetUserLogins",
+        "name": "ProviderKey",
+        "comment": "",
+        "dataType": "nvarchar(128)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserLogins_ProviderDisplayName": {
+        "id": "c_t_AspNetUserLogins_ProviderDisplayName",
+        "tableId": "t_AspNetUserLogins",
+        "name": "ProviderDisplayName",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 123,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserLogins_UserId": {
+        "id": "c_t_AspNetUserLogins_UserId",
+        "tableId": "t_AspNetUserLogins",
+        "name": "UserId",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserTokens_UserId": {
+        "id": "c_t_AspNetUserTokens_UserId",
+        "tableId": "t_AspNetUserTokens",
+        "name": "UserId",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserTokens_LoginProvider": {
+        "id": "c_t_AspNetUserTokens_LoginProvider",
+        "tableId": "t_AspNetUserTokens",
+        "name": "LoginProvider",
+        "comment": "",
+        "dataType": "nvarchar(128)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 80,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserTokens_Name": {
+        "id": "c_t_AspNetUserTokens_Name",
+        "tableId": "t_AspNetUserTokens",
+        "name": "Name",
+        "comment": "",
+        "dataType": "nvarchar(128)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AspNetUserTokens_Value": {
+        "id": "c_t_AspNetUserTokens_Value",
+        "tableId": "t_AspNetUserTokens",
+        "name": "Value",
+        "comment": "",
+        "dataType": "nvarchar(max)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 84,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_Votings_VotingId": {
+        "id": "c_t_Votings_VotingId",
+        "tableId": "t_Votings",
+        "name": "VotingId",
+        "comment": "",
+        "dataType": "int",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 3,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_Votings_Name": {
+        "id": "c_t_Votings_Name",
+        "tableId": "t_Votings",
+        "name": "Name",
+        "comment": "",
+        "dataType": "nvarchar(200)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_Votings_CreatedAt": {
+        "id": "c_t_Votings_CreatedAt",
+        "tableId": "t_Votings",
+        "name": "CreatedAt",
+        "comment": "",
+        "dataType": "datetime2(0)",
+        "default": "SYSUTCDATETIME()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 76,
+          "widthDefault": 117
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_Votings_StartsAt": {
+        "id": "c_t_Votings_StartsAt",
+        "tableId": "t_Votings",
+        "name": "StartsAt",
+        "comment": "",
+        "dataType": "datetime2(0)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 76,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_Votings_EndsAt": {
+        "id": "c_t_Votings_EndsAt",
+        "tableId": "t_Votings",
+        "name": "EndsAt",
+        "comment": "",
+        "dataType": "datetime2(0)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 76,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_Votings_CreatedByUserId": {
+        "id": "c_t_Votings_CreatedByUserId",
+        "tableId": "t_Votings",
+        "name": "CreatedByUserId",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 98,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_Votings_KeySalt": {
+        "id": "c_t_Votings_KeySalt",
+        "tableId": "t_Votings",
+        "name": "KeySalt",
+        "comment": "",
+        "dataType": "varbinary(16)",
+        "default": "CRYPT_GEN_RANDOM(16)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 77,
+          "widthDefault": 155
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VoteChoices_ChoiceId": {
+        "id": "c_t_VoteChoices_ChoiceId",
+        "tableId": "t_VoteChoices",
+        "name": "ChoiceId",
+        "comment": "",
+        "dataType": "int",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 3,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VoteChoices_Name": {
+        "id": "c_t_VoteChoices_Name",
+        "tableId": "t_VoteChoices",
+        "name": "Name",
+        "comment": "",
+        "dataType": "nvarchar(200)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VoteChoices_Description": {
+        "id": "c_t_VoteChoices_Description",
+        "tableId": "t_VoteChoices",
+        "name": "Description",
+        "comment": "",
+        "dataType": "nvarchar(1000)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 67,
+          "widthComment": 60,
+          "widthDataType": 88,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VoteChoices_VotingId": {
+        "id": "c_t_VoteChoices_VotingId",
+        "tableId": "t_VoteChoices",
+        "name": "VotingId",
+        "comment": "",
+        "dataType": "int",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VoteChoices_CreatedAt": {
+        "id": "c_t_VoteChoices_CreatedAt",
+        "tableId": "t_VoteChoices",
+        "name": "CreatedAt",
+        "comment": "",
+        "dataType": "datetime2(0)",
+        "default": "SYSUTCDATETIME()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 76,
+          "widthDefault": 117
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VoteChoices_VoteCount": {
+        "id": "c_t_VoteChoices_VoteCount",
+        "tableId": "t_VoteChoices",
+        "name": "VoteCount",
+        "comment": "",
+        "dataType": "int",
+        "default": "(0)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VotingParticipation_VotingId": {
+        "id": "c_t_VotingParticipation_VotingId",
+        "tableId": "t_VotingParticipation",
+        "name": "VotingId",
+        "comment": "",
+        "dataType": "int",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VotingParticipation_UserId": {
+        "id": "c_t_VotingParticipation_UserId",
+        "tableId": "t_VotingParticipation",
+        "name": "UserId",
+        "comment": "",
+        "dataType": "nvarchar(450)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VotingParticipation_HasVoted": {
+        "id": "c_t_VotingParticipation_HasVoted",
+        "tableId": "t_VotingParticipation",
+        "name": "HasVoted",
+        "comment": "",
+        "dataType": "bit",
+        "default": "(1)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VotingParticipation_VotedBatchId": {
+        "id": "c_t_VotingParticipation_VotedBatchId",
+        "tableId": "t_VotingParticipation",
+        "name": "VotedBatchId",
+        "comment": "",
+        "dataType": "uniqueidentifier",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 78,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_VotingParticipation_CreatedAt": {
+        "id": "c_t_VotingParticipation_CreatedAt",
+        "tableId": "t_VotingParticipation",
+        "name": "CreatedAt",
+        "comment": "",
+        "dataType": "datetime2(0)",
+        "default": "SYSUTCDATETIME()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 76,
+          "widthDefault": 117
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AnonymousBallot_AnonymousBallotId": {
+        "id": "c_t_AnonymousBallot_AnonymousBallotId",
+        "tableId": "t_AnonymousBallot",
+        "name": "AnonymousBallotId",
+        "comment": "",
+        "dataType": "bigint",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 111,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AnonymousBallot_VotingId": {
+        "id": "c_t_AnonymousBallot_VotingId",
+        "tableId": "t_AnonymousBallot",
+        "name": "VotingId",
+        "comment": "",
+        "dataType": "int",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AnonymousBallot_ChoiceId": {
+        "id": "c_t_AnonymousBallot_ChoiceId",
+        "tableId": "t_AnonymousBallot",
+        "name": "ChoiceId",
+        "comment": "",
+        "dataType": "int",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AnonymousBallot_VoteTag": {
+        "id": "c_t_AnonymousBallot_VoteTag",
+        "tableId": "t_AnonymousBallot",
+        "name": "VoteTag",
+        "comment": "",
+        "dataType": "varbinary(32)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 78,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AnonymousBallot_BatchId": {
+        "id": "c_t_AnonymousBallot_BatchId",
+        "tableId": "t_AnonymousBallot",
+        "name": "BatchId",
+        "comment": "",
+        "dataType": "uniqueidentifier",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t_AnonymousBallot_CreatedAt": {
+        "id": "c_t_AnonymousBallot_CreatedAt",
+        "tableId": "t_AnonymousBallot",
+        "name": "CreatedAt",
+        "comment": "",
+        "dataType": "datetime2(0)",
+        "default": "SYSUTCDATETIME()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 76,
+          "widthDefault": 117
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t___EFMigrationsHistory_MigrationId": {
+        "id": "c_t___EFMigrationsHistory_MigrationId",
+        "tableId": "t___EFMigrationsHistory",
+        "name": "MigrationId",
+        "comment": "",
+        "dataType": "nvarchar(150)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 66,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "c_t___EFMigrationsHistory_ProductVersion": {
+        "id": "c_t___EFMigrationsHistory_ProductVersion",
+        "tableId": "t___EFMigrationsHistory",
+        "name": "ProductVersion",
+        "comment": "",
+        "dataType": "nvarchar(32)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 89,
+          "widthComment": 60,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      }
+    },
+    "relationshipEntities": {
+      "r_UserRoles_User": {
+        "id": "r_UserRoles_User",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_AspNetUserRoles",
+          "columnIds": [
+            "c_t_AspNetUserRoles_UserId"
+          ],
+          "x": 5200,
+          "y": 1552,
+          "direction": 1
+        },
+        "end": {
+          "tableId": "t_AspNetUsers",
+          "columnIds": [
+            "c_t_AspNetUsers_Id"
+          ],
+          "x": 4141,
+          "y": 1744,
+          "direction": 2
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_UserRoles_Role": {
+        "id": "r_UserRoles_Role",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_AspNetUserRoles",
+          "columnIds": [
+            "c_t_AspNetUserRoles_RoleId"
+          ],
+          "x": 5641,
+          "y": 1552,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t_AspNetRoles",
+          "columnIds": [
+            "c_t_AspNetRoles_Id"
+          ],
+          "x": 6300,
+          "y": 376,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_RoleClaims_Role": {
+        "id": "r_RoleClaims_Role",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_AspNetRoleClaims",
+          "columnIds": [
+            "c_t_AspNetRoleClaims_RoleId"
+          ],
+          "x": 6523,
+          "y": 1100,
+          "direction": 4
+        },
+        "end": {
+          "tableId": "t_AspNetRoles",
+          "columnIds": [
+            "c_t_AspNetRoles_Id"
+          ],
+          "x": 6546.5,
+          "y": 452,
+          "direction": 8
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_UserClaims_User": {
+        "id": "r_UserClaims_User",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_AspNetUserClaims",
+          "columnIds": [
+            "c_t_AspNetUserClaims_UserId"
+          ],
+          "x": 3823,
+          "y": 652,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "t_AspNetUsers",
+          "columnIds": [
+            "c_t_AspNetUsers_Id"
+          ],
+          "x": 3870.5,
+          "y": 1500,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_UserLogins_User": {
+        "id": "r_UserLogins_User",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_AspNetUserLogins",
+          "columnIds": [
+            "c_t_AspNetUserLogins_UserId"
+          ],
+          "x": 3852.5,
+          "y": 2600,
+          "direction": 4
+        },
+        "end": {
+          "tableId": "t_AspNetUsers",
+          "columnIds": [
+            "c_t_AspNetUsers_Id"
+          ],
+          "x": 4050.833333333334,
+          "y": 1988,
+          "direction": 8
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_UserTokens_User": {
+        "id": "r_UserTokens_User",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_AspNetUserTokens",
+          "columnIds": [
+            "c_t_AspNetUserTokens_UserId"
+          ],
+          "x": 3831,
+          "y": 3500,
+          "direction": 4
+        },
+        "end": {
+          "tableId": "t_AspNetUsers",
+          "columnIds": [
+            "c_t_AspNetUsers_Id"
+          ],
+          "x": 3870.5000000000005,
+          "y": 1988,
+          "direction": 8
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_Votings_CreatedBy": {
+        "id": "r_Votings_CreatedBy",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_Votings",
+          "columnIds": [
+            "c_t_Votings_CreatedByUserId"
+          ],
+          "x": 2474,
+          "y": 1612,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t_AspNetUsers",
+          "columnIds": [
+            "c_t_AspNetUsers_Id"
+          ],
+          "x": 3600,
+          "y": 1744,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_VoteChoices_Voting": {
+        "id": "r_VoteChoices_Voting",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_VoteChoices",
+          "columnIds": [
+            "c_t_VoteChoices_VotingId"
+          ],
+          "x": 1210,
+          "y": 1600,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t_Votings",
+          "columnIds": [
+            "c_t_Votings_VotingId"
+          ],
+          "x": 1900,
+          "y": 1556,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_VotingParticipation_Voting": {
+        "id": "r_VotingParticipation_Voting",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_VotingParticipation",
+          "columnIds": [
+            "c_t_VotingParticipation_VotingId"
+          ],
+          "x": 2761.5,
+          "y": 3000,
+          "direction": 4
+        },
+        "end": {
+          "tableId": "t_Votings",
+          "columnIds": [
+            "c_t_Votings_VotingId"
+          ],
+          "x": 2187,
+          "y": 1724,
+          "direction": 8
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_VotingParticipation_User": {
+        "id": "r_VotingParticipation_User",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_VotingParticipation",
+          "columnIds": [
+            "c_t_VotingParticipation_UserId"
+          ],
+          "x": 3023,
+          "y": 3088,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t_AspNetUsers",
+          "columnIds": [
+            "c_t_AspNetUsers_Id"
+          ],
+          "x": 3690.166666666667,
+          "y": 1988,
+          "direction": 8
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_AnonymousBallot_Voting": {
+        "id": "r_AnonymousBallot_Voting",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_AnonymousBallot",
+          "columnIds": [
+            "c_t_AnonymousBallot_VotingId"
+          ],
+          "x": 1256,
+          "y": 3100,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t_Votings",
+          "columnIds": [
+            "c_t_Votings_VotingId"
+          ],
+          "x": 1900,
+          "y": 1668,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      },
+      "r_AnonymousBallot_Choice": {
+        "id": "r_AnonymousBallot_Choice",
+        "identification": true,
+        "relationshipType": 16,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t_AnonymousBallot",
+          "columnIds": [
+            "c_t_AnonymousBallot_ChoiceId"
+          ],
+          "x": 978,
+          "y": 3000,
+          "direction": 4
+        },
+        "end": {
+          "tableId": "t_VoteChoices",
+          "columnIds": [
+            "c_t_VoteChoices_ChoiceId"
+          ],
+          "x": 955,
+          "y": 1700,
+          "direction": 8
+        },
+        "meta": {
+          "updateAt": 1771241105081,
+          "createAt": 1771240701758
+        }
+      }
+    },
+    "indexEntities": {},
+    "indexColumnEntities": {},
+    "memoEntities": {}
+  }
+}

@@ -7,7 +7,8 @@ namespace VoterSystem.DataAccess;
 public class VoterSystemDbContext(DbContextOptions<VoterSystemDbContext> options) 
     : IdentityDbContext<User, UserRole, Guid>(options)
 {
-    public DbSet<Vote> Votes { get; set; } = null!;
+    public DbSet<VotingParticipation> VotingParticipations { get; set; } = null!;
+    public DbSet<AnonymousBallot> AnonymousBallots { get; set; } = null!;
     public DbSet<Voting> Votings { get; set; } = null!;
     public DbSet<VoteChoice> VoteChoices { get; set; } = null!;
     
@@ -15,24 +16,33 @@ public class VoterSystemDbContext(DbContextOptions<VoterSystemDbContext> options
     {
         base.OnModelCreating(modelBuilder);
         
-        modelBuilder.Entity<Vote>()
-            .HasKey(p => new { p.UserId, p.ChoiceId });
+        modelBuilder.Entity<AnonymousBallot>()
+            .HasKey(p => p.AnonymousBallotId);
         
-        modelBuilder.Entity<Vote>()
-            .HasOne(v => v.VoteChoice)
-            .WithMany(c => c.Votes)
-            .HasForeignKey(v => v.ChoiceId)
-            .OnDelete(DeleteBehavior.NoAction);
-        
-        modelBuilder.Entity<Vote>()
+        modelBuilder.Entity<AnonymousBallot>()
             .HasOne(v => v.Voting)
-            .WithMany(c => c.Votes)
+            .WithMany(c => c.AnonymousBallots)
             .HasForeignKey(v => v.VotingId)
             .OnDelete(DeleteBehavior.Cascade);
         
-        modelBuilder.Entity<Vote>()
+        modelBuilder.Entity<AnonymousBallot>()
+            .HasOne(v => v.VoteChoice)
+            .WithMany(c => c.AnonymousBallots)
+            .HasForeignKey(v => v.ChoiceId)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        modelBuilder.Entity<VotingParticipation>()
+            .HasKey(p => new { p.UserId, p.VotingId });
+        
+        modelBuilder.Entity<VotingParticipation>()
+            .HasOne(v => v.Voting)
+            .WithMany(c => c.VotingParticipations)
+            .HasForeignKey(v => v.VotingId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<VotingParticipation>()
             .HasOne(v => v.User)
-            .WithMany(c => c.Votes)
+            .WithMany(c => c.VotingParticipations)
             .HasForeignKey(v => v.UserId)
             .OnDelete(DeleteBehavior.NoAction);
         
@@ -50,6 +60,13 @@ public class VoterSystemDbContext(DbContextOptions<VoterSystemDbContext> options
         modelBuilder.Entity<VoteChoice>()
             .HasIndex(v => new { v.VotingId, v.Name })
             .IsUnique();
+        
+        modelBuilder.Entity<AnonymousBallot>()
+            .HasIndex(v => new { v.VotingId, v.VoteTag })
+            .IsUnique();
+
+        modelBuilder.Entity<AnonymousBallot>()
+            .HasIndex(v => new { v.VotingId, v.ChoiceId });
         
         modelBuilder.Entity<Voting>()
             .HasOne(v => v.CreatedByUser)

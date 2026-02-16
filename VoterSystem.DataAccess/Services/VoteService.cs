@@ -1,16 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
+using VoterSystem.Shared;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
 
-public class VoteService(VoterSystemDbContext dbContext, IUserService userService) 
-    : BaseService<Vote>(userService), IVoteService
+public class VoteService(
+    VoterSystemDbContext dbContext, 
+    IUserService userService, 
+    IOptions<VotingSettings> votingSettingsOptions) 
+    : BaseService<AnonymousBallot>(userService), IVoteService
 {
     private readonly IUserService _userService = userService;
+    private readonly VotingSettings _votingSettings = votingSettingsOptions.Value;
     protected override bool CanAccessAll(bool admin) => admin;
 
-    public async Task<Result<List<Vote>, ServiceError>> GetVotesForVoting(Voting voting)
+    public async Task<Result<List<AnonymousBallot>, ServiceError>> GetVotesForVoting(Voting voting)
     {
         //Admin can access them all
         var isAdmin = _userService.IsCurrentUserAdmin();
@@ -28,8 +36,9 @@ public class VoteService(VoterSystemDbContext dbContext, IUserService userServic
         }
         
         //If you have voted, you can also access them all
-        var hasVoted = await dbContext.Votes.AnyAsync(v => v.VotingId == voting.VotingId
-                                                           && v.UserId == userId.Value);
+        var hasVoted = await dbContext.VotingParticipations
+            .AnyAsync(v => 
+                v.VotingId == voting.VotingId && v.UserId == userId.Value);
         if (!hasVoted)
         {
             return new UnauthorizedError("Access denied");
@@ -38,14 +47,14 @@ public class VoteService(VoterSystemDbContext dbContext, IUserService userServic
         return await GetVotes(voting);
     }
 
-    private async Task<List<Vote>> GetVotes(Voting voting)
+    private async Task<List<AnonymousBallot>> GetVotes(Voting voting)
     {
-        return await dbContext.Votes
+        return await dbContext.AnonymousBallots
             .Where(v => v.VotingId == voting.VotingId)
             .ToListAsync();
     }
     
-    public async Task<Result<List<Vote>, ServiceError>> GetMyVotes()
+    public async Task<Result<List<VotingParticipation>, ServiceError>> GetMyVotes()
     {
         var isAdmin = _userService.IsCurrentUserAdmin();
         if (isAdmin)
@@ -56,49 +65,75 @@ public class VoteService(VoterSystemDbContext dbContext, IUserService userServic
         var userId = _userService.GetCurrentUserId();
         if (userId.IsError) return userId.Error;
         
-        return await dbContext.Votes
+        return await dbContext.VotingParticipations
             .Where(v => v.UserId == userId.Value)
             .ToListAsync();
     }
 
-    private async Task<Option<ServiceError>> CastVote(Vote vote)
+    public async Task<Result<VoteResultDto, ServiceError>> CastVote(User user, VoteChoice voteChoice)
     {
-        var user = await _userService.GetUserRoleByIdAsync(vote.UserId);
-        if (user.IsError) return user.Error;
-        if (user.Value == Role.Admin)
-        {
-            return new UnauthorizedError("Admins cannot vote");
-        }
-        
-        var check = await CheckAccessOn(vote, RoleControlAction.Create);
-        if (check.IsSome) return check.AsSome.Value;
-        
-        try
-        {
-            await dbContext.Votes.AddAsync(vote);
-            await dbContext.SaveChangesAsync();
-            return new Option<ServiceError>.None();
-        }
-        catch (Exception e)
-        {
-            return new ConflictError(e.Message);
-        }
-    }
-
-    public async Task<Option<ServiceError>> CastVote(User user, VoteChoice voteChoice)
-    {
-        var vote = new Vote
-        {
-            UserId = user.Id,
-            VotingId = voteChoice.VotingId,
-            ChoiceId = voteChoice.ChoiceId,
-        };
-
         if (voteChoice.Voting.CreatedByUserId == user.Id)
         {
             return new UnauthorizedError("You can not vote on your own voting!");
         }
+        
+        var role = await _userService.GetUserRoleByIdAsync(user.Id);
+        if (role.IsError) return role.Error;
+        if (role.Value == Role.Admin)
+        {
+            return new UnauthorizedError("Admins cannot vote");
+        }
+        
+        var alreadyVoted = await dbContext.VotingParticipations.AnyAsync(
+            x => x.UserId == user.Id && x.VotingId == voteChoice.VotingId);
+        if (alreadyVoted)
+        {
+            return new ConflictError("User already voted on this voting");
+        }
 
-        return await CastVote(vote);
+        try
+        {
+            var participation = new VotingParticipation
+            {
+                UserId = user.Id,
+                VotingId = voteChoice.VotingId,
+                HasVoted = true
+            };
+
+            await dbContext.VotingParticipations.AddAsync(participation);
+
+            var saltS = Convert.ToBase64String(voteChoice.Voting.KeySalt);
+            var result = SaltGenerator.CreateVoteTag(saltS, _votingSettings.MasterKey);
+
+            var ballot = new AnonymousBallot
+            {
+                VotingId = voteChoice.VotingId,
+                ChoiceId = voteChoice.ChoiceId,
+                VoteTag = result.HashCode
+            };
+
+            await dbContext.AnonymousBallots.AddAsync(ballot);
+
+            voteChoice.VoteCount++;
+            dbContext.VoteChoices.Update(voteChoice);
+
+            //var check = await CheckAccessOn(ballot, RoleControlAction.Create);
+            //if (check.IsSome) return check.AsSome.Value;
+
+            await dbContext.SaveChangesAsync();
+            return new VoteResultDto
+            {
+                VotingId = voteChoice.VotingId,
+                Receipt = result.Receipt
+            };
+        }
+        catch (DbUpdateException e)
+        {
+            return new ConflictError(e.Message);
+        }
+        catch (Exception e)
+        {
+            return new BadRequestError(e.Message);
+        }
     }
 }

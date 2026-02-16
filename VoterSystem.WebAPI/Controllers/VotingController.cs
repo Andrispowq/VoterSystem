@@ -224,6 +224,6 @@ public class VotingController(IVotingService votingService, IVoteService voteSer
         var voting = votingRes.Value;
 
         var votes = await voteService.GetVotesForVoting(voting);
-        return votes.ToOkResult(list => list.Select(DtoExtensions.ToVoteDto));
+        return votes.ToOkResult(list => list.Select(DtoExtensions.ToBallotDto));
     }
 }

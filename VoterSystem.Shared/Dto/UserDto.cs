@@ -11,5 +11,5 @@ public class UserDto
     public required bool TwoFactorEnabled { get; init; }
     public Role Role { get; set; }
     
-    public required ICollection<VoteDto> Votes { get; init; }
+    public required ICollection<VotingParticipationDto> Participations { get; init; }
 }

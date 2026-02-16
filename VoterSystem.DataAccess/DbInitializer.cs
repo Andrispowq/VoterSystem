@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 
 namespace VoterSystem.DataAccess;
 
-public static class DbInitializer
+public class DbInitializer
 {
     private sealed class UserSeedDto
     {
@@ -16,7 +17,7 @@ public static class DbInitializer
 
     private static readonly List<UserSeedDto> Users =
     [
-        new() { Email = "example@gmail.com", Password = "test_Str0ng_password", Role = Role.User },
+        new() { Email = "example1@gmail.com", Password = "test_Str0ng_password", Role = Role.User },
         new() { Email = "example2@gmail.com", Password = "test_Str0ng_password", Role = Role.User },
         new() { Email = "example3@gmail.com", Password = "test_Str0ng_password", Role = Role.User },
         new() { Email = "example4@gmail.com", Password = "test_Str0ng_password", Role = Role.User },
@@ -28,7 +29,9 @@ public static class DbInitializer
     public static async Task InitialiseAsync(
         VoterSystemDbContext context,
         IUserService userService,
+        IVoteService voteService,
         RoleManager<UserRole> roleManager,
+        ILogger<DbInitializer> logger,
         bool prune = true)
     {
         if (prune)
@@ -108,55 +111,35 @@ public static class DbInitializer
             }
         }
 
-        if (!context.Votes.Any())
+        if (!context.AnonymousBallots.Any())
         {
             var users = await context.Users.ToListAsync();
-            var votingList = await context.Votings.ToListAsync();
-            var voting = votingList.Skip(1).First();
+            var voting = await context.Votings.OrderBy(x => x.CreatedAt).Skip(1).FirstAsync();
             var choices = await context.VoteChoices.Where(c => c.VotingId == voting.VotingId)
                 .ToListAsync();
-            
-            var votes = new List<Vote>
-            {
-                new()
-                {
-                    UserId = users[0].Id,
-                    VotingId = voting.VotingId,
-                    ChoiceId = choices[0].ChoiceId,
-                },
-                new()
-                {
-                    UserId = users[1].Id,
-                    VotingId = voting.VotingId,
-                    ChoiceId = choices[^1].ChoiceId,
-                },
-                new()
-                {
-                    UserId = users[2].Id,
-                    VotingId = voting.VotingId,
-                    ChoiceId = choices[0].ChoiceId,
-                },
-                new()
-                {
-                    UserId = users[3].Id,
-                    VotingId = voting.VotingId,
-                    ChoiceId = choices[1].ChoiceId,
-                }
-            };
 
-            foreach (var vote in votes)
-            {
-                //Use this to bypass restrictions in the services
-                await context.Votes.AddAsync(vote);
-            }
-            
-            await context.SaveChangesAsync();
+            await TryCastVote(voteService, logger, users[4], choices[0]);
+            await TryCastVote(voteService, logger, users[1], choices[^1]);
+            await TryCastVote(voteService, logger, users[2], choices[0]);
+            await TryCastVote(voteService, logger, users[3], choices[1]);
+        }
+    }
+
+    private static async Task TryCastVote(IVoteService voteService, 
+        ILogger<DbInitializer> logger,
+        User user, VoteChoice choice)
+    {
+        var result = await voteService.CastVote(user, choice);
+        if (result.IsError)
+        {
+            logger.LogWarning("Failed to vote with user {User} for option {Choice}: {Error}",
+                user.Name, choice.Name, result.ToString());
         }
     }
     
     private static async Task SeedRolesAsync(RoleManager<UserRole> roleManager)
     {
-        string[] roleNames = [ Role.User.ToString(), Role.Admin.ToString() ];
+        string[] roleNames = [ nameof(Role.User), nameof(Role.Admin) ];
 
         foreach (var roleName in roleNames)
         {

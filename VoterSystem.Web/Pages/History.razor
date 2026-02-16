@@ -60,12 +60,12 @@
     [Parameter] [SupplyParameterFromQuery] public bool Offline { get; set; }
     
     private VotingsViewModel? ViewModel { get; set; }
-    private List<VoteDto>? Votes { get; set; }
+    private List<VotingParticipationDto>? Votes { get; set; }
     
     private Dictionary<long, VotingResultsDto> VotingResults { get; set; } = new();
     private HashSet<long> LoadingResults { get; set; } = new();
     
-    private Dictionary<long, long> _userVotesByVotingId = new();
+    //private Dictionary<long, long> _userVotesByVotingId = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,7 +89,9 @@
             return;
         }
         
-        _userVotesByVotingId = Votes.ToDictionary(v => v.Voting.VotingId, v => v.VoteChoice.ChoiceId);
+        /*_userVotesByVotingId = Votes.ToDictionary(
+            v => v.Voting.VotingId, 
+            v => v.VoteChoice.ChoiceId);*/
 
         if (ViewModel is not null)
         {
@@ -210,8 +212,8 @@
             <ul class="list-group list-group-flush">
                 @foreach (var choice in voting.VoteChoices)
                 {
-                    bool isSelected = _userVotesByVotingId.TryGetValue(voting.VotingId, out var selectedChoiceId)
-                                          && selectedChoiceId == choice.ChoiceId;
+                     var isSelected = /*_userVotesByVotingId.TryGetValue(voting.VotingId, out var selectedChoiceId)
+                                          && selectedChoiceId == choice.ChoiceId;*/false;
 
                     <li class="list-group-item d-flex justify-content-between align-items-start @(isSelected ? "list-group-item-success fw-bold" : "")">
                         <div>

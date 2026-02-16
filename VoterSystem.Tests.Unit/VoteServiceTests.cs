@@ -38,8 +38,8 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         var result = await _voteService.CastVote(user, _voteChoice);
 
         // Assert
-        Assert.True(result.IsSome);
-        Assert.IsType<UnauthorizedError>(result.AsSome.Value);
+        Assert.True(result.IsError);
+        Assert.IsType<UnauthorizedError>(result.Error);
     }
 
     [Fact]
@@ -58,8 +58,8 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         var result = await _voteService.CastVote(user, _voteChoice);
 
         // Assert
-        Assert.True(result.IsSome);
-        Assert.IsType<UnauthorizedError>(result.AsSome.Value);
+        Assert.True(result.IsError);
+        Assert.IsType<UnauthorizedError>(result.Error);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         var result = await _voteService.CastVote(anotherUser, _voteChoice);
 
         // Assert
-        Assert.True(result.IsNone); // Vote is cast successfully, no error
+        Assert.True(result.IsError); // Vote is cast successfully, no error
     }
 
     #endregion

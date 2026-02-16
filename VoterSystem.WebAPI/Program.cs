@@ -186,12 +186,14 @@ public class Program
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
-            var database = services.GetService<VoterSystemDbContext>()!;
+            var database = services.GetRequiredService<VoterSystemDbContext>();
 
-            var userService = services.GetService<IUserService>()!;
+            var userService = services.GetRequiredService<IUserService>();
+            var voteService = services.GetRequiredService<IVoteService>();
+            var logger = services.GetRequiredService<ILogger<DbInitializer>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();
 
-            await DbInitializer.InitialiseAsync(database, userService, roleManager);
+            await DbInitializer.InitialiseAsync(database, userService, voteService, roleManager, logger);
         }
 
         await app.RunAsync();

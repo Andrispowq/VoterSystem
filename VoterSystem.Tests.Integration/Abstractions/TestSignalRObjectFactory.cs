@@ -41,7 +41,8 @@ public class TestSignalRObjectFactory : BaseTest
 
         dbContext.Votings.ExecuteDelete();
         dbContext.VoteChoices.ExecuteDelete();
-        dbContext.Votes.ExecuteDelete();
+        dbContext.VotingParticipations.ExecuteDelete();
+        dbContext.AnonymousBallots.ExecuteDelete();
         dbContext.Users.ExecuteDelete();
         
         //dbContext.Database.EnsureDeleted();

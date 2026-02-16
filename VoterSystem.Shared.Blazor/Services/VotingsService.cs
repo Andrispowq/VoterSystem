@@ -180,11 +180,11 @@ public class VotingsService(IHttpRequestUtility httpRequestUtility) : IVotingsSe
         }
     }
 
-    public async Task<List<VoteDto>?> GetMyVotesAsync()
+    public async Task<List<VotingParticipationDto>?> GetMyVotesAsync()
     {
         try
         {
-            var result = await httpRequestUtility.ExecuteGetHttpRequestAsync<List<VoteDto>>($"votes");
+            var result = await httpRequestUtility.ExecuteGetHttpRequestAsync<List<VotingParticipationDto>>($"votes");
             return result.Response;
         }
         catch (System.Exception ex)

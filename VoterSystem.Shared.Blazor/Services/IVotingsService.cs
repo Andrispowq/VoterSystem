@@ -19,6 +19,6 @@ public interface IVotingsService
     Task<VotingDto?> CreateVotingAsync(VotingCreateRequestDto dto);
     Task DeleteVotingAsync(long votingId);
 
-    Task<List<VoteDto>?> GetMyVotesAsync();
+    Task<List<VotingParticipationDto>?> GetMyVotesAsync();
     Task<bool> VoteAsync(long choiceId);
 }

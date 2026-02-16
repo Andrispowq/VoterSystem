@@ -1,4 +1,5 @@
 using VoterSystem.DataAccess.Model;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
@@ -8,7 +9,7 @@ namespace VoterSystem.DataAccess.Services;
 /// </summary>
 public interface IVoteService
 {
-    Task<Result<List<Vote>, ServiceError>> GetVotesForVoting(Voting voting);
-    Task<Result<List<Vote>, ServiceError>> GetMyVotes();
-    Task<Option<ServiceError>> CastVote(User user, VoteChoice voteChoice);
+    Task<Result<List<AnonymousBallot>, ServiceError>> GetVotesForVoting(Voting voting);
+    Task<Result<List<VotingParticipation>, ServiceError>> GetMyVotes();
+    Task<Result<VoteResultDto, ServiceError>> CastVote(User user, VoteChoice voteChoice);
 }

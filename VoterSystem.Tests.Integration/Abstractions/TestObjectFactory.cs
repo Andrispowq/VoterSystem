@@ -19,7 +19,8 @@ public abstract class TestObjectFactory : BaseTest
 
         DbContext.Votings.ExecuteDelete();
         DbContext.VoteChoices.ExecuteDelete();
-        DbContext.Votes.ExecuteDelete();
+        DbContext.VotingParticipations.ExecuteDelete();
+        DbContext.AnonymousBallots.ExecuteDelete();
         DbContext.Users.ExecuteDelete();
         
         //DbContext.Database.EnsureDeleted();

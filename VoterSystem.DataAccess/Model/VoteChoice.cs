@@ -8,11 +8,15 @@ public class VoteChoice : ITimestamped, IRoleControlled
     [MaxLength(50)] public required string Name { get; set; }
     [MaxLength(255)] public string? Description { get; set; }
     public required long VotingId { get; set; }
+    /// <summary>
+    /// Index property used to speed up subsequent vote count lookups, but not the primary source of truth
+    /// </summary>
+    public int? VoteCount { get; set; }
     
     public DateTime CreatedAt { get; set;  } = DateTime.UtcNow;
 
     public virtual Voting Voting { get; set; } = null!;
-    public virtual ICollection<Vote> Votes { get; set; } = [];
+    public virtual ICollection<AnonymousBallot> AnonymousBallots { get; set; } = [];
     
     //Choices can be seen by anyone
     public bool CanAccessById(bool isAdmin, Guid userId)

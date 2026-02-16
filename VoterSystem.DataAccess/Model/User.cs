@@ -10,7 +10,7 @@ public class User : IdentityUser<Guid>, ISoftDeletable, IRoleControlled
     public DateTime? DeletedAt { get; set; }
     
     public virtual ICollection<Voting> Votings { get; set; } = [];
-    public virtual ICollection<Vote> Votes { get; set; } = [];
+    public virtual ICollection<VotingParticipation> VotingParticipations { get; set; } = [];
     
     //We can access users as an admin or ourselves
     public bool CanAccessById(bool isAdmin, Guid userId)

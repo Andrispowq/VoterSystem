@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Options;
 using Moq;
+using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.Shared.Functional;
@@ -9,6 +11,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
 {
     private readonly VoteService _voteService;
     private readonly Mock<IUserService> _mockUserService;
+    private readonly IOptions<VotingSettings> _votingSettings;
     
     private User _user = null!;
     private Voting _voting = null!;
@@ -17,9 +20,11 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     public VoteServiceTests()
     {
         _mockUserService = new Mock<IUserService>();
+        _votingSettings = new OptionsWrapper<VotingSettings>(new VotingSettings());
         _voteService = new VoteService(
             Context,
-            _mockUserService.Object);
+            _mockUserService.Object,
+            _votingSettings);
 
         SeedDatabase();
     }
@@ -38,8 +43,8 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         var result = await _voteService.CastVote(user, _voteChoice);
 
         // Assert
-        Assert.True(result.IsSome);
-        Assert.IsType<UnauthorizedError>(result.AsSome.Value);
+        Assert.True(result.IsError);
+        Assert.IsType<UnauthorizedError>(result.Error);
     }
 
     [Fact]
@@ -58,8 +63,8 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         var result = await _voteService.CastVote(user, _voteChoice);
 
         // Assert
-        Assert.True(result.IsSome);
-        Assert.IsType<UnauthorizedError>(result.AsSome.Value);
+        Assert.True(result.IsError);
+        Assert.IsType<UnauthorizedError>(result.Error);
     }
 
     [Fact]
@@ -76,7 +81,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         var result = await _voteService.CastVote(anotherUser, _voteChoice);
 
         // Assert
-        Assert.True(result.IsNone); // Vote is cast successfully, no error
+        Assert.True(result.HasValue); // Vote is cast successfully, no error
     }
 
     #endregion
@@ -88,17 +93,17 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     {
         // Arrange
         _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(true);
-        var votes = new List<Vote>
+        var votes = new List<AnonymousBallot>
         {
             new()
             {
-                VotingId = _voting.VotingId, 
+                VotingId = _voting.VotingId,
                 ChoiceId = 1,
-                UserId = Guid.NewGuid()
+                VoteTag = []
             }
         };
         
-        await Context.Votes.AddRangeAsync(votes);
+        await Context.AnonymousBallots.AddRangeAsync(votes);
         await Context.SaveChangesAsync();
 
         // Act
@@ -114,17 +119,27 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     {
         // Arrange
         var userId = _user.Id;
-        var votes = new List<Vote>
+        var ballots = new List<AnonymousBallot>
         {
             new()
             {
-                VotingId = _voting.VotingId, 
-                UserId = userId, 
+                VotingId = _voting.VotingId,
                 ChoiceId = _voteChoice.ChoiceId,
+                VoteTag = []
+            }
+        };
+        var participations = new List<VotingParticipation>
+        {
+            new()
+            {
+                UserId = userId,
+                VotingId = _voting.VotingId,
+                HasVoted = true
             }
         };
         
-        await Context.Votes.AddRangeAsync(votes);
+        await Context.AnonymousBallots.AddRangeAsync(ballots);
+        await Context.VotingParticipations.AddRangeAsync(participations);
         await Context.SaveChangesAsync();
 
         _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(userId);
@@ -175,17 +190,27 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     {
         // Arrange
         var userId = _user.Id;
-        var votes = new List<Vote>
+        var ballots = new List<AnonymousBallot>
         {
             new()
             {
-                UserId = userId, 
-                VotingId = _voting.VotingId, 
-                ChoiceId = _voteChoice.ChoiceId
+                VotingId = _voting.VotingId,
+                ChoiceId = _voteChoice.ChoiceId,
+                VoteTag = []
+            }
+        };
+        var participations = new List<VotingParticipation>
+        {
+            new()
+            {
+                UserId = userId,
+                VotingId = _voting.VotingId,
+                HasVoted = true
             }
         };
         
-        await Context.Votes.AddRangeAsync(votes);
+        await Context.AnonymousBallots.AddRangeAsync(ballots);
+        await Context.VotingParticipations.AddRangeAsync(participations);
         await Context.SaveChangesAsync();
 
         _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(userId);

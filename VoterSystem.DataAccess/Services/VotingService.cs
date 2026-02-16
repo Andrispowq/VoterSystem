@@ -106,7 +106,7 @@ public class VotingService(VoterSystemDbContext dbContext, IUserService userServ
         var userId = _userService.GetCurrentUserId();
         if (userId.IsError) return false;
         
-        return await dbContext.Votes
+        return await dbContext.VotingParticipations
             .AnyAsync(v => v.VotingId == voting.VotingId && v.UserId == userId.Value);
     }
 }

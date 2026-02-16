@@ -7,7 +7,7 @@ public static class DtoExtensions
 {
     public static TokensDto ToTokensDto(this Tokens tokens)
     {
-        return new()
+        return new TokensDto
         {
             AuthToken = tokens.AuthToken,
             RefreshToken = tokens.RefreshToken,
@@ -17,20 +17,20 @@ public static class DtoExtensions
 
     public static UserDto ToUserDto(this User user)
     {
-        return new()
+        return new UserDto
         {
             Id = user.Id,
             Email = user.Email!,
             EmailConfirmed = user.EmailConfirmed,
             Name = user.Name,
-            Votes = GetVotes(user),
+            Participations = GetVotes(user),
             TwoFactorEnabled = user.TwoFactorEnabled,
         };
     }
 
     public static VoteChoiceDto ToVoteChoiceDto(this VoteChoice voteChoice)
     {
-        return new()
+        return new VoteChoiceDto
         {
             ChoiceId = voteChoice.ChoiceId,
             Name = voteChoice.Name,
@@ -39,9 +39,9 @@ public static class DtoExtensions
         };
     }
 
-    public static VoteDto ToVoteDto(this Vote vote)
+    public static BallotDto ToBallotDto(this AnonymousBallot vote)
     {
-        return new()
+        return new BallotDto
         {
             CreatedAt = vote.CreatedAt,
             VoteChoice = vote.VoteChoice.ToVoteChoiceDto(),
@@ -49,9 +49,17 @@ public static class DtoExtensions
         };
     }
 
+    public static VotingParticipationDto ToVotingParticipationDto(this VotingParticipation vote)
+    {
+        return new VotingParticipationDto
+        {
+            Voting = vote.Voting.ToVotingDto()
+        };
+    }
+
     public static VotingDto ToVotingDto(this Voting voting)
     {
-        return new()
+        return new VotingDto
         {
             VotingId = voting.VotingId,
             Name = voting.Name,
@@ -68,7 +76,7 @@ public static class DtoExtensions
         };
     }
 
-    public static VotingResultsDto ToVotingResultsDto(this List<Vote> votes)
+    public static VotingResultsDto ToVotingResultsDto(this List<AnonymousBallot> votes)
     {
         return new()
         {
@@ -76,12 +84,13 @@ public static class DtoExtensions
         };
     }
 
-    private static List<VoteDto> GetVotes(User user)
+    private static List<VotingParticipationDto> GetVotes(User user)
     {
-        return user.Votes.Select(vote => vote.ToVoteDto()).ToList();
+        return user.VotingParticipations.Select(
+            vote => vote.ToVotingParticipationDto()).ToList();
     }
 
-    private static List<ChoiceResultDto> CalculateResults(List<Vote> list)
+    private static List<ChoiceResultDto> CalculateResults(List<AnonymousBallot> list)
     {
         return list
             .GroupBy(v => v.ChoiceId)

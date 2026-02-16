@@ -1,6 +1,6 @@
 namespace VoterSystem.Shared.Dto;
 
-public class VoteDto
+public class BallotDto
 {
     public required VoteChoiceDto VoteChoice { get; init; }
     public required VotingDto Voting { get; init; }

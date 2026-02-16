@@ -1,4 +1,5 @@
 ﻿@page "/login"
+@using VoterSystem.Shared.Blazor
 @using VoterSystem.Shared.Blazor.Services
 @using VoterSystem.Shared.Blazor.ViewModels
 @using VoterSystem.Web.Admin.Layout
@@ -22,11 +23,15 @@
         else
         {
             <div class="mb-3">
-                <button type="button"
-                        class="btn btn-outline-secondary me-2"
-                        @onclick="LoginAsUser">
-                    Login as user
-                </button>
+                @for (var i = 1; i <= 6; ++i)
+                {
+                    var i2 = i;
+                    <button type="button"
+                            class="btn btn-outline-secondary me-2"
+                            @onclick="() => LoginAsUser(i2)">
+                        Login as user @i
+                    </button>
+                }
                 <button type="button"
                         class="btn btn-outline-secondary"
                         @onclick="LoginAsAdmin">
@@ -76,12 +81,6 @@
     private LoginViewModel LoginViewModel { get; set; } = new();
     private bool _tryAutoLogin = true;
     
-    private const string DevUserEmail = "example@gmail.com";
-    private const string DevUserPassword = "test_Str0ng_password";
-
-    private const string DevAdminEmail = "example6@gmail.com";
-    private const string DevAdminPassword = "test_Str0ng_password";
-
     protected override async Task OnInitializedAsync()
     {
         if (Offline)
@@ -110,17 +109,17 @@
         }
     }
     
-    private async Task LoginAsUser()
+    private async Task LoginAsUser(int number)
     {
-        LoginViewModel.Email = DevUserEmail;
-        LoginViewModel.Password = DevUserPassword;
+        LoginViewModel.Email = DevLogins.DevUserEmail(number);
+        LoginViewModel.Password = DevLogins.DevUserPassword;
         await HandleLogin();
     }
 
     private async Task LoginAsAdmin()
     {
-        LoginViewModel.Email = DevAdminEmail;
-        LoginViewModel.Password = DevAdminPassword;
+        LoginViewModel.Email = DevLogins.DevAdminEmail;
+        LoginViewModel.Password = DevLogins.DevAdminPassword;
         await HandleLogin();
     }
 

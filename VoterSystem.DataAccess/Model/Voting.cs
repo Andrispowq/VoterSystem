@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using VoterSystem.Shared;
 
 namespace VoterSystem.DataAccess.Model;
 
@@ -12,6 +13,8 @@ public class Voting : ITimestamped, IRoleControlled
     public required DateTime StartsAt { get; set; }
     public required DateTime EndsAt { get; set; }
     public required Guid CreatedByUserId { get; init; }
+    [MaxLength(32)] 
+    public byte[] KeySalt { get; init; } = SaltGenerator.GenerateSalt();
     
     [NotMapped]
     public bool HasStarted => DateTime.UtcNow >= StartsAt && VoteChoices.Count >= 2;
@@ -23,7 +26,8 @@ public class Voting : ITimestamped, IRoleControlled
     [ForeignKey("CreatedByUserId")]
     public virtual User CreatedByUser { get; set; } = null!;
     
-    public virtual ICollection<Vote> Votes { get; set; } = [];
+    public virtual ICollection<VotingParticipation> VotingParticipations { get; set; } = [];
+    public virtual ICollection<AnonymousBallot> AnonymousBallots { get; set; } = [];
     public virtual ICollection<VoteChoice> VoteChoices { get; set; } = [];
     
     //Votings can be accessed by anyone

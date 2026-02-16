@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.BindWithEnvSubstitution<JwtSettings>(config, "JwtSettings");
         services.BindWithEnvSubstitution<EmailSettings>(config, "EmailSettings");
         services.BindWithEnvSubstitution<UserSettings>(config, "UserSettings");
+        services.BindWithEnvSubstitution<VotingSettings>(config, "VotingSettings");
         
         // Database
         var connectionString = config.GetConnectionString("VoterSystemConnection");

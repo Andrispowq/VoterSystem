@@ -24,7 +24,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
 
     #region Register
 
-    [Fact(Skip = "TODO: fix")]
+    [Fact]
     public async Task Register_ReturnsOk_WhenCorrect()
     {
         // Act

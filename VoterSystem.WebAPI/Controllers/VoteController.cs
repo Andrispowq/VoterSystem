@@ -20,7 +20,7 @@ public class VoteController(
     
     [Authorize("UserOnly")]
     [HttpPost("cast-vote")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(VotingResultsDto))]
+    [ProducesResponseType<VoteResultDto>(StatusCodes.Status200OK)]
     public async Task<IActionResult> CastVoteAsync([FromQuery] long choiceId)
     {
         var choiceResult = await voteChoiceService.GetChoiceById(choiceId);
@@ -32,7 +32,7 @@ public class VoteController(
         var user = userResult.Value;
         
         var result = await voteService.CastVote(user, choice);
-        if (result.IsSome) return result.ToHttpResult();
+        if (result.IsError) return result.ToHttpResult();
         
         var votes = await voteService.GetVotesForVoting(choice.Voting);
         if (votes.IsError) return votes.Error.ToHttpResult();
@@ -45,14 +45,15 @@ public class VoteController(
         };
         
         await voteNotificationService.NotifyVotingResultChanged(notification);
-        return Ok(results);
+        return result.ToHttpResult();
     }
 
     [Authorize]
     [HttpGet]
+    [ProducesResponseType<List<VotingParticipationDto>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyVotes()
     {
         var votes = await voteService.GetMyVotes();
-        return votes.ToOkResult(list => list.Select(DtoExtensions.ToVoteDto));
+        return votes.ToOkResult(list => list.Select(DtoExtensions.ToVotingParticipationDto));
     }
 }

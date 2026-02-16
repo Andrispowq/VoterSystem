@@ -40,7 +40,10 @@ public class UserController(IUserService userService, IEmailService emailService
         var result = await userService.CreateUser(user, request.Password, newRole);
         if (result.IsSome) return result.ToHttpResult();
         
-        return Created();
+        return CreatedAtAction(
+            nameof(GetUserById),
+            new { id = user.Id },
+            user.ToUserDto());
     }
 
     [HttpPost("login")]
@@ -104,7 +107,7 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserDto))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetUserByIdAsync(Guid id)
+    public async Task<IActionResult> GetUserById(Guid id)
     {
         var user = await userService.GetUserByIdAsync(id);
         if (user.IsError) return user.Error.ToHttpResult();

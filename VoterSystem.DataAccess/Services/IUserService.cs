@@ -10,7 +10,7 @@ public interface IUserService
 {
     //CRUD
     Task<Result<List<User>, ServiceError>> GetAllUsersAsync();
-    Task<Option<ServiceError>> CreateUser(User user, string password, Role? role = null);
+    Task<Option<ServiceError>> CreateUser(User user, string password);
     //Helper
     Task<bool> AnyAdmins();
     //Auth userflow
@@ -24,12 +24,8 @@ public interface IUserService
     Task<Result<string, ServiceError>> GeneratePasswordResetTokenAsync(string email);
     Task<Option<ServiceError>> ResetPasswordAsync(string email, string token, string newPassword);
     //Helper methods
-    Task<Result<User, ServiceError>> GetCurrentUserAsync();
-    Result<Guid, ServiceError> GetCurrentUserId();
     Task<Result<User, ServiceError>> GetUserByIdAsync(Guid id);
     Task<Result<User, ServiceError>> GetUserByEmailAsync(string email);
     Task<Result<Role, ServiceError>> GetUserRoleByIdAsync(Guid id);
-    Result<Role, ServiceError> GetCurrentUserRole();
     Task<Option<ServiceError>> SetUserRoleAsync(Guid userId, Role role);
-    bool IsCurrentUserAdmin();
 }

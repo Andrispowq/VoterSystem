@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared.Functional;
@@ -10,11 +10,14 @@ namespace VoterSystem.DataAccess.Services;
 
 public class UserService( 
     IHttpContextAccessor httpContextAccessor,
+    ILogger<UserService> logger,
     UserManager<User> userManager, 
     SignInManager<User> signInManager,
     ITokenIssuer tokenIssuer) 
-    : IUserService
+    : BaseService<User, UserService>(httpContextAccessor, logger), IUserService
 {
+    protected override bool CanAccessAll(bool admin) => admin;
+
     public async Task<bool> AnyAdmins()
     {
         var list = await userManager.GetUsersInRoleAsync("Admin");
@@ -23,7 +26,7 @@ public class UserService(
 
     public async Task<Result<List<User>, ServiceError>> GetAllUsersAsync()
     {
-        if (!IsCurrentUserAdmin())
+        if (!IsAdmin)
         {
             return new UnauthorizedError("Access denied");
         }
@@ -31,7 +34,7 @@ public class UserService(
         return await userManager.Users.ToListAsync();
     }
 
-    public async Task<Option<ServiceError>> CreateUser(User user, string password, Role? role = null)
+    public async Task<Option<ServiceError>> CreateUser(User user, string password)
     {
         user.RefreshToken = Guid.NewGuid();
 
@@ -41,13 +44,10 @@ public class UserService(
             return new BadRequestError($"User creation failed: {result.Errors.First().Description}");
         }
 
-        if (role is not null)
+        result = await userManager.AddToRoleAsync(user, user.Role.ToString());
+        if (!result.Succeeded)
         {
-            result = await userManager.AddToRoleAsync(user, role.Value.ToString());
-            if (!result.Succeeded)
-            {
-                return new BadRequestError($"Adding to role failed: {result.Errors.First().Description}");
-            }
+            return new BadRequestError($"Adding to role failed: {result.Errors.First().Description}");
         }
 
         return new Option<ServiceError>.None();
@@ -63,7 +63,7 @@ public class UserService(
         if (result.IsLockedOut) return new UnauthorizedError("Too many failed attempts");
         if (!result.Succeeded) return new UnauthorizedError("Unsuccessful login attempt");
 
-        var accessToken = await tokenIssuer.GenerateJwtTokenAsync(user, userManager);
+        var accessToken = tokenIssuer.GenerateJwtToken(user);
 
         //Regenerate refresh token on login
         user.RefreshToken = Guid.NewGuid();
@@ -83,7 +83,7 @@ public class UserService(
         var user = await userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         if (user is null) return new NotFoundError("Invalid refresh token");
 
-        var accessToken = await tokenIssuer.GenerateJwtTokenAsync(user, userManager);
+        var accessToken = tokenIssuer.GenerateJwtToken(user);
 
         //Regenerate refresh token on redeeming
         user.RefreshToken = Guid.NewGuid();
@@ -169,23 +169,10 @@ public class UserService(
 
     public async Task<Result<User, ServiceError>> GetCurrentUserAsync()
     {
-        var userId = GetCurrentUserId();
-        if (userId.IsError) return userId.Error;
-        var id = userId.Value;
-
-        var user = await userManager.FindByIdAsync(id.ToString());
+        var user = await userManager.FindByIdAsync(UserId.ToString());
         if (user is null) return new NotFoundError("User not found");
 
         return user;
-    }
-
-    public Result<Guid, ServiceError> GetCurrentUserId()
-    {
-        var id = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(k => k.Type == "id")?.Value;
-        if (id is null) return new NotFoundError("No ID found");
-
-        if (Guid.TryParse(id, out var userId)) return userId;
-        return new BadRequestError("Invalid GUID as ID");
     }
 
     public async Task<Result<User, ServiceError>> GetUserByIdAsync(Guid id)
@@ -193,10 +180,7 @@ public class UserService(
         var user = await userManager.FindByIdAsync(id.ToString());
         if (user is null) return new NotFoundError("User not found");
         
-        var currentId = GetCurrentUserId();
-        if (currentId.IsError) return currentId.Error;
-        
-        if (!IsCurrentUserAdmin() && user.Id != currentId.Value)
+        if (!IsAdmin && user.Id != UserId)
             return new UnauthorizedError("You may now access this user");
 
         return user;
@@ -218,31 +202,14 @@ public class UserService(
         var result = await userManager.GetRolesAsync(user);
         return result.Select(Enum.Parse<Role>).FirstOrDefault();
     }
-
-    public Result<Role, ServiceError> GetCurrentUserRole()
-    {
-        var user = httpContextAccessor.HttpContext?.User;
-        if (user is null) return new UnauthorizedError("No user found");
-        
-        var roles = user.Claims
-            .Where(c => c.Type == ClaimTypes.Role)
-            .Select(c => c.Value)
-            .ToList();
-
-        try
-        {
-            return roles.Select(Enum.Parse<Role>).FirstOrDefault();
-        }
-        catch (Exception e)
-        {
-            return new BadRequestError(e.Message);
-        }
-    }
-
+    
     public async Task<Option<ServiceError>> SetUserRoleAsync(Guid userId, Role role)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null) return new NotFoundError("User not found");
+        
+        user.Role = role;
+        await userManager.UpdateAsync(user);
         
         var prevRoles = await userManager.GetRolesAsync(user);
         var result = await userManager.RemoveFromRolesAsync(user, prevRoles);
@@ -258,13 +225,5 @@ public class UserService(
         }
         
         return new Option<ServiceError>.None();
-    }
-
-    public bool IsCurrentUserAdmin()
-    {
-        var roles = GetCurrentUserRole();
-        if (roles.IsError) return false;
-
-        return roles.Value == Role.Admin;
     }
 }

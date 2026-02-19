@@ -99,7 +99,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
             {
                 VotingId = _voting.VotingId,
                 ChoiceId = 1,
-                VoteTag = []
+                VoteTagBase64 = ""
             }
         };
         
@@ -125,7 +125,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
             {
                 VotingId = _voting.VotingId,
                 ChoiceId = _voteChoice.ChoiceId,
-                VoteTag = []
+                VoteTagBase64 = ""
             }
         };
         var participations = new List<VotingParticipation>
@@ -196,7 +196,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
             {
                 VotingId = _voting.VotingId,
                 ChoiceId = _voteChoice.ChoiceId,
-                VoteTag = []
+                VoteTagBase64 = ""
             }
         };
         var participations = new List<VotingParticipation>

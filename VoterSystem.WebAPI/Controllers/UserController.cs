@@ -25,19 +25,20 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RegisterAsync([FromBody] UserRegisterRequestDto request)
     {
-        var user = new User
-        {
-            Email = request.Email,
-            Name = request.Name,
-            UserName = request.Email
-        };
-
         //If there are no admins, add one (this will be the first user)
         //After that, a user has to be promoted by an admin
         var hasAdmin = await userService.AnyAdmins();
         var newRole = hasAdmin ? Role.User : Role.Admin;
         
-        var result = await userService.CreateUser(user, request.Password, newRole);
+        var user = new User
+        {
+            Email = request.Email,
+            Name = request.Name,
+            UserName = request.Email,
+            Role = newRole
+        };
+        
+        var result = await userService.CreateUser(user, request.Password);
         if (result.IsSome) return result.ToHttpResult();
         
         return CreatedAtAction(
@@ -89,7 +90,7 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserDto))]
     public async Task<IActionResult> GetCurrentUserAsync()
     {
-        var user = await userService.GetCurrentUserAsync();
+        var user = await userService.GetUser();
         if (user.IsError) return user.Error.ToHttpResult();
         var userR = user.Value;
         

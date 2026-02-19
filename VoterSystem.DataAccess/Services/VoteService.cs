@@ -109,7 +109,7 @@ public class VoteService(
             {
                 VotingId = voteChoice.VotingId,
                 ChoiceId = voteChoice.ChoiceId,
-                VoteTag = result.HashCode
+                VoteTagBase64 = result.HashCode
             };
 
             await dbContext.AnonymousBallots.AddAsync(ballot);

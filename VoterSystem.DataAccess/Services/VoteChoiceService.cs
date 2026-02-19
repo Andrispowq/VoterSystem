@@ -1,13 +1,15 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
 
-public class VoteChoiceService(VoterSystemDbContext dbContext, IUserService userService) 
-    :  BaseService<VoteChoice>(userService), IVoteChoiceService
+public class VoteChoiceService(
+    VoterSystemDbContext dbContext, IHttpContextAccessor http, ILogger<VoteChoiceService> logger) 
+    :  BaseService<VoteChoice, VoteChoiceService>(http, logger), IVoteChoiceService
 {
-    private readonly IUserService _userService = userService;
     protected override bool CanAccessAll(bool admin) => true;
     
     public async Task<List<VoteChoice>> GetVoteChoices(Voting voting)
@@ -32,10 +34,7 @@ public class VoteChoiceService(VoterSystemDbContext dbContext, IUserService user
             return new UnauthorizedError("Voting has already started");
         }
         
-        var userId = _userService.GetCurrentUserId();
-        if (userId.IsError) return userId.Error;
-
-        if (voting.CreatedByUserId != userId.Value)
+        if (voting.CreatedByUserId != UserId)
         {
             return new UnauthorizedError("Access not authorized");
         }

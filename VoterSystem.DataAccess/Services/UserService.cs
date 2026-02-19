@@ -205,6 +205,11 @@ public class UserService(
     
     public async Task<Option<ServiceError>> SetUserRoleAsync(Guid userId, Role role)
     {
+        if (!IsAdmin || userId == UserId)
+        {
+            return new UnauthorizedError("You may not modify this user");
+        }
+        
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null) return new NotFoundError("User not found");
         
@@ -225,5 +230,12 @@ public class UserService(
         }
         
         return new Option<ServiceError>.None();
+    }
+
+    public async Task<Result<User, ServiceError>> GetCurrentUserAsync(CancellationToken ct = default)
+    {
+        var user = await userManager.FindByIdAsync(UserId.ToString());
+        if (user is null) return new NotFoundError("User not found");
+        return user;
     }
 }

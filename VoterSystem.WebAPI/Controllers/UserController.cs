@@ -15,7 +15,7 @@ namespace VoterSystem.WebAPI.Controllers;
 
 [ApiController]
 [Route("/api/v1/users")]
-public class UserController(IUserService userService, IEmailService emailService,
+internal class UserController(IUserService userService, IEmailService emailService,
     IOptions<BlazorSettings> blazorSettings) : ControllerBase
 {
     private readonly BlazorSettings _blazorSettings = blazorSettings.Value;
@@ -90,17 +90,10 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserDto))]
     public async Task<IActionResult> GetCurrentUserAsync()
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUserAsync();
         if (user.IsError) return user.Error.ToHttpResult();
         var userR = user.Value;
-        
-        var userLevels = userService.GetCurrentUserRole();
-        if (userLevels.IsError) return user.Error.ToHttpResult();
-        var userLevelsR = userLevels.Value;
-
-        var ret = userR.ToUserDto();
-        ret.Role = userLevelsR;
-        return Ok(ret);
+        return Ok(userR.ToUserDto());
     }
     
     [Authorize]
@@ -113,13 +106,7 @@ public class UserController(IUserService userService, IEmailService emailService
         var user = await userService.GetUserByIdAsync(id);
         if (user.IsError) return user.Error.ToHttpResult();
         var userR = user.Value;
-        
-        var userLevels = userService.GetCurrentUserRole();
-        if (userLevels.IsError) return user.Error.ToHttpResult();
-        var userLevelsR = userLevels.Value;
-
         var ret = userR.ToUserDto();
-        ret.Role = userLevelsR;
         return Ok(ret);
     }
 
@@ -245,22 +232,16 @@ public class UserController(IUserService userService, IEmailService emailService
     [HttpPatch("promote")]
     public async Task<IActionResult> PromoteToAdminAsync([FromQuery] Guid userId)
     {
-        var current = userService.GetCurrentUserId();
-        if (current.IsError) return current.Error.ToHttpResult();
-        return userId == current.Value 
-            ? BadRequest("Can not promote yourself") 
-            : (await userService.SetUserRoleAsync(userId, Role.Admin)).ToHttpResult();
+        var result = await userService.SetUserRoleAsync(userId, Role.Admin);
+        return result.ToHttpResult();
     }
 
     [Authorize("AdminOnly")]
     [HttpPatch("demote")]
     public async Task<IActionResult> DemoteToUserAsync([FromQuery] Guid userId)
     {
-        var current = userService.GetCurrentUserId();
-        if (current.IsError) return current.Error.ToHttpResult();
-        return userId == current.Value 
-            ? BadRequest("Can not demote yourself") 
-            : (await userService.SetUserRoleAsync(userId, Role.User)).ToHttpResult();
+        var result = await userService.SetUserRoleAsync(userId, Role.User);
+        return result.ToHttpResult();
     }
     
     [HttpPost("refresh-token")]

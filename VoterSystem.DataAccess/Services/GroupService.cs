@@ -38,6 +38,8 @@ public sealed class GroupService(
             Description = request.Description,
             CreatorUserId = UserId
         };
+
+        throw new NotImplementedException();
     }
 
     public async Task<Result<Group, ServiceError>> DeleteGroupAsync(Guid groupId, CancellationToken ct = default)

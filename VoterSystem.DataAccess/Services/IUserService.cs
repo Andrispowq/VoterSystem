@@ -28,4 +28,5 @@ public interface IUserService
     Task<Result<User, ServiceError>> GetUserByEmailAsync(string email);
     Task<Result<Role, ServiceError>> GetUserRoleByIdAsync(Guid id);
     Task<Option<ServiceError>> SetUserRoleAsync(Guid userId, Role role);
+    Task<Result<User, ServiceError>> GetCurrentUserAsync(CancellationToken ct = default);
 }

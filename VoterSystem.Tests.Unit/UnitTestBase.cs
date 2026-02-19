@@ -4,7 +4,7 @@ using VoterSystem.DataAccess.Model;
 
 namespace VoterSystem.Tests.Unit;
 
-public class UnitTestBase : IAsyncDisposable
+internal class UnitTestBase : IAsyncDisposable
 {
     protected readonly VoterSystemDbContext Context;
 
@@ -26,7 +26,8 @@ public class UnitTestBase : IAsyncDisposable
             {
                 Email = $"{id}@email.com",
                 Name = $"{id}",
-                UserName = $"{id}@email.com"
+                UserName = $"{id}@email.com",
+                Role = Role.User
             };
         }
     }

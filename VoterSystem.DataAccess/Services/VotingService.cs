@@ -1,13 +1,16 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using VoterSystem.DataAccess.Model;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
 
-public class VotingService(VoterSystemDbContext dbContext, IUserService userService) 
-    : BaseService<Voting>(userService), IVotingService
+public class VotingService(
+    VoterSystemDbContext dbContext, IHttpContextAccessor http, ILogger<VotingService> logger) 
+    : BaseService<Voting, VotingService>(http, logger), IVotingService
 {
-    private readonly IUserService _userService = userService;
     protected override bool CanAccessAll(bool admin) => true;
     
     public async Task<Result<List<Voting>, ServiceError>> GetAllVotings()
@@ -20,6 +23,22 @@ public class VotingService(VoterSystemDbContext dbContext, IUserService userServ
         return await dbContext.Votings.ToListAsync();
     }
 
+    public async Task<Result<List<Voting>, ServiceError>> GetVotableVotings()
+    {
+        return await dbContext.Votings
+            .Include(x => x.VotingParticipations)
+            .Where(x => x.VotingParticipations.All(v => v.UserId != UserId))
+            .ToListAsync();
+    }
+
+    public async Task<Result<List<Voting>, ServiceError>> GetVotedVotings()
+    {
+        return await dbContext.Votings
+            .Include(x => x.VotingParticipations)
+            .Where(x => x.VotingParticipations.Any(v => v.UserId == UserId))
+            .ToListAsync();
+    }
+
     public async Task<Result<Voting, ServiceError>> GetVotingById(long id)
     {
         var item = await dbContext.Votings.FindAsync(id);
@@ -28,15 +47,23 @@ public class VotingService(VoterSystemDbContext dbContext, IUserService userServ
             return new NotFoundError("Voting not found");
         }
 
-        var check = await CheckAccessOn(item, RoleControlAction.Access);
+        var check = CheckAccessOn(item, RoleControlAction.Access);
         if (check.IsSome) return check.AsSome.Value;
 
         return item;
     }
 
-    public async Task<Option<ServiceError>> CreateVoting(Voting voting, bool commit = true)
+    public async Task<Result<Voting, ServiceError>> CreateVoting(VotingCreateRequestDto request, bool commit = true)
     {
-        var check = await CheckAccessOn(voting, RoleControlAction.Create);
+        var voting = new Voting
+        {
+            StartsAt = request.StartsAt,
+            EndsAt = request.EndsAt,
+            Name = request.Name,
+            CreatedByUserId = UserId
+        };
+        
+        var check = CheckAccessOn(voting, RoleControlAction.Create);
         if (check.IsSome) return check.AsSome.Value;
 
         if (voting.StartsAt <= DateTime.UtcNow)
@@ -53,7 +80,7 @@ public class VotingService(VoterSystemDbContext dbContext, IUserService userServ
         {
             await dbContext.Votings.AddAsync(voting);
             if (commit) await dbContext.SaveChangesAsync();
-            return new Option<ServiceError>.None();
+            return voting;
         }
         catch (Exception ex)
         {
@@ -68,7 +95,7 @@ public class VotingService(VoterSystemDbContext dbContext, IUserService userServ
             var item = await GetVotingById(voting.VotingId);
             if (item.IsError) return item.Error;
             
-            var check = await CheckAccessOn(item.Value, RoleControlAction.Update);
+            var check = CheckAccessOn(item.Value, RoleControlAction.Update);
             if (check.IsSome) return check.AsSome.Value;
 
             dbContext.Votings.Update(voting);
@@ -88,7 +115,7 @@ public class VotingService(VoterSystemDbContext dbContext, IUserService userServ
             var item = await GetVotingById(id);
             if (item.IsError) return item.Error;
             
-            var check = await CheckAccessOn(item.Value, RoleControlAction.Delete);
+            var check = CheckAccessOn(item.Value, RoleControlAction.Delete);
             if (check.IsSome) return check.AsSome.Value;
             
             dbContext.Votings.Remove(item.Value);
@@ -103,10 +130,7 @@ public class VotingService(VoterSystemDbContext dbContext, IUserService userServ
 
     public async Task<bool> HasVotedOnVoting(Voting voting)
     {
-        var userId = _userService.GetCurrentUserId();
-        if (userId.IsError) return false;
-        
         return await dbContext.VotingParticipations
-            .AnyAsync(v => v.VotingId == voting.VotingId && v.UserId == userId.Value);
+            .AnyAsync(v => v.VotingId == voting.VotingId && v.UserId == UserId);
     }
 }

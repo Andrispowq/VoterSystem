@@ -130,7 +130,13 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         var admin = userManager.FindByEmailAsync(AdminLogin.Email).Result;
         if (admin is null)
         {
-            admin = new User { UserName = AdminLogin.Email, Email = AdminLogin.Email, Name = "Seed-Admin" };
+            admin = new User
+            {
+                UserName = AdminLogin.Email,
+                Email = AdminLogin.Email,
+                Name = "Seed-Admin",
+                Role = Role.Admin
+            };
             userManager.CreateAsync(admin, AdminLogin.Password).Wait();
             userManager.AddToRoleAsync(admin, "Admin").Wait();
         }
@@ -139,7 +145,13 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         var user = userManager.FindByEmailAsync(UserLogin.Email).Result;
         if (user is null)
         {
-            user = new User { UserName = UserLogin.Email, Email = UserLogin.Email, Name = "Seed-User" };
+            user = new User
+            {
+                UserName = UserLogin.Email,
+                Email = UserLogin.Email,
+                Name = "Seed-User",
+                Role = Role.User
+            };
             userManager.CreateAsync(user, UserLogin.Password).Wait();
             userManager.AddToRoleAsync(user, "User").Wait();
         }

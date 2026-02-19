@@ -74,7 +74,7 @@ public class VoterSystemDbContext(DbContextOptions<VoterSystemDbContext> options
 
             entity.HasOne(v => v.VoteChoice)
                 .WithMany(c => c.AnonymousBallots)
-                .HasForeignKey(v => v.VoteTagBase64)
+                .HasForeignKey(v => v.ChoiceId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
         

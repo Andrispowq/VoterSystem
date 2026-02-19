@@ -345,7 +345,13 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         var adminUser = userManager.FindByEmailAsync(AdminLogin.Email).Result;
         if (adminUser == null)
         {
-            adminUser = new User { UserName = AdminLogin.Email, Email = AdminLogin.Email, Name = "Test Admin" };
+            adminUser = new User
+            {
+                UserName = AdminLogin.Email,
+                Email = AdminLogin.Email,
+                Name = "Test Admin",
+                Role = Role.Admin
+            };
             userManager.CreateAsync(adminUser, AdminLogin.Password).Wait();
             userManager.AddToRoleAsync(adminUser, "Admin").Wait();
         }
@@ -354,7 +360,13 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         var user = userManager.FindByEmailAsync(UserLogin.Email).Result;
         if (user == null)
         {
-            user = new User { UserName = UserLogin.Email, Email = UserLogin.Email, Name = "Test User" };
+            user = new User
+            {
+                UserName = UserLogin.Email,
+                Email = UserLogin.Email,
+                Name = "Test User",
+                Role = Role.User
+            };
             userManager.CreateAsync(user, UserLogin.Password).Wait();
         }
     }

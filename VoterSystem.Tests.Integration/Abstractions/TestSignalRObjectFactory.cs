@@ -44,6 +44,8 @@ public class TestSignalRObjectFactory : BaseTest
         dbContext.VotingParticipations.ExecuteDelete();
         dbContext.AnonymousBallots.ExecuteDelete();
         dbContext.Users.ExecuteDelete();
+        dbContext.Groups.ExecuteDelete();
+        dbContext.GroupMembers.ExecuteDelete();
         
         //dbContext.Database.EnsureDeleted();
         //dbContext.Database.EnsureCreated();
@@ -55,11 +57,23 @@ public class TestSignalRObjectFactory : BaseTest
 
         var userService = Scope.ServiceProvider.GetRequiredService<IUserService>();
 
-        var user = new User { UserName = _user.Email, Name = _user.Name, Email = _user.Email };
-        var admin = new User { UserName = _adminUser.Email, Name = _adminUser.Name, Email = _adminUser.Email };
+        var user = new User
+        {
+            UserName = _user.Email,
+            Name = _user.Name,
+            Email = _user.Email,
+            Role = Role.User
+        };
+        var admin = new User
+        {
+            UserName = _adminUser.Email,
+            Name = _adminUser.Name,
+            Email = _adminUser.Email,
+            Role = Role.Admin
+        };
         
-        userService.CreateUser(user, _user.Password, Role.User).Wait();
-        userService.CreateUser(admin, _adminUser.Password, Role.Admin).Wait();
+        userService.CreateUser(user, _user.Password).Wait();
+        userService.CreateUser(admin, _adminUser.Password).Wait();
     }
     
     protected async Task<string> Login(UserLoginRequestDto user)

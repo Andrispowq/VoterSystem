@@ -276,7 +276,13 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
         var user = um.FindByEmailAsync(creds.Email).Result;
         if (user != null) return;
 
-        user = new User { Email = creds.Email, UserName = creds.Email, Name = creds.Email.Split('@')[0] };
+        user = new User
+        {
+            Email = creds.Email,
+            UserName = creds.Email,
+            Name = creds.Email.Split('@')[0],
+            Role = Enum.Parse<Role>(role)
+        };
         um.CreateAsync(user, creds.Password).Wait();
         um.AddToRoleAsync(user, role).Wait();
     }

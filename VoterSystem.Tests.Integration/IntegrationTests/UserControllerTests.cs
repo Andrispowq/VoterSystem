@@ -192,10 +192,10 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
     [Fact]
     public async Task GetUserById_ReturnsUnauthorized_ForUserAccessingAdmin()
     {
-        var adminTokens = await LoginAndGetTokensAsync(AdminLogin); // no auth cookie set
+        var adminTokensDto = await LoginAndGetTokensDtoAsync(AdminLogin); // no auth cookie set
         await AuthenticateAsync(UserLogin); // now sign-in as normal user
 
-        var response = await HttpClient.GetAsync($"/api/v1/users/{adminTokens.UserId}");
+        var response = await HttpClient.GetAsync($"/api/v1/users/{adminTokensDto.UserId}");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -298,10 +298,10 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
     [Fact]
     public async Task RefreshToken_ReturnsOk_WhenValid()
     {
-        var tokens = await LoginAndGetTokensAsync(UserLogin);
+        var TokensDto = await LoginAndGetTokensDtoAsync(UserLogin);
 
         var response = await HttpClient.PostAsJsonAsync("/api/v1/users/refresh-token",
-            tokens.RefreshToken.ToString());
+            TokensDto.RefreshToken.ToString());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -387,7 +387,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         return users.Single(u => u.Email == email).Id;
     }
 
-    private async Task<Tokens> LoginAndGetTokensAsync(UserLoginRequestDto credentials)
+    private async Task<TokensDto> LoginAndGetTokensDtoAsync(UserLoginRequestDto credentials)
     {
         // fresh client to avoid polluting the main CookieContainer
         using var client = Factory.CreateClient();
@@ -401,9 +401,9 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
             Assert.Fail($"Failed with the following response: {await response.Content.ReadAsStringAsync()}");
         }
         
-        var tokens = await response.Content.ReadFromJsonAsync<Tokens>();
-        Assert.NotNull(tokens);
-        return tokens;
+        var TokensDto = await response.Content.ReadFromJsonAsync<TokensDto>();
+        Assert.NotNull(TokensDto);
+        return TokensDto;
     }
 
     private async Task AuthenticateAsync(UserLoginRequestDto credentials)

@@ -147,7 +147,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
     }
 
     [Fact]
-    public async Task Login_WhenSuccessful_ReturnsTokens()
+    public async Task Login_WhenSuccessful_ReturnsTokensDto()
     {
         // Arrange
         var email = "user@test.com";

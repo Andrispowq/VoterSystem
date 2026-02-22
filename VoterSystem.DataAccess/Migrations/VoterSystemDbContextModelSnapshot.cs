@@ -125,7 +125,7 @@ namespace VoterSystem.DataAccess.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
+                    b.ToTable("AspNetUserTokensDto", (string)null);
                 });
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.AnonymousBallot", b =>

@@ -197,11 +197,11 @@ public class ChoiceControllerTests(TestWebAppFactory factory) : TestObjectFactor
             Assert.Fail($"Request failed, status code: {resp.StatusCode}, message: {message}");
         }
 
-        var tokens = await resp.Content.ReadFromJsonAsync<Tokens>()
-                     ?? throw new InvalidOperationException("No tokens returned");
+        var TokensDto = await resp.Content.ReadFromJsonAsync<TokensDto>()
+                     ?? throw new InvalidOperationException("No TokensDto returned");
 
         HttpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", tokens.AuthToken);
+            new AuthenticationHeaderValue("Bearer", TokensDto.AuthToken);
     }
 
     protected override void SeedRoles(RoleManager<UserRole> roleManager)

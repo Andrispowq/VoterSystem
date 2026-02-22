@@ -88,7 +88,7 @@ public class GroupControllerTests(TestWebAppFactory factory) : TestObjectFactory
         ClearAuthentication();
         await AuthenticateAsAsync(AdminLogin);
 
-        var response = await HttpClient.GetAsync("/api/v1/groups/999999");
+        var response = await HttpClient.GetAsync($"/api/v1/groups/{Guid.NewGuid()}");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -189,7 +189,7 @@ public class GroupControllerTests(TestWebAppFactory factory) : TestObjectFactory
         await AuthenticateAsAsync(AdminLogin);
         var userId = await GetUserIdAsync(UserLogin.Email);
 
-        var response = await HttpClient.PostAsync("/api/v1/groups/999999/members/" + userId, null);
+        var response = await HttpClient.PostAsync($"/api/v1/groups/{Guid.NewGuid()}/members/{userId}", null);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 

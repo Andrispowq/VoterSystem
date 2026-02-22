@@ -71,7 +71,7 @@ public class UserController(IUserService userService, IEmailService emailService
         var users = await userService.GetAllUsersAsync();
         if (users.IsError) return users.Error.ToHttpResult();
         
-        List<UserDto> userDtos = new List<UserDto>();
+        List<UserDto> userDtos = [];
         foreach (var user in users.Value)
         {
             var result = await userService.GetUserRoleByIdAsync(user.Id);

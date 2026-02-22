@@ -20,13 +20,18 @@ public sealed class GroupService(
         return await context.Groups
             .AsNoTracking()
             .Include(x => x.Members)
+                .ThenInclude(m => m.User)
             .Where(x => x.Members.Any(y => y.UserId == UserId))
             .ToListAsync(ct);
     }
 
     public async Task<Result<Group, ServiceError>> GetByIdAsync(Guid groupId, CancellationToken ct = default)
     {
-        var group = await context.Groups.FindAsync([groupId], ct);
+        var group = await context.Groups
+            .AsNoTracking()
+            .Include(x => x.Members)
+                .ThenInclude(m => m.User)
+            .FirstOrDefaultAsync(x => x.GroupId == groupId, ct);
         if (group is null) return new NotFoundError("Group not found");
 
         var access = CheckAccessOn(group, RoleControlAction.Access);
@@ -69,6 +74,12 @@ public sealed class GroupService(
 
             var result = await context.SaveChangesAsync(ct);
             if (result.IsSome) return result.AsSome.Value;
+
+            await context.Entry(group)
+                .Collection(g => g.Members)
+                .Query()
+                .Include(m => m.User)
+                .LoadAsync(ct);
 
             return group;
         }
@@ -114,6 +125,9 @@ public sealed class GroupService(
         
         var access = CheckAccessOn(group, RoleControlAction.Update);
         if (access.IsSome) return access.AsSome.Value;
+        
+        var existing = await context.GroupMembers.FindAsync([groupId, userId], ct);
+        if (existing is not null) return new Option<ServiceError>.None();
         
         var member = new GroupMembers
         {

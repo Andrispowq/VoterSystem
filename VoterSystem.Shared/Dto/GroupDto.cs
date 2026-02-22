@@ -12,4 +12,5 @@ public sealed class GroupDto
     public required string Description { get; set; }
     public required DateTime? DeletedAt { get; set; }
     public required DateTime CreatedAt { get; init; }
+    public List<GroupMemberDto> Members { get; init; } = [];
 }

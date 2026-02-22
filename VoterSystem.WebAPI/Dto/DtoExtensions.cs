@@ -15,6 +15,22 @@ public static class DtoExtensions
             Description = group.Description,
             DeletedAt = group.DeletedAt,
             CreatedAt = group.CreatedAt,
+            Members = group.Members
+                .Select(ToGroupMemberDto)
+                .OrderBy(m => m.Name)
+                .ToList()
+        };
+    }
+
+    public static GroupMemberDto ToGroupMemberDto(this GroupMembers member)
+    {
+        return new GroupMemberDto
+        {
+            UserId = member.UserId,
+            AddedByUserId = member.AddedByUserId,
+            CreatedAt = member.CreatedAt,
+            Name = member.User?.Name,
+            Email = member.User?.Email
         };
     }
 
@@ -28,6 +44,7 @@ public static class DtoExtensions
             Name = user.Name,
             Participations = GetVotes(user),
             TwoFactorEnabled = user.TwoFactorEnabled,
+            Role = user.Role
         };
     }
 
@@ -72,6 +89,8 @@ public static class DtoExtensions
             HasStarted = voting.HasStarted,
             HasEnded = voting.HasEnded,
             IsOngoing = voting.IsOngoing,
+            GroupId = voting.GroupId,
+            GroupName = voting.Group?.Name,
             VoteChoices = voting.VoteChoices
                 .Select(v => v.ToVoteChoiceDto())
                 .OrderBy(v => v.CreatedAt)

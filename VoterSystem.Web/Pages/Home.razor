@@ -34,6 +34,14 @@ else
                         </div>
 
                         <div class="card-body">
+                            @if (!string.IsNullOrWhiteSpace(voting.GroupName))
+                            {
+                                <div class="mb-2">
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-people me-1"></i> @voting.GroupName
+                                    </span>
+                                </div>
+                            }
                             <p class="mb-1 text-muted">
                                 <i class="bi bi-play-circle me-1"></i>
                                 From: @voting.StartsAt.ToLocalTime():g

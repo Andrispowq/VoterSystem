@@ -1,0 +1,275 @@
+@page "/groups"
+@layout MainLayout
+
+@using System.ComponentModel.DataAnnotations
+@using System.Linq
+@using VoterSystem.DataAccess.Model
+@using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Dto
+@using VoterSystem.Web.Admin.Layout
+
+@inject IGroupsService GroupsService
+@inject IAuthenticationService AuthenticationService
+
+<h1 class="my-4">Groups</h1>
+
+@if (_isLoading)
+{
+    <p>Loading groups…</p>
+}
+else if (!_groups.Any() && !_isAdmin)
+{
+    <div class="alert alert-info">You are not a member of any groups yet.</div>
+}
+else
+{
+    @if (_isAdmin)
+    {
+        <section class="mb-4">
+            <h5>Create new group</h5>
+            <EditForm Model="_newGroup" OnValidSubmit="CreateGroupAsync">
+                <DataAnnotationsValidator />
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label" for="groupName">Name</label>
+                        <InputText id="groupName" class="form-control" @bind-Value="_newGroup.Name" />
+                        <ValidationMessage For="() => _newGroup.Name" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="groupDescription">Description</label>
+                        <InputText id="groupDescription" class="form-control" @bind-Value="_newGroup.Description" />
+                        <ValidationMessage For="() => _newGroup.Description" />
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-plus-circle me-1"></i>Create</button>
+                    </div>
+                </div>
+            </EditForm>
+        </section>
+    }
+
+    <div class="accordion" id="groupAccordion">
+        @foreach (var group in _groups.OrderBy(g => g.Name))
+        {
+            <div class="accordion-item mb-3">
+                <h2 class="accordion-header" id="heading-@group.GroupId">
+                    <div class="d-flex align-items-center w-100">
+                        <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@group.GroupId" aria-expanded="false" aria-controls="collapse-@group.GroupId">
+                            <div class="w-100 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>@group.Name</strong>
+                                    <div class="small text-muted">@group.Description</div>
+                                    <div class="small text-muted mt-1">Members: @group.Members.Count</div>
+                                </div>
+                            </div>
+                        </button>
+                        @if (_isAdmin)
+                        {
+                            <button class="btn btn-sm btn-link text-danger ms-2" type="button" @onclick="async () => await DeleteGroupAsync(group.GroupId)" title="Delete group">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        }
+                    </div>
+                </h2>
+                <div id="collapse-@group.GroupId" class="accordion-collapse collapse" aria-labelledby="heading-@group.GroupId" data-bs-parent="#groupAccordion">
+                    <div class="accordion-body">
+                        @if (!_isAdmin)
+                        {
+                            <p class="text-muted mb-0">You belong to this group along with @group.Members.Count other @(group.Members.Count == 1 ? "person" : "people").</p>
+                        }
+                        else
+                        {
+                            <section>
+                                <h6>Members</h6>
+                                @if (group.Members.Any())
+                                {
+                                    <ul class="list-group mb-3">
+                                        @foreach (var member in group.Members.OrderBy(m => m.Name ?? m.Email))
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>@(member.Name ?? member.Email ?? member.UserId.ToString())</strong>
+                                                    <div class="small text-muted">@member.Email</div>
+                                                </div>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="async () => await RemoveUserAsync(group.GroupId, member.UserId)"
+                                                        disabled="@(!_isAdmin)">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <p class="text-muted">No members yet.</p>
+                                }
+
+                                <div class="mb-3">
+                                    <label class="form-label">Add user by name or email</label>
+                                    <input class="form-control" placeholder="Start typing to search" value="@GetSearchValue(group.GroupId)"
+                                           @oninput="e => UpdateSearch(group.GroupId, e.Value?.ToString() ?? string.Empty)" />
+                                    @{ var suggestions = GetSuggestions(group).ToList(); }
+                                    @if (suggestions.Any())
+                                    {
+                                        <div class="list-group mt-2">
+                                            @foreach (var user in suggestions)
+                                            {
+                                                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between"
+                                                        @onclick="async () => await AddUserAsync(group.GroupId, user.Id)">
+                                                    <span>@user.Name (@user.Email)</span>
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                    else if (!string.IsNullOrWhiteSpace(GetSearchValue(group.GroupId)))
+                                    {
+                                        <div class="text-muted small mt-2">No matching users</div>
+                                    }
+                                </div>
+                            </section>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<GroupDto> _groups = [];
+    private List<UserDto> _allUsers = [];
+    private bool _isAdmin;
+    private bool _isLoading = true;
+    private readonly Dictionary<Guid, string> _groupSearchValues = new();
+    private CreateGroupViewModel _newGroup = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUser = await AuthenticationService.GetCurrentUserAsync();
+        _isAdmin = currentUser?.Role == Role.Admin;
+        await LoadGroupsAsync();
+
+        if (_isAdmin)
+        {
+            _allUsers = await AuthenticationService.GetUsersAsync();
+            if (currentUser is not null && _allUsers.All(u => u.Id != currentUser.Id))
+            {
+                _allUsers.Add(currentUser);
+            }
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task LoadGroupsAsync()
+    {
+        _groups = await GroupsService.GetGroupsAsync();
+        foreach (var group in _groups)
+        {
+            _groupSearchValues[group.GroupId] = string.Empty;
+        }
+    }
+
+    private async Task RefreshGroupAsync(Guid groupId)
+    {
+        var updated = await GroupsService.GetGroupAsync(groupId);
+        if (updated is null) return;
+        var index = _groups.FindIndex(g => g.GroupId == groupId);
+        if (index >= 0)
+        {
+            _groups[index] = updated;
+        }
+        else
+        {
+            _groups.Add(updated);
+        }
+    }
+
+    private async Task CreateGroupAsync()
+    {
+        if (!_isAdmin)
+            return;
+
+        var request = new CreateGroupRequest
+        {
+            Name = _newGroup.Name.Trim(),
+            Description = _newGroup.Description.Trim()
+        };
+
+        var created = await GroupsService.CreateGroupAsync(request);
+        if (created is not null)
+        {
+            _newGroup = new();
+            _groupSearchValues[created.GroupId] = string.Empty;
+            await RefreshGroupAsync(created.GroupId);
+        }
+    }
+
+    private async Task DeleteGroupAsync(Guid groupId)
+    {
+        if (!_isAdmin)
+            return;
+
+        await GroupsService.DeleteGroupAsync(groupId);
+        _groups.RemoveAll(g => g.GroupId == groupId);
+        _groupSearchValues.Remove(groupId);
+    }
+
+    private async Task AddUserAsync(Guid groupId, Guid userId)
+    {
+        if (!_isAdmin)
+            return;
+
+        await GroupsService.AddUserAsync(groupId, userId);
+        await RefreshGroupAsync(groupId);
+    }
+
+    private async Task RemoveUserAsync(Guid groupId, Guid userId)
+    {
+        if (!_isAdmin)
+            return;
+
+        await GroupsService.RemoveUserAsync(groupId, userId);
+        await RefreshGroupAsync(groupId);
+    }
+
+    private string GetSearchValue(Guid groupId)
+    {
+        return _groupSearchValues.TryGetValue(groupId, out var value) ? value : string.Empty;
+    }
+
+    private void UpdateSearch(Guid groupId, string value)
+    {
+        _groupSearchValues[groupId] = value;
+    }
+
+    private IEnumerable<UserDto> GetSuggestions(GroupDto group)
+    {
+        if (!_isAdmin || !_groupSearchValues.TryGetValue(group.GroupId, out var term) || string.IsNullOrWhiteSpace(term))
+        {
+            Console.WriteLine("Not found anything");
+            return [];
+        }
+        
+        Console.WriteLine("Searching for term");
+
+        return _allUsers
+            .Where(u => group.Members.All(m => m.UserId != u.Id))
+            .Where(u => u.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
+                        || u.Email.Contains(term, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(u => u.Email)
+            .Take(5);
+    }
+
+    private sealed class CreateGroupViewModel
+    {
+        [Required]
+        [StringLength(32, MinimumLength = 3)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(255, MinimumLength = 3)]
+        public string Description { get; set; } = string.Empty;
+    }
+}

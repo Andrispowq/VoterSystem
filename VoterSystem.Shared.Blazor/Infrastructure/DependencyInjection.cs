@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<IHttpRequestUtility, HttpRequestUtility>();
         services.AddScoped<IVotingsService, VotingsService>();
         services.AddScoped<IVoteHubService, VoteHubService>();
+        services.AddScoped<IGroupsService, GroupsService>();
         
         services.AddScoped<NetworkService>();
 

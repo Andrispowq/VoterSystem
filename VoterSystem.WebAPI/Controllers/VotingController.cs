@@ -9,7 +9,7 @@ namespace VoterSystem.WebAPI.Controllers;
 
 [ApiController]
 [Route("/api/v1/votings")]
-internal class VotingController(IVotingService votingService, IVoteService voteService) : ControllerBase
+public class VotingController(IVotingService votingService, IVoteService voteService) : ControllerBase
 {
     [Authorize]
     [HttpGet]

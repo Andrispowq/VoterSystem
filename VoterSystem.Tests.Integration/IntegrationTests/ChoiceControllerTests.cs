@@ -191,7 +191,11 @@ public class ChoiceControllerTests(TestWebAppFactory factory) : TestObjectFactor
     private async Task AuthenticateAsync(UserLoginRequestDto creds)
     {
         var resp = await HttpClient.PostAsJsonAsync("/api/v1/users/login", creds);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+        {
+            var message = await resp.Content.ReadAsStringAsync();
+            Assert.Fail($"Request failed, status code: {resp.StatusCode}, message: {message}");
+        }
 
         var tokens = await resp.Content.ReadFromJsonAsync<Tokens>()
                      ?? throw new InvalidOperationException("No tokens returned");

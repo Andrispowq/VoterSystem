@@ -11,7 +11,7 @@ namespace VoterSystem.WebAPI.Controllers;
 
 [ApiController]
 [Route("/api/v1/votes/")]
-internal class VoteController(
+public class VoteController(
     IUserService userService, 
     IVoteChoiceService voteChoiceService, 
     IVoteService voteService,

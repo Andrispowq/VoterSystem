@@ -15,7 +15,7 @@ namespace VoterSystem.WebAPI.Controllers;
 
 [ApiController]
 [Route("/api/v1/users")]
-internal class UserController(IUserService userService, IEmailService emailService,
+public class UserController(IUserService userService, IEmailService emailService,
     IOptions<BlazorSettings> blazorSettings) : ControllerBase
 {
     private readonly BlazorSettings _blazorSettings = blazorSettings.Value;

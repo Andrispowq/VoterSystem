@@ -5,7 +5,7 @@ namespace VoterSystem.DataAccess.Model;
 public class Group : IRoleControlled, ITimestamped, ISoftDeletable
 {
     [Key]
-    public long GroupId { get; init; }
+    public Guid GroupId { get; init; }
     public required Guid CreatorUserId { get; init; }
     [MaxLength(32)]
     public required string Name { get; set; }

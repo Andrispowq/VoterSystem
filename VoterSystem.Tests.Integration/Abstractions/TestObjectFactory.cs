@@ -45,11 +45,11 @@ public abstract class TestObjectFactory : BaseTest
         var login = await HttpClient.PostAsJsonAsync("/api/v1/users/login", credentials);
         login.EnsureSuccessStatusCode();
 
-        var TokensDto = await login.Content.ReadFromJsonAsync<TokensDto>()
+        var tokensDto = await login.Content.ReadFromJsonAsync<TokensDto>()
                      ?? throw new InvalidOperationException("No token returned");
 
         HttpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TokensDto.AuthToken);
+            new AuthenticationHeaderValue("Bearer", tokensDto.AuthToken);
     }
 
     protected abstract void SeedRoles(RoleManager<UserRole> roleManager);

@@ -3,17 +3,32 @@ using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.WebAPI.Functional;
 
+public sealed class ErrorDto
+{
+    public required string Message { get; init; }
+    public required string? InnerMessage { get; init; }
+}
+
 public static class FunctionalExtensions
 {
+    private static ErrorDto ToErrorDto(this ServiceError error)
+    {
+        return new ErrorDto
+        {
+            Message = error.Message,
+            InnerMessage = error.Exception?.Message
+        };
+    }
+    
     public static IActionResult ToHttpResult(this ServiceError error)
     {
         return error switch
         {
-            NotFoundError nfe => new NotFoundObjectResult(nfe.Message),
-            BadRequestError bre => new BadRequestObjectResult(bre.Message),
-            ConflictError conf => new ConflictObjectResult(conf.Message),
-            UnauthorizedError un => new UnauthorizedObjectResult(un.Message),
-            UnprocessableEntityError uee => new UnprocessableEntityObjectResult(uee.Message),
+            NotFoundError nfe => new NotFoundObjectResult(nfe.ToErrorDto()),
+            BadRequestError bre => new BadRequestObjectResult(bre.ToErrorDto()),
+            ConflictError conf => new ConflictObjectResult(conf.ToErrorDto()),
+            UnauthorizedError un => new UnauthorizedObjectResult(un.ToErrorDto()),
+            UnprocessableEntityError uee => new UnprocessableEntityObjectResult(uee.ToErrorDto()),
             _ => new BadRequestResult()
         };
     }

@@ -24,7 +24,7 @@ public sealed class GroupService(
             .ToListAsync(ct);
     }
 
-    public async Task<Result<Group, ServiceError>> GetByIdAsync(long groupId, CancellationToken ct = default)
+    public async Task<Result<Group, ServiceError>> GetByIdAsync(Guid groupId, CancellationToken ct = default)
     {
         var group = await context.Groups.FindAsync([groupId], ct);
         if (group is null) return new NotFoundError("Group not found");
@@ -42,8 +42,10 @@ public sealed class GroupService(
             return new UnauthorizedError("You are not authorized to create a group");
         }
 
+        var id = Guid.NewGuid();
         var group = new Group
         {
+            GroupId = id,
             Name = request.Name,
             Description = request.Description,
             CreatorUserId = UserId
@@ -52,24 +54,31 @@ public sealed class GroupService(
         var access = CheckAccessOn(group, RoleControlAction.Create);
         if (access.IsSome) return access.AsSome.Value;
 
-        await context.Groups.AddAsync(group, ct);
-
-        var member = new GroupMembers
+        try
         {
-            GroupId = group.GroupId,
-            UserId = UserId,
-            AddedByUserId = UserId
-        };
-        
-        await context.GroupMembers.AddAsync(member, ct);
-        
-        var result = await context.SaveChangesAsync(ct);
-        if (result.IsSome) return result.AsSome.Value;
+            await context.Groups.AddAsync(group, ct);
 
-        return group;
+            var member = new GroupMembers
+            {
+                GroupId = id,
+                UserId = UserId,
+                AddedByUserId = UserId
+            };
+
+            await context.GroupMembers.AddAsync(member, ct);
+
+            var result = await context.SaveChangesAsync(ct);
+            if (result.IsSome) return result.AsSome.Value;
+
+            return group;
+        }
+        catch (Exception e)
+        {
+            return new BadRequestError("Failed to create group", e);
+        }
     }
 
-    public async Task<Option<ServiceError>> DeleteGroupAsync(long groupId, CancellationToken ct = default)
+    public async Task<Option<ServiceError>> DeleteGroupAsync(Guid groupId, CancellationToken ct = default)
     {
         if (!IsAdmin)
         {
@@ -82,11 +91,18 @@ public sealed class GroupService(
         var access = CheckAccessOn(group, RoleControlAction.Delete);
         if (access.IsSome) return access.AsSome.Value;
 
-        context.Groups.Remove(group);
-        return await context.SaveChangesAsync(ct);
+        try
+        {
+            context.Groups.Remove(group);
+            return await context.SaveChangesAsync(ct);
+        }
+        catch (Exception e)
+        {
+            return new BadRequestError("Failed to create group", e);
+        }
     }
 
-    public async Task<Option<ServiceError>> AddToGroupAsync(long groupId, Guid userId, CancellationToken ct = default)
+    public async Task<Option<ServiceError>> AddToGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default)
     {
         if (!IsAdmin)
         {
@@ -117,7 +133,7 @@ public sealed class GroupService(
         }
     }
 
-    public async Task<Option<ServiceError>> RemoveFromGroupAsync(long groupId, Guid userId, CancellationToken ct = default)
+    public async Task<Option<ServiceError>> RemoveFromGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default)
     {
         if (!IsAdmin)
         {
@@ -132,8 +148,15 @@ public sealed class GroupService(
         
         var membership = await context.GroupMembers.FindAsync([groupId, userId], ct);
         if (membership is null) return new NotFoundError("Group member not found");
-        
-        context.GroupMembers.Remove(membership);
-        return await context.SaveChangesAsync(ct);
+
+        try
+        {
+            context.GroupMembers.Remove(membership);
+            return await context.SaveChangesAsync(ct);
+        }
+        catch (Exception e)
+        {
+            return new BadRequestError("Failed to create group", e);
+        }
     }
 }

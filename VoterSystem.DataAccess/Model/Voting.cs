@@ -15,7 +15,7 @@ public class Voting : ITimestamped, IRoleControlled
     public required Guid CreatedByUserId { get; init; }
     [MaxLength(32)] 
     public byte[] KeySalt { get; init; } = SaltGenerator.GenerateSalt();
-    public long? GroupId { get; init; }
+    public Guid? GroupId { get; init; }
     
     [NotMapped]
     public bool HasStarted => DateTime.UtcNow >= StartsAt && VoteChoices.Count >= 2;

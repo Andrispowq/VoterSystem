@@ -142,7 +142,7 @@ namespace VoterSystem.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AspNetUserTokensDto",
+                name: "AspNetUserTokens",
                 columns: table => new
                 {
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -152,9 +152,9 @@ namespace VoterSystem.DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AspNetUserTokensDto", x => new { x.UserId, x.LoginProvider, x.Name });
+                    table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
                     table.ForeignKey(
-                        name: "FK_AspNetUserTokensDto_AspNetUsers_UserId",
+                        name: "FK_AspNetUserTokens_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -165,8 +165,7 @@ namespace VoterSystem.DataAccess.Migrations
                 name: "Groups",
                 columns: table => new
                 {
-                    GroupId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatorUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Description = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -188,7 +187,7 @@ namespace VoterSystem.DataAccess.Migrations
                 name: "GroupMembers",
                 columns: table => new
                 {
-                    GroupId = table.Column<long>(type: "bigint", nullable: false),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     AddedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     DeletedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -229,7 +228,7 @@ namespace VoterSystem.DataAccess.Migrations
                     EndsAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     KeySalt = table.Column<byte[]>(type: "bytea", maxLength: 32, nullable: false),
-                    GroupId = table.Column<long>(type: "bigint", nullable: true)
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -438,7 +437,7 @@ namespace VoterSystem.DataAccess.Migrations
                 name: "AspNetUserRoles");
 
             migrationBuilder.DropTable(
-                name: "AspNetUserTokensDto");
+                name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
                 name: "GroupMembers");

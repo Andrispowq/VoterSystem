@@ -12,7 +12,7 @@ using VoterSystem.DataAccess;
 namespace VoterSystem.DataAccess.Migrations
 {
     [DbContext(typeof(VoterSystemDbContext))]
-    [Migration("20260219205120_Initial")]
+    [Migration("20260222155657_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -128,7 +128,7 @@ namespace VoterSystem.DataAccess.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokensDto", (string)null);
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.AnonymousBallot", b =>
@@ -167,11 +167,9 @@ namespace VoterSystem.DataAccess.Migrations
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.Group", b =>
                 {
-                    b.Property<long>("GroupId")
+                    b.Property<Guid>("GroupId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("GroupId"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -201,8 +199,8 @@ namespace VoterSystem.DataAccess.Migrations
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.GroupMembers", b =>
                 {
-                    b.Property<long>("GroupId")
-                        .HasColumnType("bigint");
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -382,8 +380,8 @@ namespace VoterSystem.DataAccess.Migrations
                     b.Property<DateTime>("EndsAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("GroupId")
-                        .HasColumnType("bigint");
+                    b.Property<Guid?>("GroupId")
+                        .HasColumnType("uuid");
 
                     b.Property<byte[]>("KeySalt")
                         .IsRequired()

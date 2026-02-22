@@ -222,7 +222,7 @@ public sealed class GroupServiceTests : UnitTestBase
         return group;
     }
 
-    private async Task AddMemberAsync(long groupId, Guid userId, Guid addedBy)
+    private async Task AddMemberAsync(Guid groupId, Guid userId, Guid addedBy)
     {
         var member = new GroupMembers
         {

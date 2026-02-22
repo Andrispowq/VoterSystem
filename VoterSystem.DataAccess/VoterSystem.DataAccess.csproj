@@ -33,4 +33,8 @@
       <ProjectReference Include="..\VoterSystem.Shared\VoterSystem.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Migrations\" />
+    </ItemGroup>
+
 </Project>

@@ -401,7 +401,9 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
             Assert.Fail($"Failed with the following response: {await response.Content.ReadAsStringAsync()}");
         }
         
-        return (await response.Content.ReadFromJsonAsync<Tokens>())!;
+        var tokens = await response.Content.ReadFromJsonAsync<Tokens>();
+        Assert.NotNull(tokens);
+        return tokens;
     }
 
     private async Task AuthenticateAsync(UserLoginRequestDto credentials)

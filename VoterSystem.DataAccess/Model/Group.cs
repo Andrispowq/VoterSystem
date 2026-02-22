@@ -30,11 +30,11 @@ public class Group : IRoleControlled, ITimestamped, ISoftDeletable
 
     public bool CanUpdate(bool isAdmin, Guid userId)
     {
-        return isAdmin && Members.Any(m => m.UserId == userId);
+        return isAdmin && CreatorUserId == userId;
     }
 
     public bool CanDelete(bool isAdmin, Guid userId)
     {
-        return isAdmin && Members.Any(m => m.UserId == userId);
+        return isAdmin && CreatorUserId == userId;
     }
 }

@@ -4,8 +4,8 @@ namespace VoterSystem.DataAccess.Model;
 
 public class GroupMembers : ITimestamped
 {
-    public long GroupId { get; init; }
-    public Guid UserId { get; init; }
+    public required long GroupId { get; init; }
+    public required Guid UserId { get; init; }
     public Guid AddedByUserId { get; init; }
     public DateTime? DeletedAtUtc { get; set; }
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;

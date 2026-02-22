@@ -8,4 +8,5 @@ public class VotingCreateRequestDto
     public required string Name { get; set; }
     public required DateTime StartsAt { get; set; }
     public required DateTime EndsAt { get; set; }
+    public Guid? GroupId { get; set; }
 }

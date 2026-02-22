@@ -111,6 +111,62 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
     }
 
     [Fact]
+    public async Task AddVoting_ReturnsCreated_WhenGroupProvidedAndUserMember()
+    {
+        var groupId = await CreateGroupWithMemberAsync(UserLogin.Email);
+        await AuthenticateAsAsync(UserLogin);
+
+        var dto = new VotingCreateRequestDto
+        {
+            Name = "Grouped voting",
+            StartsAt = DateTime.UtcNow.AddHours(3),
+            EndsAt = DateTime.UtcNow.AddDays(3),
+            GroupId = groupId
+        };
+
+        var response = await HttpClient.PostAsJsonAsync("/api/v1/votings", dto);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AddVoting_ReturnsUnauthorized_WhenGroupProvidedAndUserNotMember()
+    {
+        var groupId = await CreateGroupWithMemberAsync(AdminLogin.Email);
+        await AuthenticateAsAsync(UserLogin);
+
+        var dto = new VotingCreateRequestDto
+        {
+            Name = "Unauthorized group voting",
+            StartsAt = DateTime.UtcNow.AddHours(3),
+            EndsAt = DateTime.UtcNow.AddDays(3),
+            GroupId = groupId
+        };
+
+        var response = await HttpClient.PostAsJsonAsync("/api/v1/votings", dto);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AddVoting_ReturnsNotFound_WhenGroupDoesNotExist()
+    {
+        await AuthenticateAsAsync(UserLogin);
+
+        var dto = new VotingCreateRequestDto
+        {
+            Name = "Missing group voting",
+            StartsAt = DateTime.UtcNow.AddHours(3),
+            EndsAt = DateTime.UtcNow.AddDays(3),
+            GroupId = Guid.NewGuid()
+        };
+
+        var response = await HttpClient.PostAsJsonAsync("/api/v1/votings", dto);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task AddVoting_ReturnsUnauthorized_WithoutToken()
     {
         var dto = new VotingCreateRequestDto
@@ -266,6 +322,8 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
     {
         //Delete votings from previous tests if there were any
         DbContext.Votings.ExecuteDelete();
+        DbContext.GroupMembers.ExecuteDelete();
+        DbContext.Groups.ExecuteDelete();
 
         CreateUserIfMissing(userManager, AdminLogin, "Admin");
         CreateUserIfMissing(userManager, UserLogin, "User");
@@ -285,6 +343,32 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
         };
         um.CreateAsync(user, creds.Password).Wait();
         um.AddToRoleAsync(user, role).Wait();
+    }
+
+    private async Task<Guid> CreateGroupWithMemberAsync(string memberEmail)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
+        var member = await ctx.Users.FirstAsync(u => u.Email == memberEmail);
+
+        var group = new Group
+        {
+            GroupId = Guid.NewGuid(),
+            CreatorUserId = member.Id,
+            Name = $"Group-{Guid.NewGuid():N}"[..30],
+            Description = "Test group"
+        };
+
+        await ctx.Groups.AddAsync(group);
+        await ctx.GroupMembers.AddAsync(new GroupMembers
+        {
+            GroupId = group.GroupId,
+            UserId = member.Id,
+            AddedByUserId = member.Id
+        });
+        await ctx.SaveChangesAsync();
+
+        return group.GroupId;
     }
 
     #endregion

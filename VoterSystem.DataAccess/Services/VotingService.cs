@@ -55,12 +55,30 @@ public class VotingService(
 
     public async Task<Result<Voting, ServiceError>> CreateVoting(VotingCreateRequestDto request, bool commit = true)
     {
+        if (request.GroupId.HasValue)
+        {
+            var group = await dbContext.Groups
+                .Include(g => g.Members)
+                .FirstOrDefaultAsync(g => g.GroupId == request.GroupId.Value);
+
+            if (group is null)
+            {
+                return new NotFoundError("Group not found");
+            }
+
+            if (group.Members.All(m => m.UserId != UserId))
+            {
+                return new UnauthorizedError("You are not part of this group");
+            }
+        }
+
         var voting = new Voting
         {
             StartsAt = request.StartsAt,
             EndsAt = request.EndsAt,
             Name = request.Name,
-            CreatedByUserId = UserId
+            CreatedByUserId = UserId,
+            GroupId = request.GroupId
         };
         
         var check = CheckAccessOn(voting, RoleControlAction.Create);

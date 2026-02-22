@@ -13,11 +13,11 @@ public interface IGroupService
     /// <returns></returns>
     Task<List<Group>> GetAllAsync(CancellationToken ct = default);
     
-    Task<Result<Group, ServiceError>> GetByIdAsync(Guid groupId, CancellationToken ct = default);
+    Task<Result<Group, ServiceError>> GetByIdAsync(long groupId, CancellationToken ct = default);
     
     Task<Result<Group, ServiceError>> CreateGroupAsync(CreateGroupRequest request, CancellationToken ct = default);
-    Task<Option<ServiceError>> DeleteGroupAsync(Guid groupId, CancellationToken ct = default);
+    Task<Option<ServiceError>> DeleteGroupAsync(long groupId, CancellationToken ct = default);
     
-    Task<Option<ServiceError>> AddToGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default);
-    Task<Option<ServiceError>> RemoveFromGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default);
+    Task<Option<ServiceError>> AddToGroupAsync(long groupId, Guid userId, CancellationToken ct = default);
+    Task<Option<ServiceError>> RemoveFromGroupAsync(long groupId, Guid userId, CancellationToken ct = default);
 }

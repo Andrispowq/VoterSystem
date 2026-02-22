@@ -18,12 +18,13 @@ public sealed class GroupService(
     public async Task<List<Group>> GetAllAsync(CancellationToken ct = default)
     {
         return await context.Groups
+            .AsNoTracking()
             .Include(x => x.Members)
-            .Where(x => x.Members.Any(y => y.AddedByUserId == UserId))
+            .Where(x => x.Members.Any(y => y.UserId == UserId))
             .ToListAsync(ct);
     }
 
-    public async Task<Result<Group, ServiceError>> GetByIdAsync(Guid groupId, CancellationToken ct = default)
+    public async Task<Result<Group, ServiceError>> GetByIdAsync(long groupId, CancellationToken ct = default)
     {
         var group = await context.Groups.FindAsync([groupId], ct);
         if (group is null) return new NotFoundError("Group not found");
@@ -68,7 +69,7 @@ public sealed class GroupService(
         return group;
     }
 
-    public async Task<Option<ServiceError>> DeleteGroupAsync(Guid groupId, CancellationToken ct = default)
+    public async Task<Option<ServiceError>> DeleteGroupAsync(long groupId, CancellationToken ct = default)
     {
         if (!IsAdmin)
         {
@@ -85,7 +86,7 @@ public sealed class GroupService(
         return await context.SaveChangesAsync(ct);
     }
 
-    public async Task<Option<ServiceError>> AddToGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default)
+    public async Task<Option<ServiceError>> AddToGroupAsync(long groupId, Guid userId, CancellationToken ct = default)
     {
         if (!IsAdmin)
         {
@@ -104,12 +105,19 @@ public sealed class GroupService(
             UserId = userId,
             AddedByUserId = UserId
         };
-        
-        await context.GroupMembers.AddAsync(member, ct);
-        return await context.SaveChangesAsync(ct);
+
+        try
+        {
+            await context.GroupMembers.AddAsync(member, ct);
+            return await context.SaveChangesAsync(ct);
+        }
+        catch (Exception e)
+        {
+            return new BadRequestError("Error while adding a group member", e);
+        }
     }
 
-    public async Task<Option<ServiceError>> RemoveFromGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default)
+    public async Task<Option<ServiceError>> RemoveFromGroupAsync(long groupId, Guid userId, CancellationToken ct = default)
     {
         if (!IsAdmin)
         {

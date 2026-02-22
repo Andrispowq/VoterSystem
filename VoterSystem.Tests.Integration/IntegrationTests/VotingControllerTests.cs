@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
@@ -23,6 +24,12 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
     {
         Email = "user@example.com",
         Password = "User@123"
+    };
+
+    private static readonly UserLoginRequestDto AnotherUserLogin = new()
+    {
+        Email = "groupuser@example.com",
+        Password = "Group@123"
     };
 
     #region GET /votings/votable
@@ -270,9 +277,53 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
 
     #endregion
 
+    #region Group Access
+
+    [Fact]
+    public async Task GetVotings_ReturnsOnlyAccessibleVotings()
+    {
+        var userGroupId = await CreateGroupWithMembersAsync(UserLogin.Email);
+        var otherGroupId = await CreateGroupWithMembersAsync(AnotherUserLogin.Email);
+
+        var userVotingId = await SeedVotingAsync(UserLogin.Email, userGroupId);
+        var otherVotingId = await SeedVotingAsync(AdminLogin.Email, otherGroupId);
+        var globalVotingId = await SeedVotingAsync(AdminLogin.Email);
+
+        await AuthenticateAsAsync(UserLogin);
+
+        var response = await HttpClient.GetAsync("/api/v1/votings");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var votings = await response.Content.ReadFromJsonAsync<List<VotingDto>>() ?? [];
+        var ids = votings.Select(v => v.VotingId).ToList();
+
+        Assert.Contains(userVotingId, ids);
+        Assert.Contains(globalVotingId, ids);
+        Assert.DoesNotContain(otherVotingId, ids);
+    }
+
+    [Fact]
+    public async Task CastVote_ReturnsUnauthorized_ForForeignGroupVoting()
+    {
+        var foreignGroupId = await CreateGroupWithMembersAsync(AnotherUserLogin.Email);
+        var votingId = await SeedVotingWithChoicesAsync(AnotherUserLogin.Email, 2, foreignGroupId);
+        var choiceId = await DbContext.VoteChoices
+            .Where(c => c.VotingId == votingId)
+            .Select(c => c.ChoiceId)
+            .FirstAsync();
+
+        await AuthenticateAsAsync(UserLogin);
+
+        var response = await HttpClient.PostAsync($"/api/v1/votes/cast-vote?choiceId={choiceId}", null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    #endregion
+
     #region Helpers
 
-    private async Task<long> SeedVotingAsync(string ownerEmail)
+    private async Task<long> SeedVotingAsync(string ownerEmail, Guid? groupId = null)
     {
         using var scope = Factory.Services.CreateScope();
         var ctx = scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
@@ -283,7 +334,8 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
             Name = $"Voting-{Guid.NewGuid()}",
             StartsAt = DateTime.UtcNow.AddHours(5),
             EndsAt = DateTime.UtcNow.AddDays(3),
-            CreatedByUserId = owner.Id
+            CreatedByUserId = owner.Id,
+            GroupId = groupId
         };
 
         ctx.Votings.Add(voting);
@@ -291,9 +343,9 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
         return voting.VotingId;
     }
 
-    private async Task<long> SeedVotingWithChoicesAsync(string ownerEmail, int choiceCount)
+    private async Task<long> SeedVotingWithChoicesAsync(string ownerEmail, int choiceCount, Guid? groupId = null)
     {
-        var id = await SeedVotingAsync(ownerEmail);
+        var id = await SeedVotingAsync(ownerEmail, groupId);
 
         using var scope = Factory.Services.CreateScope();
         var ctx = scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
@@ -327,6 +379,7 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
 
         CreateUserIfMissing(userManager, AdminLogin, "Admin");
         CreateUserIfMissing(userManager, UserLogin, "User");
+        CreateUserIfMissing(userManager, AnotherUserLogin, "User");
     }
 
     private static void CreateUserIfMissing(UserManager<User> um, UserLoginRequestDto creds, string role)
@@ -345,30 +398,46 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
         um.AddToRoleAsync(user, role).Wait();
     }
 
-    private async Task<Guid> CreateGroupWithMemberAsync(string memberEmail)
+    private async Task<Guid> CreateGroupWithMembersAsync(params string[] memberEmails)
     {
-        using var scope = Factory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
-        var member = await ctx.Users.FirstAsync(u => u.Email == memberEmail);
+        if (memberEmails.Length == 0)
+        {
+            throw new ArgumentException("At least one member email is required", nameof(memberEmails));
+        }
 
+        var owner = await DbContext.Users.FirstAsync(u => u.Email == memberEmails[0]);
+        var groupName = "Group-" + Guid.NewGuid().ToString("N");
         var group = new Group
         {
             GroupId = Guid.NewGuid(),
-            CreatorUserId = member.Id,
-            Name = $"Group-{Guid.NewGuid():N}"[..30],
+            CreatorUserId = owner.Id,
+            Name = groupName[..32],
             Description = "Test group"
         };
 
-        await ctx.Groups.AddAsync(group);
-        await ctx.GroupMembers.AddAsync(new GroupMembers
+        await DbContext.Groups.AddAsync(group);
+        await DbContext.SaveChangesAsync();
+
+        var distinctMembers = memberEmails.Distinct();
+        foreach (var email in distinctMembers)
         {
-            GroupId = group.GroupId,
-            UserId = member.Id,
-            AddedByUserId = member.Id
-        });
-        await ctx.SaveChangesAsync();
+            var member = await DbContext.Users.FirstAsync(u => u.Email == email);
+            await DbContext.GroupMembers.AddAsync(new GroupMembers
+            {
+                GroupId = group.GroupId,
+                UserId = member.Id,
+                AddedByUserId = owner.Id
+            });
+        }
+
+        await DbContext.SaveChangesAsync();
 
         return group.GroupId;
+    }
+
+    private Task<Guid> CreateGroupWithMemberAsync(string memberEmail)
+    {
+        return CreateGroupWithMembersAsync(memberEmail);
     }
 
     #endregion

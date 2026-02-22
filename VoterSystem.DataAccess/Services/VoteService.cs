@@ -71,12 +71,22 @@ public class VoteService(
         {
             return new UnauthorizedError("You can not vote on your own voting!");
         }
-        
+
         if (IsAdmin)
         {
             return new UnauthorizedError("Admins cannot vote");
         }
-        
+
+        if (voteChoice.Voting.GroupId.HasValue)
+        {
+            var isMember = await dbContext.GroupMembers
+                .AnyAsync(m => m.GroupId == voteChoice.Voting.GroupId && m.UserId == user.Id);
+            if (!isMember)
+            {
+                return new UnauthorizedError("You are not part of this group");
+            }
+        }
+
         var alreadyVoted = await dbContext.VotingParticipations.AnyAsync(
             x => x.UserId == user.Id && x.VotingId == voteChoice.VotingId);
         if (alreadyVoted)

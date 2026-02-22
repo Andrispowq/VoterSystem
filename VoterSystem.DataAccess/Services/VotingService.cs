@@ -19,38 +19,52 @@ public class VotingService(
         {
             return new UnauthorizedError("Access denied");
         }
-        
-        return await dbContext.Votings.ToListAsync();
+
+        var query = ApplyGroupFilter(dbContext.Votings);
+        return await query.ToListAsync();
     }
 
     public async Task<Result<List<Voting>, ServiceError>> GetVotableVotings()
     {
-        return await dbContext.Votings
-            .Include(x => x.VotingParticipations)
-            .Where(x => x.VotingParticipations.All(v => v.UserId != UserId))
-            .ToListAsync();
+        var query = ApplyGroupFilter(dbContext.Votings
+            .Include(x => x.VotingParticipations));
+
+        query = query.Where(x => x.VotingParticipations.All(v => v.UserId != UserId));
+
+        return await query.ToListAsync();
     }
 
     public async Task<Result<List<Voting>, ServiceError>> GetVotedVotings()
     {
-        return await dbContext.Votings
-            .Include(x => x.VotingParticipations)
-            .Where(x => x.VotingParticipations.Any(v => v.UserId == UserId))
-            .ToListAsync();
+        var query = ApplyGroupFilter(dbContext.Votings
+            .Include(x => x.VotingParticipations));
+
+        query = query.Where(x => x.VotingParticipations.Any(v => v.UserId == UserId));
+
+        return await query.ToListAsync();
     }
 
     public async Task<Result<Voting, ServiceError>> GetVotingById(long id)
     {
-        var item = await dbContext.Votings.FindAsync(id);
-        if (item is null)
+        var voting = await dbContext.Votings
+            .Include(v => v.Group)
+                .ThenInclude(g => g.Members)
+            .FirstOrDefaultAsync(v => v.VotingId == id);
+
+        if (voting is null)
         {
             return new NotFoundError("Voting not found");
         }
 
-        var check = CheckAccessOn(item, RoleControlAction.Access);
+        if (!HasGroupAccess(voting))
+        {
+            return new UnauthorizedError("Access denied");
+        }
+
+        var check = CheckAccessOn(voting, RoleControlAction.Access);
         if (check.IsSome) return check.AsSome.Value;
 
-        return item;
+        return voting;
     }
 
     public async Task<Result<Voting, ServiceError>> CreateVoting(VotingCreateRequestDto request, bool commit = true)
@@ -150,5 +164,29 @@ public class VotingService(
     {
         return await dbContext.VotingParticipations
             .AnyAsync(v => v.VotingId == voting.VotingId && v.UserId == UserId);
+    }
+
+    private IQueryable<Voting> ApplyGroupFilter(IQueryable<Voting> query)
+    {
+        query = query
+            .Include(v => v.Group)
+                .ThenInclude(g => g.Members);
+
+        if (IsAdmin)
+        {
+            return query;
+        }
+
+        return query.Where(v => v.GroupId == null || v.Group!.Members.Any(m => m.UserId == UserId));
+    }
+
+    private bool HasGroupAccess(Voting voting)
+    {
+        if (IsAdmin || voting.GroupId is null)
+        {
+            return true;
+        }
+
+        return voting.Group?.Members.Any(m => m.UserId == UserId) == true;
     }
 }

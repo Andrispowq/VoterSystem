@@ -48,31 +48,32 @@ else
         </section>
     }
 
-    <div class="accordion" id="groupAccordion">
+    <div class="mt-4">
         @foreach (var group in _groups.OrderBy(g => g.Name))
         {
-            <div class="accordion-item mb-3">
-                <h2 class="accordion-header" id="heading-@group.GroupId">
-                    <div class="d-flex align-items-center w-100">
-                        <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@group.GroupId" aria-expanded="false" aria-controls="collapse-@group.GroupId">
-                            <div class="w-100 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>@group.Name</strong>
-                                    <div class="small text-muted">@group.Description</div>
-                                    <div class="small text-muted mt-1">Members: @group.Members.Count</div>
-                                </div>
-                            </div>
+            <div class="card mb-3 shadow-sm border-0">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                    <div>
+                        <strong>@group.Name</strong>
+                        <div class="small text-muted">@group.Description</div>
+                        <div class="small text-muted mt-1">Members: @group.Members.Count</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleExpanded(group.GroupId)">
+                            <i class="bi @(IsExpanded(group.GroupId) ? "bi-chevron-up" : "bi-chevron-down")"></i>
                         </button>
                         @if (_isAdmin)
                         {
-                            <button class="btn btn-sm btn-link text-danger ms-2" type="button" @onclick="async () => await DeleteGroupAsync(group.GroupId)" title="Delete group">
+                            <button class="btn btn-sm btn-link text-danger" type="button" @onclick="async () => await DeleteGroupAsync(group.GroupId)" title="Delete group">
                                 <i class="bi bi-trash"></i>
                             </button>
                         }
                     </div>
-                </h2>
-                <div id="collapse-@group.GroupId" class="accordion-collapse collapse" aria-labelledby="heading-@group.GroupId" data-bs-parent="#groupAccordion">
-                    <div class="accordion-body">
+                </div>
+
+                @if (IsExpanded(group.GroupId))
+                {
+                    <div class="card-body">
                         @if (!_isAdmin)
                         {
                             <p class="text-muted mb-0">You belong to this group along with @group.Members.Count other @(group.Members.Count == 1 ? "person" : "people").</p>
@@ -130,7 +131,7 @@ else
                             </section>
                         }
                     </div>
-                </div>
+                }
             </div>
         }
     </div>
@@ -142,6 +143,7 @@ else
     private bool _isAdmin;
     private bool _isLoading = true;
     private readonly Dictionary<Guid, string> _groupSearchValues = new();
+    private readonly HashSet<Guid> _expandedGroups = [];
     private CreateGroupViewModel _newGroup = new();
 
     protected override async Task OnInitializedAsync()
@@ -165,9 +167,11 @@ else
     private async Task LoadGroupsAsync()
     {
         _groups = await GroupsService.GetGroupsAsync();
+        _expandedGroups.Clear();
         foreach (var group in _groups)
         {
             _groupSearchValues[group.GroupId] = string.Empty;
+            _expandedGroups.Add(group.GroupId);
         }
     }
 
@@ -184,6 +188,7 @@ else
         {
             _groups.Add(updated);
         }
+        ExpandGroup(groupId);
     }
 
     private async Task CreateGroupAsync()
@@ -214,6 +219,7 @@ else
         await GroupsService.DeleteGroupAsync(groupId);
         _groups.RemoveAll(g => g.GroupId == groupId);
         _groupSearchValues.Remove(groupId);
+        _expandedGroups.Remove(groupId);
     }
 
     private async Task AddUserAsync(Guid groupId, Guid userId)
@@ -262,6 +268,19 @@ else
             .Take(5);
     }
 
+    private void ToggleExpanded(Guid groupId)
+    {
+        if (!_expandedGroups.Add(groupId))
+        {
+            _expandedGroups.Remove(groupId);
+        }
+    }
+
+    private void ExpandGroup(Guid groupId)
+    {
+        _expandedGroups.Add(groupId);
+    }
+
     private sealed class CreateGroupViewModel
     {
         [Required]
@@ -271,5 +290,10 @@ else
         [Required]
         [StringLength(255, MinimumLength = 3)]
         public string Description { get; set; } = string.Empty;
+    }
+
+    private bool IsExpanded(Guid groupId)
+    {
+        return _expandedGroups.Contains(groupId);
     }
 }

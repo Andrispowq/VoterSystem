@@ -104,8 +104,7 @@ public class GroupControllerTests(TestWebAppFactory factory) : TestObjectFactory
         };
 
         var response = await HttpClient.PostAsJsonAsync("/api/v1/groups", request);
-        var content = await response.Content.ReadAsStringAsync();
-
+        
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var dto = await response.Content.ReadFromJsonAsync<GroupDto>();
         Assert.NotNull(dto);

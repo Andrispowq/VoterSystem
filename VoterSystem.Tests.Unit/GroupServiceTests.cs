@@ -157,7 +157,9 @@ public sealed class GroupServiceTests : UnitTestBase
         await AddMemberAsync(group.GroupId, _admin.Id, _admin.Id);
         SetCurrentUser(_admin.Id, Role.Admin);
 
-        await _service.AddToGroupAsync(group.GroupId, _member.Id);
+        var attempt1 = await _service.AddToGroupAsync(group.GroupId, _member.Id);
+        Assert.True(attempt1.IsNone);
+        
         var duplicateAttempt = await _service.AddToGroupAsync(group.GroupId, _member.Id);
 
         Assert.True(duplicateAttempt.IsSome);

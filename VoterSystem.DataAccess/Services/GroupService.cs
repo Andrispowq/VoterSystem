@@ -127,7 +127,7 @@ public sealed class GroupService(
         if (access.IsSome) return access.AsSome.Value;
         
         var existing = await context.GroupMembers.FindAsync([groupId, userId], ct);
-        if (existing is not null) return new Option<ServiceError>.None();
+        if (existing is not null) return new BadRequestError("User is already a member of this group");
         
         var member = new GroupMembers
         {

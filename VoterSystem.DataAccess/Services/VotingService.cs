@@ -29,7 +29,8 @@ public class VotingService(
         var query = ApplyGroupFilter(dbContext.Votings
             .Include(x => x.VotingParticipations));
 
-        query = query.Where(x => x.VotingParticipations.All(v => v.UserId != UserId));
+        query = query.Where(x => x.CreatedByUserId != UserId &&
+                                 x.VotingParticipations.All(v => v.UserId != UserId));
 
         return await query.ToListAsync();
     }
@@ -39,7 +40,8 @@ public class VotingService(
         var query = ApplyGroupFilter(dbContext.Votings
             .Include(x => x.VotingParticipations));
 
-        query = query.Where(x => x.VotingParticipations.Any(v => v.UserId == UserId));
+        query = query.Where(x => x.CreatedByUserId != UserId &&
+                                 x.VotingParticipations.Any(v => v.UserId == UserId));
 
         return await query.ToListAsync();
     }

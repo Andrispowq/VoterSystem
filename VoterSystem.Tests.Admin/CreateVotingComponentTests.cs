@@ -24,6 +24,7 @@ public class CreateVotingComponentTests : IDisposable
         
         _context.Services.AddSingleton(_authenticationServiceMock.Object);
         _context.Services.AddSingleton(_groupsService.Object);
+        _groupsService.Setup(x => x.GetGroupsAsync()).ReturnsAsync(new List<GroupDto>());
 
         _votingsService.Setup(x => x.CreateVotingAsync(It.IsAny<VotingCreateRequestDto>())).ReturnsAsync(
             (VotingCreateRequestDto requestDto) => new VotingDto

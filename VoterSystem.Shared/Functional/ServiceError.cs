@@ -1,27 +1,27 @@
 namespace VoterSystem.Shared.Functional;
 
-public abstract class ServiceError(string message) : Error(message)
+public abstract class ServiceError(string message, Exception? e) : Error(message, e)
 {
-    public override string ToString() => $"ServiceError({Message})";
+    public override string ToString() => $"ServiceError({base.ToString()})";
 }
 
-public class NotFoundError(string message) : ServiceError(message)
+public class NotFoundError(string message, Exception? e = null) : ServiceError(message, e)
 {
-    public override string ToString() => $"NotFoundError({Message})";
+    public override string ToString() => $"NotFoundError({base.ToString()})";
 }
-public class BadRequestError(string message) : ServiceError(message)
+public class BadRequestError(string message, Exception? e = null) : ServiceError(message, e)
 {
-    public override string ToString() => $"BadRequestError({Message})";
+    public override string ToString() => $"BadRequestError({base.ToString()})";
 }
-public class ConflictError(string message) : ServiceError(message)
+public class ConflictError(string message, Exception? e = null) : ServiceError(message, e)
 {
-    public override string ToString() => $"ConflictError({Message})";
+    public override string ToString() => $"ConflictError({base.ToString()})";
 }
-public class UnauthorizedError(string message) : ServiceError(message)
+public class UnauthorizedError(string message, Exception? e = null) : ServiceError(message, e)
 {
-    public override string ToString() => $"UnauthorizedError({Message})";
+    public override string ToString() => $"UnauthorizedError({base.ToString()})";
 }
-public class UnprocessableEntityError() : ServiceError("Unprocessable entity")
+public class UnprocessableEntityError(Exception? e = null) : ServiceError("Unprocessable entity", e)
 {
-    public override string ToString() => $"UnprocessableEntityError({Message})";
+    public override string ToString() => $"UnprocessableEntityError({base.ToString()})";
 }

@@ -25,19 +25,20 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RegisterAsync([FromBody] UserRegisterRequestDto request)
     {
-        var user = new User
-        {
-            Email = request.Email,
-            Name = request.Name,
-            UserName = request.Email
-        };
-
         //If there are no admins, add one (this will be the first user)
         //After that, a user has to be promoted by an admin
         var hasAdmin = await userService.AnyAdmins();
         var newRole = hasAdmin ? Role.User : Role.Admin;
         
-        var result = await userService.CreateUser(user, request.Password, newRole);
+        var user = new User
+        {
+            Email = request.Email,
+            Name = request.Name,
+            UserName = request.Email,
+            Role = newRole
+        };
+        
+        var result = await userService.CreateUser(user, request.Password);
         if (result.IsSome) return result.ToHttpResult();
         
         return CreatedAtAction(
@@ -47,7 +48,7 @@ public class UserController(IUserService userService, IEmailService emailService
     }
 
     [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Tokens))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokensDto))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequestDto request)
@@ -55,8 +56,8 @@ public class UserController(IUserService userService, IEmailService emailService
         var result = await userService.LoginAsync(request.Email, request.Password);
         if (result.IsError) return result.ToHttpResult();
         
-        var tokens = result.Value;
-        Response.Cookies.Append(TokenIssuer.AuthTokenKey, tokens.AuthToken);
+        var TokensDto = result.Value;
+        Response.Cookies.Append(TokenIssuer.AuthTokenKey, TokensDto.AuthToken);
         
         return result.ToHttpResult();
     }
@@ -70,7 +71,7 @@ public class UserController(IUserService userService, IEmailService emailService
         var users = await userService.GetAllUsersAsync();
         if (users.IsError) return users.Error.ToHttpResult();
         
-        List<UserDto> userDtos = new List<UserDto>();
+        List<UserDto> userDtos = [];
         foreach (var user in users.Value)
         {
             var result = await userService.GetUserRoleByIdAsync(user.Id);
@@ -92,14 +93,7 @@ public class UserController(IUserService userService, IEmailService emailService
         var user = await userService.GetCurrentUserAsync();
         if (user.IsError) return user.Error.ToHttpResult();
         var userR = user.Value;
-        
-        var userLevels = userService.GetCurrentUserRole();
-        if (userLevels.IsError) return user.Error.ToHttpResult();
-        var userLevelsR = userLevels.Value;
-
-        var ret = userR.ToUserDto();
-        ret.Role = userLevelsR;
-        return Ok(ret);
+        return Ok(userR.ToUserDto());
     }
     
     [Authorize]
@@ -112,13 +106,7 @@ public class UserController(IUserService userService, IEmailService emailService
         var user = await userService.GetUserByIdAsync(id);
         if (user.IsError) return user.Error.ToHttpResult();
         var userR = user.Value;
-        
-        var userLevels = userService.GetCurrentUserRole();
-        if (userLevels.IsError) return user.Error.ToHttpResult();
-        var userLevelsR = userLevels.Value;
-
         var ret = userR.ToUserDto();
-        ret.Role = userLevelsR;
         return Ok(ret);
     }
 
@@ -244,26 +232,20 @@ public class UserController(IUserService userService, IEmailService emailService
     [HttpPatch("promote")]
     public async Task<IActionResult> PromoteToAdminAsync([FromQuery] Guid userId)
     {
-        var current = userService.GetCurrentUserId();
-        if (current.IsError) return current.Error.ToHttpResult();
-        return userId == current.Value 
-            ? BadRequest("Can not promote yourself") 
-            : (await userService.SetUserRoleAsync(userId, Role.Admin)).ToHttpResult();
+        var result = await userService.SetUserRoleAsync(userId, Role.Admin);
+        return result.ToHttpResult();
     }
 
     [Authorize("AdminOnly")]
     [HttpPatch("demote")]
     public async Task<IActionResult> DemoteToUserAsync([FromQuery] Guid userId)
     {
-        var current = userService.GetCurrentUserId();
-        if (current.IsError) return current.Error.ToHttpResult();
-        return userId == current.Value 
-            ? BadRequest("Can not demote yourself") 
-            : (await userService.SetUserRoleAsync(userId, Role.User)).ToHttpResult();
+        var result = await userService.SetUserRoleAsync(userId, Role.User);
+        return result.ToHttpResult();
     }
     
     [HttpPost("refresh-token")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Tokens))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokensDto))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshTokenAsync([FromBody] string refreshToken)
     {

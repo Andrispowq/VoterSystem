@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
@@ -46,6 +47,10 @@ public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 options.UseNpgsql(dataSource);
                 options.EnableSensitiveDataLogging();
                 options.UseLazyLoadingProxies();
+                options.ConfigureWarnings(warnings =>
+                {
+                    warnings.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning);
+                });
             });
 
             //Seed the database with initial data

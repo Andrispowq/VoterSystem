@@ -1,4 +1,5 @@
 using VoterSystem.DataAccess.Model;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
@@ -10,12 +11,12 @@ public interface IUserService
 {
     //CRUD
     Task<Result<List<User>, ServiceError>> GetAllUsersAsync();
-    Task<Option<ServiceError>> CreateUser(User user, string password, Role? role = null);
+    Task<Option<ServiceError>> CreateUser(User user, string password);
     //Helper
     Task<bool> AnyAdmins();
     //Auth userflow
-    Task<Result<Tokens, ServiceError>> LoginAsync(string email, string password);
-    Task<Result<Tokens, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken);
+    Task<Result<TokensDto, ServiceError>> LoginAsync(string email, string password);
+    Task<Result<TokensDto, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken);
     Task<Option<ServiceError>> LogoutAsync();
     Task<Option<ServiceError>> ChangePasswordAsync(string oldPassword, string newPassword);
     Task<Result<string, ServiceError>> GenerateEmailConfirmTokenAsync();
@@ -24,12 +25,9 @@ public interface IUserService
     Task<Result<string, ServiceError>> GeneratePasswordResetTokenAsync(string email);
     Task<Option<ServiceError>> ResetPasswordAsync(string email, string token, string newPassword);
     //Helper methods
-    Task<Result<User, ServiceError>> GetCurrentUserAsync();
-    Result<Guid, ServiceError> GetCurrentUserId();
     Task<Result<User, ServiceError>> GetUserByIdAsync(Guid id);
     Task<Result<User, ServiceError>> GetUserByEmailAsync(string email);
     Task<Result<Role, ServiceError>> GetUserRoleByIdAsync(Guid id);
-    Result<Role, ServiceError> GetCurrentUserRole();
     Task<Option<ServiceError>> SetUserRoleAsync(Guid userId, Role role);
-    bool IsCurrentUserAdmin();
+    Task<Result<User, ServiceError>> GetCurrentUserAsync(CancellationToken ct = default);
 }

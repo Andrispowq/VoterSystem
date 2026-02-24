@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
@@ -10,27 +12,24 @@ namespace VoterSystem.DataAccess.Services;
 
 public class VoteService(
     VoterSystemDbContext dbContext, 
-    IUserService userService, 
+    IHttpContextAccessor http,
+    ILogger<VoteService> logger,
     IOptions<VotingSettings> votingSettingsOptions) 
-    : BaseService<AnonymousBallot>(userService), IVoteService
+    : BaseService<AnonymousBallot, VoteService>(http, logger), IVoteService
 {
-    private readonly IUserService _userService = userService;
     private readonly VotingSettings _votingSettings = votingSettingsOptions.Value;
     protected override bool CanAccessAll(bool admin) => admin;
 
     public async Task<Result<List<AnonymousBallot>, ServiceError>> GetVotesForVoting(Voting voting)
     {
         //Admin can access them all
-        var isAdmin = _userService.IsCurrentUserAdmin();
-        if (isAdmin)
+        if (IsAdmin)
         {
             return await GetVotes(voting);
         }
         
         //If you created it, you can access them all
-        var userId = _userService.GetCurrentUserId();
-        if (userId.IsError) return userId.Error;
-        if (voting.CreatedByUserId == userId.Value)
+        if (voting.CreatedByUserId == UserId)
         {
             return await GetVotes(voting);
         }
@@ -38,7 +37,7 @@ public class VoteService(
         //If you have voted, you can also access them all
         var hasVoted = await dbContext.VotingParticipations
             .AnyAsync(v => 
-                v.VotingId == voting.VotingId && v.UserId == userId.Value);
+                v.VotingId == voting.VotingId && v.UserId == UserId);
         if (!hasVoted)
         {
             return new UnauthorizedError("Access denied");
@@ -56,17 +55,13 @@ public class VoteService(
     
     public async Task<Result<List<VotingParticipation>, ServiceError>> GetMyVotes()
     {
-        var isAdmin = _userService.IsCurrentUserAdmin();
-        if (isAdmin)
+        if (IsAdmin)
         {
             return new UnauthorizedError("Admins cannot vote");
         }
         
-        var userId = _userService.GetCurrentUserId();
-        if (userId.IsError) return userId.Error;
-        
         return await dbContext.VotingParticipations
-            .Where(v => v.UserId == userId.Value)
+            .Where(v => v.UserId == UserId)
             .ToListAsync();
     }
 
@@ -76,14 +71,22 @@ public class VoteService(
         {
             return new UnauthorizedError("You can not vote on your own voting!");
         }
-        
-        var role = await _userService.GetUserRoleByIdAsync(user.Id);
-        if (role.IsError) return role.Error;
-        if (role.Value == Role.Admin)
+
+        if (IsAdmin)
         {
             return new UnauthorizedError("Admins cannot vote");
         }
-        
+
+        if (voteChoice.Voting.GroupId.HasValue)
+        {
+            var isMember = await dbContext.GroupMembers
+                .AnyAsync(m => m.GroupId == voteChoice.Voting.GroupId && m.UserId == user.Id);
+            if (!isMember)
+            {
+                return new UnauthorizedError("You are not part of this group");
+            }
+        }
+
         var alreadyVoted = await dbContext.VotingParticipations.AnyAsync(
             x => x.UserId == user.Id && x.VotingId == voteChoice.VotingId);
         if (alreadyVoted)
@@ -109,7 +112,7 @@ public class VoteService(
             {
                 VotingId = voteChoice.VotingId,
                 ChoiceId = voteChoice.ChoiceId,
-                VoteTag = result.HashCode
+                VoteTagBase64 = result.HashCode
             };
 
             await dbContext.AnonymousBallots.AddAsync(ballot);

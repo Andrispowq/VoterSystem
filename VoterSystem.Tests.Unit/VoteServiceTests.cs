@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using VoterSystem.DataAccess.Config;
@@ -10,7 +12,8 @@ namespace VoterSystem.Tests.Unit;
 public class VoteServiceTests : UnitTestBase, IDisposable
 {
     private readonly VoteService _voteService;
-    private readonly Mock<IUserService> _mockUserService;
+    private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
+    private readonly Mock<ILogger<VoteService>> _loggerMock = new();
     private readonly IOptions<VotingSettings> _votingSettings;
     
     private User _user = null!;
@@ -19,11 +22,12 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     
     public VoteServiceTests()
     {
-        _mockUserService = new Mock<IUserService>();
+        _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
         _votingSettings = new OptionsWrapper<VotingSettings>(new VotingSettings());
         _voteService = new VoteService(
             Context,
-            _mockUserService.Object,
+            _httpContextAccessorMock.Object,
+            _loggerMock.Object,
             _votingSettings);
 
         SeedDatabase();
@@ -35,9 +39,14 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     public async Task CastVote_WhenUserIsAdmin_ReturnsUnauthorizedError()
     {
         // Arrange
-        var user = new User { Id = Guid.NewGuid(), UserName = "admin@example.com" }; // Simulate an admin user
-        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(user.Id);
-        _mockUserService.Setup(x => x.GetUserRoleByIdAsync(user.Id)).ReturnsAsync(Role.Admin);
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = "admin@example.com",
+            Name = "Admin",
+            Role = Role.Admin
+        };
+        SetCurrentUser(user.Id, Role.Admin);
         
         // Act
         var result = await _voteService.CastVote(user, _voteChoice);
@@ -53,11 +62,12 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         // Arrange
         var user = new User
         {
-            Id = _voting.CreatedByUserId, UserName = "owner@example.com"
-        }; // Simulate the owner of the voting
-        
-        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(user.Id);
-        _mockUserService.Setup(x => x.GetUserRoleByIdAsync(user.Id)).ReturnsAsync(Role.User);
+            Id = _voting.CreatedByUserId,
+            UserName = "owner@example.com",
+            Name = "owner",
+            Role = Role.User
+        };
+        SetCurrentUser(user.Id, Role.User);
 
         // Act
         var result = await _voteService.CastVote(user, _voteChoice);
@@ -71,11 +81,14 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     public async Task CastVote_WhenValidVote_ReturnsSuccess()
     {
         // Arrange
-        var anotherUser = new User { Id = Guid.NewGuid(), UserName = "anotherUser@example.com", Name = "anotherUser" };
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(anotherUser);
-        
-        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(anotherUser.Id);
-        _mockUserService.Setup(x => x.GetUserRoleByIdAsync(anotherUser.Id)).ReturnsAsync(Role.User);
+        var anotherUser = new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = "anotherUser@example.com",
+            Name = "anotherUser",
+            Role = Role.User
+        };
+        SetCurrentUser(anotherUser.Id, Role.User);
 
         // Act
         var result = await _voteService.CastVote(anotherUser, _voteChoice);
@@ -92,14 +105,14 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     public async Task GetVotesForVoting_WhenAdmin_ReturnsAllVotes()
     {
         // Arrange
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(true);
+        SetCurrentUser(Guid.NewGuid(), Role.Admin);
         var votes = new List<AnonymousBallot>
         {
             new()
             {
                 VotingId = _voting.VotingId,
                 ChoiceId = 1,
-                VoteTag = []
+                VoteTagBase64 = ""
             }
         };
         
@@ -125,7 +138,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
             {
                 VotingId = _voting.VotingId,
                 ChoiceId = _voteChoice.ChoiceId,
-                VoteTag = []
+                VoteTagBase64 = ""
             }
         };
         var participations = new List<VotingParticipation>
@@ -142,7 +155,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         await Context.VotingParticipations.AddRangeAsync(participations);
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(userId);
+        SetCurrentUser(userId, Role.User);
 
         // Act
         var result = await _voteService.GetVotesForVoting(_voting);
@@ -157,7 +170,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     {
         // Arrange
         var userId = Guid.NewGuid();
-        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(userId);
+        SetCurrentUser(userId, Role.User);
 
         // Act
         var result = await _voteService.GetVotesForVoting(_voting);
@@ -175,7 +188,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
     public async Task GetMyVotes_WhenUserIsAdmin_ReturnsUnauthorizedError()
     {
         // Arrange
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(true);
+        SetCurrentUser(Guid.NewGuid(), Role.Admin);
 
         // Act
         var result = await _voteService.GetMyVotes();
@@ -196,7 +209,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
             {
                 VotingId = _voting.VotingId,
                 ChoiceId = _voteChoice.ChoiceId,
-                VoteTag = []
+                VoteTagBase64 = ""
             }
         };
         var participations = new List<VotingParticipation>
@@ -213,7 +226,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         await Context.VotingParticipations.AddRangeAsync(participations);
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(userId);
+        SetCurrentUser(userId, Role.User);
 
         // Act
         var result = await _voteService.GetMyVotes();
@@ -227,6 +240,12 @@ public class VoteServiceTests : UnitTestBase, IDisposable
 
     #region Helper Methods
 
+    private void SetCurrentUser(Guid userId, params Role[] roles)
+    {
+        var context = BuildHttpContext(userId, roles);
+        _httpContextAccessorMock.Setup(a => a.HttpContext).Returns(context);
+    }
+
     private void SeedDatabase()
     {
         _user = NextValidUser;
@@ -236,7 +255,12 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         Context.Votings.Add(_voting);
         
         _voteChoice = new VoteChoice
-            { ChoiceId = 1, VotingId = _voting.VotingId, Name = "choice1" };
+        {
+            ChoiceId = 1,
+            VotingId = _voting.VotingId,
+            Name = "choice1",
+            Voting = _voting
+        };
         Context.VoteChoices.Add(_voteChoice);
         
         Context.SaveChanges();

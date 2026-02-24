@@ -5,6 +5,7 @@
 @using VoterSystem.Shared.Dto
 @inject NavigationManager NavigationManager
 @inject IVotingsService VotingsService
+@inject IGroupsService GroupsService
 
 <h1 class="my-4">Create Voting</h1>
 
@@ -36,6 +37,42 @@
                 <ValidationMessage For="@(() => _model.EndsAt)" />
             </div>
 
+            <div class="mb-3">
+                <label class="form-label d-block">Scope</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="scope-global" checked="@(!_useGroupVoting)"
+                           @onchange="_ => SetScope(false)" />
+                    <label class="form-check-label" for="scope-global">
+                        Global voting (visible to everyone)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="scope-group" @onchange="_ => SetScope(true)"
+                           disabled="@(!_groups.Any())" checked="@_useGroupVoting" />
+                    <label class="form-check-label" for="scope-group">
+                        Group voting
+                        @if (!_groups.Any())
+                        {
+                            <span class="text-muted small"> (join a group to enable)</span>
+                        }
+                    </label>
+                </div>
+            </div>
+
+            @if (_useGroupVoting)
+            {
+                <div class="mb-3">
+                    <label class="form-label" for="group-select">Select group</label>
+                    <InputSelect id="group-select" class="form-select" @bind-Value="_selectedGroupId">
+                        <option value="">Choose a group…</option>
+                        @foreach (var group in _groups)
+                        {
+                            <option value="@group.GroupId">@group.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-1"></i> Create
             </button>
@@ -50,9 +87,25 @@
         StartsAt = DateTime.Now.AddHours(1),
         EndsAt = DateTime.Now.AddDays(1).AddHours(1)
     };
+    private List<GroupDto> _groups = [];
+    private bool _useGroupVoting;
+    private string? _selectedGroupId;
 
     private string NowFormatted => DateTime.Now.ToString("yyyy-MM-dd");
     private string MinEndFormatted => _model.StartsAt.AddDays(1).ToString("yyyy-MM-dd");
+
+    protected override async Task OnInitializedAsync()
+    {
+        _groups = await GroupsService.GetGroupsAsync();
+        if (_groups.Any())
+        {
+            _selectedGroupId ??= _groups.First().GroupId.ToString();
+        }
+        else
+        {
+            _useGroupVoting = false;
+        }
+    }
 
     private async Task HandleCreateAsync()
     {
@@ -61,12 +114,34 @@
             Name = _model.Name,
             StartsAt = _model.StartsAt.ToUniversalTime(),
             EndsAt = _model.EndsAt.ToUniversalTime(),
+            GroupId = _useGroupVoting && Guid.TryParse(_selectedGroupId, out var groupId)
+                ? groupId
+                : null
         };
         
         var newVoting = await VotingsService.CreateVotingAsync(model);
         if (newVoting is not null)
         {
             NavigationManager.NavigateTo($"/votings/{newVoting.VotingId}");
+        }
+    }
+
+    private void SetScope(bool useGroup)
+    {
+        if (useGroup && !_groups.Any())
+        {
+            _useGroupVoting = false;
+            return;
+        }
+
+        _useGroupVoting = useGroup;
+        if (_useGroupVoting)
+        {
+            _selectedGroupId ??= _groups.FirstOrDefault()?.GroupId.ToString();
+        }
+        else
+        {
+            _selectedGroupId = null;
         }
     }
 }

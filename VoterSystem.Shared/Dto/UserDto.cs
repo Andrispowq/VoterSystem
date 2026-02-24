@@ -9,7 +9,7 @@ public class UserDto
     public required string Email { get; init; }
     public required bool EmailConfirmed { get; init; }
     public required bool TwoFactorEnabled { get; init; }
-    public Role Role { get; set; }
+    public required Role Role { get; set; }
     
     public required ICollection<VotingParticipationDto> Participations { get; init; }
 }

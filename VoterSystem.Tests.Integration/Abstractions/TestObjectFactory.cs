@@ -22,6 +22,8 @@ public abstract class TestObjectFactory : BaseTest
         DbContext.VotingParticipations.ExecuteDelete();
         DbContext.AnonymousBallots.ExecuteDelete();
         DbContext.Users.ExecuteDelete();
+        DbContext.Groups.ExecuteDelete();
+        DbContext.GroupMembers.ExecuteDelete();
         
         //DbContext.Database.EnsureDeleted();
         //DbContext.Database.EnsureCreated();
@@ -43,11 +45,11 @@ public abstract class TestObjectFactory : BaseTest
         var login = await HttpClient.PostAsJsonAsync("/api/v1/users/login", credentials);
         login.EnsureSuccessStatusCode();
 
-        var tokens = await login.Content.ReadFromJsonAsync<Tokens>()
+        var tokensDto = await login.Content.ReadFromJsonAsync<TokensDto>()
                      ?? throw new InvalidOperationException("No token returned");
 
         HttpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", tokens.AuthToken);
+            new AuthenticationHeaderValue("Bearer", tokensDto.AuthToken);
     }
 
     protected abstract void SeedRoles(RoleManager<UserRole> roleManager);

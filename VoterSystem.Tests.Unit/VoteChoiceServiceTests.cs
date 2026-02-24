@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
@@ -9,7 +11,8 @@ namespace VoterSystem.Tests.Unit;
 public class VoteChoiceServiceTests : UnitTestBase, IDisposable
 {
     private readonly VoteChoiceService _voteChoiceService;
-    private readonly Mock<IUserService> _mockUserService;
+    private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
+    private readonly Mock<ILogger<VoteChoiceService>> _loggerMock = new();
 
     private User _user = null!;
     private User _otherUser = null!;
@@ -20,10 +23,14 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
 
     public VoteChoiceServiceTests()
     {
-        _mockUserService = new Mock<IUserService>();
-        _voteChoiceService = new VoteChoiceService(Context, _mockUserService.Object);
+        _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+        _voteChoiceService = new VoteChoiceService(
+            Context,
+            _httpContextAccessorMock.Object,
+            _loggerMock.Object);
 
         SeedDatabase();
+        SetCurrentUser(_user.Id);
     }
 
     [Fact]
@@ -69,7 +76,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
             VotingId = _startedVoting.VotingId 
         };
         
-        _mockUserService.Setup(s => s.GetCurrentUserId()).Returns(_startedVoting.CreatedByUserId);
+        SetCurrentUser(_startedVoting.CreatedByUserId);
 
         // Act
         var result = await _voteChoiceService.AddVotingChoice(_startedVoting, newChoice);
@@ -88,13 +95,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
             VotingId = _voting.VotingId
         };
 
-        _mockUserService.Setup(s => s.GetCurrentUserId()).Returns(new UnauthorizedError("Access denied").AsError<Guid, ServiceError>());
-        var unauthorizedUserId = Guid.NewGuid();
-        _mockUserService.Setup(s => s.GetCurrentUserId()).Returns(unauthorizedUserId.AsResult<Guid, ServiceError>());
-        // The voting creator is _user, but userId will be something else
-
-        // To simulate different user
-        _mockUserService.Setup(s => s.GetCurrentUserId()).Returns(Guid.NewGuid().AsResult<Guid, ServiceError>());
+        SetCurrentUser(_otherUser.Id);
 
         // Act
         var result = await _voteChoiceService.AddVotingChoice(_voting, newChoice);
@@ -113,7 +114,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
             VotingId = _voting.VotingId
         };
 
-        _mockUserService.Setup(s => s.GetCurrentUserId()).Returns(_user.Id.AsResult<Guid, ServiceError>());
+        SetCurrentUser(_user.Id);
 
         // Act
         var result = await _voteChoiceService.AddVotingChoice(_voting, newChoice);
@@ -155,7 +156,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
             Name = "Nonexistent Choice"
         };
 
-        _mockUserService.Setup(s => s.GetCurrentUserId()).Returns(_user.Id.AsResult<Guid, ServiceError>());
+        SetCurrentUser(_user.Id);
 
         // Act
         var result = await _voteChoiceService.UpdateVotingChoice(choice);
@@ -168,7 +169,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task UpdateVotingChoice_UpdatesChoice_WhenValid()
     {
-        _mockUserService.Setup(s => s.GetCurrentUserId()).Returns(_user.Id.AsResult<Guid, ServiceError>());
+        SetCurrentUser(_user.Id);
 
         // Act
         _voteChoice.Name = "Updated Choice Name";
@@ -185,7 +186,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     public async Task DeleteVotingChoice_ReturnsUnauthorized_WhenVotingStarted()
     {
         // Act
-        _mockUserService.Setup(s => s.GetCurrentUserId()).Returns(_user.Id.AsResult<Guid, ServiceError>());
+        SetCurrentUser(_user.Id);
         
         var result = await _voteChoiceService.DeleteVotingChoice(
             new VoteChoice
@@ -223,7 +224,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task DeleteVotingChoice_DeletesChoice_WhenValid()
     {
-        _mockUserService.Setup(s => s.GetCurrentUserId()).Returns(_voting.CreatedByUserId);
+        SetCurrentUser(_voting.CreatedByUserId);
 
         // Act
         var result = await _voteChoiceService.DeleteVotingChoice(_voteChoice);
@@ -233,6 +234,12 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
 
         var deletedChoice = await Context.VoteChoices.FindAsync(_voteChoice.ChoiceId);
         Assert.Null(deletedChoice);
+    }
+
+    private void SetCurrentUser(Guid userId, params Role[] roles)
+    {
+        var context = BuildHttpContext(userId, roles);
+        _httpContextAccessorMock.Setup(a => a.HttpContext).Returns(context);
     }
 
     private void SeedDatabase()
@@ -258,19 +265,22 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
         _voteChoice = new VoteChoice
         {
             VotingId = _voting.VotingId,
-            Name = "choice1"
+            Name = "choice1",
+            Voting = _voting
         };
 
         _startedChoice1 = new VoteChoice
         {
             VotingId = _startedVoting.VotingId,
-            Name = "choice1"
+            Name = "choice1",
+            Voting = _startedVoting
         };
 
         var startedChoice2 = new VoteChoice
         {
             VotingId = _startedVoting.VotingId,
-            Name = "choice2"
+            Name = "choice2",
+            Voting = _startedVoting
         };
         
         Context.VoteChoices.AddRange(_voteChoice, _startedChoice1, startedChoice2);

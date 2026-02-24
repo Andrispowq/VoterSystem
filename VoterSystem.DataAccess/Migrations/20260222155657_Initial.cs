@@ -34,6 +34,7 @@ namespace VoterSystem.DataAccess.Migrations
                     Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     RefreshToken = table.Column<Guid>(type: "uuid", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Role = table.Column<int>(type: "integer", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -161,6 +162,61 @@ namespace VoterSystem.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Groups",
+                columns: table => new
+                {
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatorUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Description = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Groups", x => x.GroupId);
+                    table.ForeignKey(
+                        name: "FK_Groups_AspNetUsers_CreatorUserId",
+                        column: x => x.CreatorUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GroupMembers",
+                columns: table => new
+                {
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AddedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DeletedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupMembers", x => new { x.GroupId, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_GroupMembers_AspNetUsers_AddedByUserId",
+                        column: x => x.AddedByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupMembers_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupMembers_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "GroupId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Votings",
                 columns: table => new
                 {
@@ -170,7 +226,9 @@ namespace VoterSystem.DataAccess.Migrations
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     StartsAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndsAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false)
+                    CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    KeySalt = table.Column<byte[]>(type: "bytea", maxLength: 32, nullable: false),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -181,6 +239,11 @@ namespace VoterSystem.DataAccess.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Votings_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "GroupId");
                 });
 
             migrationBuilder.CreateTable(
@@ -192,6 +255,7 @@ namespace VoterSystem.DataAccess.Migrations
                     Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Description = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     VotingId = table.Column<long>(type: "bigint", nullable: false),
+                    VoteCount = table.Column<int>(type: "integer", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -206,34 +270,73 @@ namespace VoterSystem.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Votes",
+                name: "VotingParticipations",
                 columns: table => new
                 {
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ChoiceId = table.Column<long>(type: "bigint", nullable: false),
                     VotingId = table.Column<long>(type: "bigint", nullable: false),
+                    VotingParticipationId = table.Column<long>(type: "bigint", nullable: false),
+                    HasVoted = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Votes", x => new { x.UserId, x.ChoiceId });
+                    table.PrimaryKey("PK_VotingParticipations", x => new { x.UserId, x.VotingId });
                     table.ForeignKey(
-                        name: "FK_Votes_AspNetUsers_UserId",
+                        name: "FK_VotingParticipations_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Votes_VoteChoices_ChoiceId",
-                        column: x => x.ChoiceId,
-                        principalTable: "VoteChoices",
-                        principalColumn: "ChoiceId");
-                    table.ForeignKey(
-                        name: "FK_Votes_Votings_VotingId",
+                        name: "FK_VotingParticipations_Votings_VotingId",
                         column: x => x.VotingId,
                         principalTable: "Votings",
                         principalColumn: "VotingId",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "AnonymousBallots",
+                columns: table => new
+                {
+                    AnonymousBallotId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    VotingId = table.Column<long>(type: "bigint", nullable: false),
+                    ChoiceId = table.Column<long>(type: "bigint", nullable: false),
+                    VoteTagBase64 = table.Column<string>(type: "character varying(63)", maxLength: 63, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AnonymousBallots", x => x.AnonymousBallotId);
+                    table.ForeignKey(
+                        name: "FK_AnonymousBallots_VoteChoices_ChoiceId",
+                        column: x => x.ChoiceId,
+                        principalTable: "VoteChoices",
+                        principalColumn: "ChoiceId");
+                    table.ForeignKey(
+                        name: "FK_AnonymousBallots_Votings_VotingId",
+                        column: x => x.VotingId,
+                        principalTable: "Votings",
+                        principalColumn: "VotingId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnonymousBallots_ChoiceId",
+                table: "AnonymousBallots",
+                column: "ChoiceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnonymousBallots_VotingId_ChoiceId",
+                table: "AnonymousBallots",
+                columns: new[] { "VotingId", "ChoiceId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnonymousBallots_VotingId_VoteTagBase64",
+                table: "AnonymousBallots",
+                columns: new[] { "VotingId", "VoteTagBase64" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -273,25 +376,40 @@ namespace VoterSystem.DataAccess.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_GroupMembers_AddedByUserId",
+                table: "GroupMembers",
+                column: "AddedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupMembers_UserId",
+                table: "GroupMembers",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_CreatorUserId",
+                table: "Groups",
+                column: "CreatorUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_VoteChoices_VotingId_Name",
                 table: "VoteChoices",
                 columns: new[] { "VotingId", "Name" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Votes_ChoiceId",
-                table: "Votes",
-                column: "ChoiceId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Votes_VotingId",
-                table: "Votes",
+                name: "IX_VotingParticipations_VotingId",
+                table: "VotingParticipations",
                 column: "VotingId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Votings_CreatedByUserId",
                 table: "Votings",
                 column: "CreatedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Votings_GroupId",
+                table: "Votings",
+                column: "GroupId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Votings_Name",
@@ -303,6 +421,9 @@ namespace VoterSystem.DataAccess.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AnonymousBallots");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -319,16 +440,22 @@ namespace VoterSystem.DataAccess.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Votes");
+                name: "GroupMembers");
 
             migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "VotingParticipations");
 
             migrationBuilder.DropTable(
                 name: "VoteChoices");
 
             migrationBuilder.DropTable(
+                name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
                 name: "Votings");
+
+            migrationBuilder.DropTable(
+                name: "Groups");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

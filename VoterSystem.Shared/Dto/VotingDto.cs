@@ -10,6 +10,8 @@ public class VotingDto
     public required bool HasStarted { get; init; }
     public required bool HasEnded { get; init; }
     public required bool IsOngoing { get; init; }
+    public Guid? GroupId { get; init; }
+    public string? GroupName { get; init; }
 
     /// <summary>
     /// For Admin users, this will always be null.

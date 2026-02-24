@@ -142,9 +142,10 @@ namespace VoterSystem.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<byte[]>("VoteTag")
+                    b.Property<string>("VoteTagBase64")
                         .IsRequired()
-                        .HasColumnType("bytea");
+                        .HasMaxLength(63)
+                        .HasColumnType("character varying(63)");
 
                     b.Property<long>("VotingId")
                         .HasColumnType("bigint");
@@ -155,10 +156,68 @@ namespace VoterSystem.DataAccess.Migrations
 
                     b.HasIndex("VotingId", "ChoiceId");
 
-                    b.HasIndex("VotingId", "VoteTag")
+                    b.HasIndex("VotingId", "VoteTagBase64")
                         .IsUnique();
 
                     b.ToTable("AnonymousBallots");
+                });
+
+            modelBuilder.Entity("VoterSystem.DataAccess.Model.Group", b =>
+                {
+                    b.Property<Guid>("GroupId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("GroupId");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.ToTable("Groups");
+                });
+
+            modelBuilder.Entity("VoterSystem.DataAccess.Model.GroupMembers", b =>
+                {
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AddedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("GroupId", "UserId");
+
+                    b.HasIndex("AddedByUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GroupMembers");
                 });
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.User", b =>
@@ -214,6 +273,9 @@ namespace VoterSystem.DataAccess.Migrations
 
                     b.Property<Guid?>("RefreshToken")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
@@ -315,6 +377,9 @@ namespace VoterSystem.DataAccess.Migrations
                     b.Property<DateTime>("EndsAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("GroupId")
+                        .HasColumnType("uuid");
+
                     b.Property<byte[]>("KeySalt")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -331,6 +396,8 @@ namespace VoterSystem.DataAccess.Migrations
                     b.HasKey("VotingId");
 
                     b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("GroupId");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -351,6 +418,9 @@ namespace VoterSystem.DataAccess.Migrations
 
                     b.Property<bool>("HasVoted")
                         .HasColumnType("boolean");
+
+                    b.Property<long>("VotingParticipationId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("UserId", "VotingId");
 
@@ -429,6 +499,44 @@ namespace VoterSystem.DataAccess.Migrations
                     b.Navigation("Voting");
                 });
 
+            modelBuilder.Entity("VoterSystem.DataAccess.Model.Group", b =>
+                {
+                    b.HasOne("VoterSystem.DataAccess.Model.User", "CreatorUser")
+                        .WithMany("GroupsCreated")
+                        .HasForeignKey("CreatorUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatorUser");
+                });
+
+            modelBuilder.Entity("VoterSystem.DataAccess.Model.GroupMembers", b =>
+                {
+                    b.HasOne("VoterSystem.DataAccess.Model.User", "AddedByUser")
+                        .WithMany("GroupAdditions")
+                        .HasForeignKey("AddedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VoterSystem.DataAccess.Model.Group", "Group")
+                        .WithMany("Members")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VoterSystem.DataAccess.Model.User", "User")
+                        .WithMany("Groups")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AddedByUser");
+
+                    b.Navigation("Group");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("VoterSystem.DataAccess.Model.VoteChoice", b =>
                 {
                     b.HasOne("VoterSystem.DataAccess.Model.Voting", "Voting")
@@ -448,7 +556,13 @@ namespace VoterSystem.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("VoterSystem.DataAccess.Model.Group", "Group")
+                        .WithMany("Votings")
+                        .HasForeignKey("GroupId");
+
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("Group");
                 });
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.VotingParticipation", b =>
@@ -470,8 +584,21 @@ namespace VoterSystem.DataAccess.Migrations
                     b.Navigation("Voting");
                 });
 
+            modelBuilder.Entity("VoterSystem.DataAccess.Model.Group", b =>
+                {
+                    b.Navigation("Members");
+
+                    b.Navigation("Votings");
+                });
+
             modelBuilder.Entity("VoterSystem.DataAccess.Model.User", b =>
                 {
+                    b.Navigation("GroupAdditions");
+
+                    b.Navigation("Groups");
+
+                    b.Navigation("GroupsCreated");
+
                     b.Navigation("VotingParticipations");
 
                     b.Navigation("Votings");

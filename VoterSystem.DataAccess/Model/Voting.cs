@@ -15,6 +15,7 @@ public class Voting : ITimestamped, IRoleControlled
     public required Guid CreatedByUserId { get; init; }
     [MaxLength(32)] 
     public byte[] KeySalt { get; init; } = SaltGenerator.GenerateSalt();
+    public Guid? GroupId { get; init; }
     
     [NotMapped]
     public bool HasStarted => DateTime.UtcNow >= StartsAt && VoteChoices.Count >= 2;
@@ -25,6 +26,7 @@ public class Voting : ITimestamped, IRoleControlled
     
     [ForeignKey("CreatedByUserId")]
     public virtual User CreatedByUser { get; set; } = null!;
+    public virtual Group? Group { get; set; }
     
     public virtual ICollection<VotingParticipation> VotingParticipations { get; set; } = [];
     public virtual ICollection<AnonymousBallot> AnonymousBallots { get; set; } = [];

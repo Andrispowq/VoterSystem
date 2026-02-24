@@ -191,13 +191,17 @@ public class ChoiceControllerTests(TestWebAppFactory factory) : TestObjectFactor
     private async Task AuthenticateAsync(UserLoginRequestDto creds)
     {
         var resp = await HttpClient.PostAsJsonAsync("/api/v1/users/login", creds);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+        {
+            var message = await resp.Content.ReadAsStringAsync();
+            Assert.Fail($"Request failed, status code: {resp.StatusCode}, message: {message}");
+        }
 
-        var tokens = await resp.Content.ReadFromJsonAsync<Tokens>()
-                     ?? throw new InvalidOperationException("No tokens returned");
+        var TokensDto = await resp.Content.ReadFromJsonAsync<TokensDto>()
+                     ?? throw new InvalidOperationException("No TokensDto returned");
 
         HttpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", tokens.AuthToken);
+            new AuthenticationHeaderValue("Bearer", TokensDto.AuthToken);
     }
 
     protected override void SeedRoles(RoleManager<UserRole> roleManager)
@@ -224,7 +228,13 @@ public class ChoiceControllerTests(TestWebAppFactory factory) : TestObjectFactor
         var user = um.FindByEmailAsync(creds.Email).Result;
         if (user != null) return;
 
-        user = new User { Email = creds.Email, UserName = creds.Email, Name = creds.Email.Split('@')[0] };
+        user = new User
+        {
+            Email = creds.Email,
+            UserName = creds.Email,
+            Name = creds.Email.Split('@')[0],
+            Role = Enum.Parse<Role>(role)
+        };
         um.CreateAsync(user, creds.Password).Wait();
         um.AddToRoleAsync(user, role).Wait();
     }

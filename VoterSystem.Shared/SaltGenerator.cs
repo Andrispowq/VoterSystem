@@ -17,12 +17,14 @@ public static class SaltGenerator
         return Convert.ToBase64String(GenerateSalt());
     }
 
-    public static (string Receipt, byte[] HashCode) CreateVoteTag(string votingSalt, string masterKey)
+    public static (string Receipt, string HashCode) CreateVoteTag(string votingSalt, string masterKey)
     {
         var receipt = GenerateSalt();
+        var receiptsS = Convert.ToBase64String(receipt);
         var voteKey = $"{votingSalt}-{masterKey}";
         var voteKeyB = Encoding.ASCII.GetBytes(voteKey);
         var voteTag = HMACSHA256.HashData(voteKeyB, receipt);
-        return (Convert.ToBase64String(receipt), voteTag);
+        var voteTagS = Convert.ToBase64String(voteTag);
+        return (receiptsS, voteTagS);
     }
 }

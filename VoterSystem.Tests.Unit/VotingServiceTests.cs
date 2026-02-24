@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.Tests.Unit;
@@ -9,62 +12,68 @@ namespace VoterSystem.Tests.Unit;
 public class VotingsServiceTests : UnitTestBase, IDisposable
 {
     private readonly VotingService _votingService;
-    private readonly Mock<IUserService> _mockUserService;
-    
+    private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
+    private readonly Mock<ILogger<VotingService>> _loggerMock = new();
+
     private User? _user;
     private User? _user2;
 
     public VotingsServiceTests()
     {
-        _mockUserService = new Mock<IUserService>();
+        _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
 
         _votingService = new VotingService(
             Context,
-            _mockUserService.Object);
+            _httpContextAccessorMock.Object,
+            _loggerMock.Object);
 
         SeedDatabase();
+        SetCurrentUser(_user!.Id);
     }
  
     #region Add
 
-    [Fact(Skip = "No support for FK validation in InMemory")]
-    public async Task CreateVoting_WhenUserNotExists()
+    [Fact]
+    public async Task CreateVoting_ReturnsUnauthorized_ForAdmin()
     {
-        var voting = GetNextValidVoting(Guid.NewGuid());
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user2!);
+        SetCurrentUser(Guid.NewGuid(), Role.Admin);
+        var request = BuildValidRequest();
 
-        var result = await _votingService.CreateVoting(voting);
-        Assert.True(result.IsSome);
-        Assert.IsType<UnauthorizedError>(result.AsSome.Value);
+        var result = await _votingService.CreateVoting(request);
+
+        Assert.True(result.IsError);
+        Assert.IsType<UnauthorizedError>(result.Error);
     }
 
     [Fact]
-    public async Task CreateVoting_WhenInvalidTimes()
+    public async Task CreateVoting_WhenInvalidTimes_ReturnsBadRequest()
     {
-        var voting = GetNextInvalidVoting(_user?.Id ?? throw new InvalidOperationException());
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user2!);
+        SetCurrentUser(_user!.Id);
+        var request = new VotingCreateRequestDto
+        {
+            Name = Helpers.NextUniqueId,
+            StartsAt = DateTime.UtcNow.AddHours(-1),
+            EndsAt = DateTime.UtcNow.AddDays(1)
+        };
 
-        var result = await _votingService.CreateVoting(voting);
-        Assert.True(result.IsSome);
-        Assert.IsType<BadRequestError>(result.AsSome.Value);
+        var result = await _votingService.CreateVoting(request);
+
+        Assert.True(result.IsError);
+        Assert.IsType<BadRequestError>(result.Error);
     }
 
     [Fact]
     public async Task CreateVoting_AddsVoting()
     {
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
-        
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user!);
+        SetCurrentUser(_user!.Id);
+        var request = BuildValidRequest();
 
-        var result = await _votingService.CreateVoting(voting);
-        Assert.True(result.IsNone);
+        var result = await _votingService.CreateVoting(request);
+        Assert.True(result.HasValue);
 
-        // Assert
         var votings = await Context.Votings.ToListAsync();
         Assert.Single(votings);
+        Assert.Equal(_user!.Id, votings[0].CreatedByUserId);
     }
 
     #endregion
@@ -74,93 +83,69 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task GetAllVotingsAsync_ReturnsAllVotingsForAdmin()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
-        var voting2 = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user!.Id);
+        var voting2 = GetNextValidVoting(_user!.Id);
         Context.Votings.AddRange(voting, voting2);
-        
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(true);
+        SetCurrentUser(Guid.NewGuid(), Role.Admin);
 
-        // Act
         var votings = await _votingService.GetAllVotings();
         Assert.True(votings.HasValue);
-
-        // Assert
-        Assert.NotEmpty(votings.Value);
         Assert.Equal(2, votings.Value.Count);
     }
 
     [Fact]
-    public async Task GetAllVotingsAsync_ReturnsOnlyOwnVotings()
+    public async Task GetAllVotingsAsync_ReturnsAllVotingsForUser()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
-        var voting2 = GetNextValidVoting(_user2?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user!.Id);
+        var voting2 = GetNextValidVoting(_user2!.Id);
         Context.Votings.AddRange(voting, voting2);
-        
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(_user2.Id);
+        SetCurrentUser(_user2!.Id);
 
-        // Act
         var votings = await _votingService.GetAllVotings();
         Assert.True(votings.HasValue);
-
-        // Assert
-        Assert.NotEmpty(votings.Value);
         Assert.Equal(2, votings.Value.Count);
-        Assert.Equal(_user2.Id, votings.Value.First().CreatedByUserId);
+        Assert.Contains(votings.Value, v => v.CreatedByUserId == _user2!.Id);
     }
 
     [Fact]
     public async Task GetVotingByIdAsync_ReturnsAnyForAdmin()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user!.Id);
         Context.Votings.Add(voting);
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(true);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user);
+        SetCurrentUser(Guid.NewGuid(), Role.Admin);
 
-        // Act
         var savedVoting = await _votingService.GetVotingById(voting.VotingId);
         Assert.True(savedVoting.HasValue);
     }
 
     [Fact]
-    public async Task GetAllVotingByIdAsync_WhenNotAdmin()
+    public async Task GetVotingByIdAsync_ReturnsForNonAdmin()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user!.Id);
         Context.Votings.Add(voting);
-
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user2!);
+        SetCurrentUser(_user2!.Id);
 
-        // Act & Assert
         var savedVoting = await _votingService.GetVotingById(voting.VotingId);
         Assert.True(savedVoting.HasValue);
     }
 
     [Fact]
-    public async Task GetAllVotingByIdAsync_ReturnsWhenSameUser()
+    public async Task GetVotingByIdAsync_ReturnsForOwner()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user!.Id);
         Context.Votings.Add(voting);
-
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user);
+        SetCurrentUser(_user!.Id);
 
-        // Act & Assert
         var savedVoting = await _votingService.GetVotingById(voting.VotingId);
         Assert.True(savedVoting.HasValue);
     }
@@ -168,6 +153,22 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     #endregion
 
     #region Helper
+
+    private VotingCreateRequestDto BuildValidRequest()
+    {
+        return new VotingCreateRequestDto
+        {
+            Name = Helpers.NextUniqueId,
+            StartsAt = DateTime.UtcNow.AddHours(1),
+            EndsAt = DateTime.UtcNow.AddDays(2)
+        };
+    }
+
+    private void SetCurrentUser(Guid userId, params Role[] roles)
+    {
+        var context = BuildHttpContext(userId, roles);
+        _httpContextAccessorMock.Setup(a => a.HttpContext).Returns(context);
+    }
 
     private void SeedDatabase()
     {

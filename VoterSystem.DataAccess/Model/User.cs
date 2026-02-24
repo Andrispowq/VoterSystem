@@ -8,9 +8,13 @@ public class User : IdentityUser<Guid>, ISoftDeletable, IRoleControlled
     [MaxLength(50)] public string Name { get; set; } = null!;
     public Guid? RefreshToken { get; set; }
     public DateTime? DeletedAt { get; set; }
+    public required Role Role { get; set; }
     
     public virtual ICollection<Voting> Votings { get; set; } = [];
     public virtual ICollection<VotingParticipation> VotingParticipations { get; set; } = [];
+    public virtual ICollection<GroupMembers> Groups { get; set; } = [];
+    public virtual ICollection<GroupMembers> GroupAdditions { get; set; } = [];
+    public virtual ICollection<Group> GroupsCreated { get; set; } = [];
     
     //We can access users as an admin or ourselves
     public bool CanAccessById(bool isAdmin, Guid userId)

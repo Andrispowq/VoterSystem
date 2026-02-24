@@ -51,10 +51,11 @@ public class DbInitializer
                 {
                     Name = user.Email,
                     UserName = user.Email.Split("@")[0],
-                    Email = user.Email
+                    Email = user.Email,
+                    Role = user.Role
                 };
 
-                var result = await userService.CreateUser(usr, user.Password, user.Role);
+                var result = await userService.CreateUser(usr, user.Password);
                 if (result.IsSome)
                 {
                     throw new InvalidOperationException(result.AsSome.Value.Message);

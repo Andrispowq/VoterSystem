@@ -13,7 +13,7 @@ public class CreateVotingComponentTests : IDisposable
     private readonly TestContext _context = new();
     private readonly Mock<IAuthenticationService> _authenticationServiceMock = new();
     private readonly Mock<IVotingsService> _votingsService = new();
-    private readonly FakeNavigationManager _fakeNavigationManager;
+    private readonly Mock<IGroupsService> _groupsService = new();
 
     public CreateVotingComponentTests()
     {
@@ -23,6 +23,8 @@ public class CreateVotingComponentTests : IDisposable
             .ReturnsAsync("admin");
         
         _context.Services.AddSingleton(_authenticationServiceMock.Object);
+        _context.Services.AddSingleton(_groupsService.Object);
+        _groupsService.Setup(x => x.GetGroupsAsync()).ReturnsAsync(new List<GroupDto>());
 
         _votingsService.Setup(x => x.CreateVotingAsync(It.IsAny<VotingCreateRequestDto>())).ReturnsAsync(
             (VotingCreateRequestDto requestDto) => new VotingDto
@@ -40,7 +42,7 @@ public class CreateVotingComponentTests : IDisposable
             });
         _context.Services.AddSingleton(_votingsService.Object);
         
-        _fakeNavigationManager = _context.Services.GetRequiredService<FakeNavigationManager>();
+        _context.Services.GetRequiredService<FakeNavigationManager>();
     }
 
     public void Dispose() => _context.Dispose();

@@ -387,7 +387,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         return users.Single(u => u.Email == email).Id;
     }
 
-    private async Task<Tokens> LoginAndGetTokensAsync(UserLoginRequestDto credentials)
+    private async Task<TokensDto> LoginAndGetTokensAsync(UserLoginRequestDto credentials)
     {
         // fresh client to avoid polluting the main CookieContainer
         using var client = Factory.CreateClient();
@@ -401,7 +401,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
             Assert.Fail($"Failed with the following response: {await response.Content.ReadAsStringAsync()}");
         }
         
-        return (await response.Content.ReadFromJsonAsync<Tokens>())!;
+        return (await response.Content.ReadFromJsonAsync<TokensDto>())!;
     }
 
     private async Task AuthenticateAsync(UserLoginRequestDto credentials)

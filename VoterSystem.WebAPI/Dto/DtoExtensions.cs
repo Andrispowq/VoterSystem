@@ -5,13 +5,13 @@ namespace VoterSystem.WebAPI.Dto;
 
 public static class DtoExtensions
 {
-    public static TokensDto ToTokensDto(this Tokens tokens)
+    public static TokensDto ToTokensDto(this TokensDto tokensDto)
     {
         return new TokensDto
         {
-            AuthToken = tokens.AuthToken,
-            RefreshToken = tokens.RefreshToken,
-            UserId = tokens.UserId,
+            AuthToken = tokensDto.AuthToken,
+            RefreshToken = tokensDto.RefreshToken,
+            UserId = tokensDto.UserId,
         };
     }
 

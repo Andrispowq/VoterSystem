@@ -48,7 +48,7 @@ internal class UserController(IUserService userService, IEmailService emailServi
     }
 
     [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Tokens))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokensDto))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequestDto request)
@@ -245,7 +245,7 @@ internal class UserController(IUserService userService, IEmailService emailServi
     }
     
     [HttpPost("refresh-token")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Tokens))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokensDto))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshTokenAsync([FromBody] string refreshToken)
     {

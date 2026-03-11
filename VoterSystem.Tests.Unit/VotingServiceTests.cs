@@ -1,184 +1,161 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.Tests.Unit;
 
 public class VotingsServiceTests : UnitTestBase, IDisposable
 {
-    private readonly VotingService _votingService;
-    private readonly Mock<IUserService> _mockUserService;
+    private readonly User _user;
+    private readonly User _user2;
     
-    private User? _user;
-    private User? _user2;
+    private readonly Mock<IHttpContextAccessor> _httpContextAccessor;
 
     public VotingsServiceTests()
     {
-        _mockUserService = new Mock<IUserService>();
+        _user = NextValidUser;
+        _user2 = NextValidUser;
+        _httpContextAccessor = new Mock<IHttpContextAccessor>();
 
-        _votingService = new VotingService(
-            Context,
-            _mockUserService.Object);
-
-        SeedDatabase();
-    }
- 
-    #region Add
-
-    [Fact(Skip = "No support for FK validation in InMemory")]
-    public async Task CreateVoting_WhenUserNotExists()
-    {
-        var voting = GetNextValidVoting(Guid.NewGuid());
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user2!);
-
-        var result = await _votingService.CreateVoting(voting);
-        Assert.True(result.IsSome);
-        Assert.IsType<UnauthorizedError>(result.AsSome.Value);
+        Context.Users.AddRange(_user, _user2);
+        Context.SaveChanges();
     }
 
     [Fact]
-    public async Task CreateVoting_WhenInvalidTimes()
+    public async Task CreateVoting_WhenInvalidTimes_ReturnsBadRequest()
     {
-        var voting = GetNextInvalidVoting(_user?.Id ?? throw new InvalidOperationException());
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user2!);
+        var service = CreateService(_user.Id);
+        var request = ToCreateRequest(GetNextInvalidVoting(_user.Id));
 
-        var result = await _votingService.CreateVoting(voting);
-        Assert.True(result.IsSome);
-        Assert.IsType<BadRequestError>(result.AsSome.Value);
+        var result = await service.CreateVoting(request);
+
+        Assert.True(result.IsError);
+        Assert.IsType<BadRequestError>(result.Error);
     }
 
     [Fact]
     public async Task CreateVoting_AddsVoting()
     {
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
-        
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user!);
+        var service = CreateService(_user.Id);
+        var request = ToCreateRequest(GetNextValidVoting(_user.Id));
 
-        var result = await _votingService.CreateVoting(voting);
-        Assert.True(result.IsNone);
+        var result = await service.CreateVoting(request);
 
-        // Assert
+        Assert.True(result.HasValue);
+
         var votings = await Context.Votings.ToListAsync();
         Assert.Single(votings);
+        Assert.Equal(_user.Id, votings[0].CreatedByUserId);
     }
-
-    #endregion
-
-    #region Get
 
     [Fact]
     public async Task GetAllVotingsAsync_ReturnsAllVotingsForAdmin()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
-        var voting2 = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user.Id);
+        var voting2 = GetNextValidVoting(_user2.Id);
         Context.Votings.AddRange(voting, voting2);
-        
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(true);
+        var service = CreateService(_user.Id, Role.Admin);
 
-        // Act
-        var votings = await _votingService.GetAllVotings();
+        var votings = await service.GetAllVotings();
+
         Assert.True(votings.HasValue);
-
-        // Assert
-        Assert.NotEmpty(votings.Value);
         Assert.Equal(2, votings.Value.Count);
     }
 
     [Fact]
-    public async Task GetAllVotingsAsync_ReturnsOnlyOwnVotings()
+    public async Task GetAllVotingsAsync_ReturnsAllVotingsForUser()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
-        var voting2 = GetNextValidVoting(_user2?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user.Id);
+        var voting2 = GetNextValidVoting(_user2.Id);
         Context.Votings.AddRange(voting, voting2);
-        
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserId()).Returns(_user2.Id);
+        var service = CreateService(_user2.Id);
 
-        // Act
-        var votings = await _votingService.GetAllVotings();
+        var votings = await service.GetAllVotings();
+
         Assert.True(votings.HasValue);
-
-        // Assert
-        Assert.NotEmpty(votings.Value);
         Assert.Equal(2, votings.Value.Count);
-        Assert.Equal(_user2.Id, votings.Value.First().CreatedByUserId);
     }
 
     [Fact]
     public async Task GetVotingByIdAsync_ReturnsAnyForAdmin()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user.Id);
         Context.Votings.Add(voting);
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(true);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user);
+        var service = CreateService(_user2.Id, Role.Admin);
 
-        // Act
-        var savedVoting = await _votingService.GetVotingById(voting.VotingId);
+        var savedVoting = await service.GetVotingById(voting.VotingId);
+
         Assert.True(savedVoting.HasValue);
     }
 
     [Fact]
-    public async Task GetAllVotingByIdAsync_WhenNotAdmin()
+    public async Task GetVotingByIdAsync_ReturnsVotingForOtherUser()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user.Id);
         Context.Votings.Add(voting);
-
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user2!);
+        var service = CreateService(_user2.Id);
 
-        // Act & Assert
-        var savedVoting = await _votingService.GetVotingById(voting.VotingId);
+        var savedVoting = await service.GetVotingById(voting.VotingId);
+
         Assert.True(savedVoting.HasValue);
     }
 
     [Fact]
-    public async Task GetAllVotingByIdAsync_ReturnsWhenSameUser()
+    public async Task GetVotingByIdAsync_ReturnsVotingForOwner()
     {
-        // Arrange
-        var voting = GetNextValidVoting(_user?.Id ?? throw new InvalidOperationException());
+        var voting = GetNextValidVoting(_user.Id);
         Context.Votings.Add(voting);
-
         await Context.SaveChangesAsync();
 
-        _mockUserService.Setup(x => x.IsCurrentUserAdmin()).Returns(false);
-        _mockUserService.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(_user);
+        var service = CreateService(_user.Id);
 
-        // Act & Assert
-        var savedVoting = await _votingService.GetVotingById(voting.VotingId);
+        var savedVoting = await service.GetVotingById(voting.VotingId);
+
         Assert.True(savedVoting.HasValue);
     }
 
-    #endregion
-
-    #region Helper
-
-    private void SeedDatabase()
+    private VotingService CreateService(Guid userId, Role role = Role.User)
     {
-        _user = NextValidUser;
-        _user2 = NextValidUser;
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+            {
+                new(ClaimTypes.Role, role.ToString()),
+                new("id", userId.ToString())
+            }, "TestAuth"))
+        };
+
+        _httpContextAccessor.Setup(h => h.HttpContext).Returns(context);
         
-        Context.Users.AddRange(_user, _user2);
-        Context.SaveChanges();
+        return new VotingService(
+            Context,
+            _httpContextAccessor.Object,
+            new NullLogger<VotingService>());
     }
 
-    #endregion
+    private static VotingCreateRequestDto ToCreateRequest(Voting voting)
+    {
+        return new VotingCreateRequestDto
+        {
+            Name = voting.Name,
+            StartsAt = voting.StartsAt,
+            EndsAt = voting.EndsAt
+        };
+    }
 
     public void Dispose()
     {

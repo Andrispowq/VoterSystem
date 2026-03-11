@@ -43,7 +43,7 @@ public abstract class TestObjectFactory : BaseTest
         var login = await HttpClient.PostAsJsonAsync("/api/v1/users/login", credentials);
         login.EnsureSuccessStatusCode();
 
-        var tokens = await login.Content.ReadFromJsonAsync<Tokens>()
+        var tokens = await login.Content.ReadFromJsonAsync<TokensDto>()
                      ?? throw new InvalidOperationException("No token returned");
 
         HttpClient.DefaultRequestHeaders.Authorization =

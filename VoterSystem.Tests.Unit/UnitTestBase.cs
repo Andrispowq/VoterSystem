@@ -1,10 +1,15 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using VoterSystem.DataAccess;
 using VoterSystem.DataAccess.Model;
+using VoterSystem.DataAccess.Token;
 
 namespace VoterSystem.Tests.Unit;
 
-internal class UnitTestBase : IAsyncDisposable
+
+public class UnitTestBase : IAsyncDisposable
 {
     protected readonly VoterSystemDbContext Context;
 
@@ -17,7 +22,7 @@ internal class UnitTestBase : IAsyncDisposable
         Context = new VoterSystemDbContext(options);
     }
 
-    protected User NextValidUser
+    protected static User NextValidUser
     {
         get
         {
@@ -32,7 +37,7 @@ internal class UnitTestBase : IAsyncDisposable
         }
     }
 
-    protected Voting GetNextValidVoting(Guid creatorId)
+    protected static Voting GetNextValidVoting(Guid creatorId)
     {
         return new Voting
         {
@@ -43,7 +48,7 @@ internal class UnitTestBase : IAsyncDisposable
         };
     }
 
-    protected Voting GetNextInvalidVoting(Guid creatorId)
+    protected static Voting GetNextInvalidVoting(Guid creatorId)
     {
         return new Voting
         {
@@ -53,6 +58,33 @@ internal class UnitTestBase : IAsyncDisposable
             CreatedByUserId = creatorId,
         };
     }
+
+    protected static IHttpContextAccessor CreateHttpContextAccessor(
+        Guid? userId = null,
+        Role role = Role.User,
+        bool isAuthenticated = true)
+    {
+        var context = new DefaultHttpContext();
+        if (isAuthenticated)
+        {
+            var claims = new List<Claim>
+            {
+                new(TokenIssuerKeys.UserIdKey, (userId ?? Guid.NewGuid()).ToString()),
+                new(TokenIssuerKeys.UsernameKey, Guid.NewGuid().ToString()),
+                new(ClaimTypes.Role, role.ToString())
+            };
+
+            context.User = new ClaimsPrincipal(
+                new ClaimsIdentity(claims, authenticationType: "TestAuth"));
+        }
+
+        return new HttpContextAccessor
+        {
+            HttpContext = context
+        };
+    }
+
+    protected static NullLogger<T> CreateLogger<T>() => NullLogger<T>.Instance;
 
     public async ValueTask DisposeAsync()
     {

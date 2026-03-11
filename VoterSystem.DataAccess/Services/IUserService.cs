@@ -1,4 +1,5 @@
 using VoterSystem.DataAccess.Model;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
@@ -14,8 +15,8 @@ public interface IUserService
     //Helper
     Task<bool> AnyAdmins();
     //Auth userflow
-    Task<Result<Tokens, ServiceError>> LoginAsync(string email, string password);
-    Task<Result<Tokens, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken);
+    Task<Result<TokensDto, ServiceError>> LoginAsync(string email, string password);
+    Task<Result<TokensDto, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken);
     Task<Option<ServiceError>> LogoutAsync();
     Task<Option<ServiceError>> ChangePasswordAsync(string oldPassword, string newPassword);
     Task<Result<string, ServiceError>> GenerateEmailConfirmTokenAsync();

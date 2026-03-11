@@ -115,12 +115,9 @@ public class Program
             });
         });
 
-        builder.Services.AddAuthorization(options =>
-        {
-            options.AddPolicy("AdminOnly", policy => { policy.RequireClaim(ClaimTypes.Role, "Admin"); });
-
-            options.AddPolicy("UserOnly", policy => { policy.RequireClaim(ClaimTypes.Role, "User"); });
-        });
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("AdminOnly", policy => { policy.RequireClaim(ClaimTypes.Role, "Admin"); })
+            .AddPolicy("UserOnly", policy => { policy.RequireClaim(ClaimTypes.Role, "User"); });
 
         builder.Services.AddCors(options =>
         {

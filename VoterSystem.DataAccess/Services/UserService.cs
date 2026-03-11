@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
@@ -53,7 +54,7 @@ public class UserService(
         return new Option<ServiceError>.None();
     }
 
-    public async Task<Result<Tokens, ServiceError>> LoginAsync(string email, string password)
+    public async Task<Result<TokensDto, ServiceError>> LoginAsync(string email, string password)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user is null) return new NotFoundError("User not found");
@@ -70,7 +71,7 @@ public class UserService(
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded) return new BadRequestError("Login failed");
         
-        return new Tokens
+        return new TokensDto
         {
             AuthToken = accessToken,
             RefreshToken = user.RefreshToken!.Value,
@@ -78,7 +79,7 @@ public class UserService(
         };
     }
 
-    public async Task<Result<Tokens, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken)
+    public async Task<Result<TokensDto, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken)
     {
         var user = await userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         if (user is null) return new NotFoundError("Invalid refresh token");
@@ -90,7 +91,7 @@ public class UserService(
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded) return new BadRequestError("Login failed");
         
-        return new Tokens
+        return new TokensDto
         {
             AuthToken = accessToken,
             RefreshToken = user.RefreshToken!.Value,
@@ -169,7 +170,10 @@ public class UserService(
 
     public async Task<Result<User, ServiceError>> GetCurrentUserAsync()
     {
-        var user = await userManager.FindByIdAsync(UserId.ToString());
+        var userId = MaybeUserId;
+        if (userId is null) return new NotFoundError("No user present");
+        
+        var user = await userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null) return new NotFoundError("User not found");
 
         return user;

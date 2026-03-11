@@ -191,13 +191,22 @@ public class ChoiceControllerTests(TestWebAppFactory factory) : TestObjectFactor
     private async Task AuthenticateAsync(UserLoginRequestDto creds)
     {
         var resp = await HttpClient.PostAsJsonAsync("/api/v1/users/login", creds);
-        resp.EnsureSuccessStatusCode();
+        var content = await resp.Content.ReadAsStringAsync();
 
-        var tokens = await resp.Content.ReadFromJsonAsync<Tokens>()
-                     ?? throw new InvalidOperationException("No tokens returned");
+        try
+        {
+            resp.EnsureSuccessStatusCode();
 
-        HttpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", tokens.AuthToken);
+            var tokens = await resp.Content.ReadFromJsonAsync<TokensDto>()
+                         ?? throw new InvalidOperationException("No tokens returned");
+
+            HttpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", tokens.AuthToken);
+        }
+        catch (Exception e)
+        {
+            Assert.Fail($"Request failed: {e.Message}, content: {content}. Full exception: {e.ToString()}");
+        }
     }
 
     protected override void SeedRoles(RoleManager<UserRole> roleManager)

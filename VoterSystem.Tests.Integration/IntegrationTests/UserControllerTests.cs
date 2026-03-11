@@ -276,7 +276,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         var promote = await HttpClient.SendAsync(
             new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/users/promote?userId={adminId}"));
 
-        Assert.Equal(HttpStatusCode.BadRequest, promote.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, promote.StatusCode);
     }
 
     [Fact]

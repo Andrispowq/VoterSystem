@@ -25,6 +25,7 @@ public static class DtoExtensions
             Name = user.Name,
             Participations = GetVotes(user),
             TwoFactorEnabled = user.TwoFactorEnabled,
+            Role = user.Role
         };
     }
 

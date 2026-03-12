@@ -15,6 +15,7 @@ public abstract class TestObjectFactory : BaseTest
 
     protected TestObjectFactory(TestWebAppFactory factory) : base(factory)
     {
+        factory.EmailService.Clear();
         DbContext = Scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
 
         DbContext.Votings.ExecuteDelete();

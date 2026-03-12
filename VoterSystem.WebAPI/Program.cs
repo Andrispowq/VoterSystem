@@ -171,6 +171,7 @@ public class Program
 #pragma warning restore S125
         app.UseRouting();
 
+        app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
 

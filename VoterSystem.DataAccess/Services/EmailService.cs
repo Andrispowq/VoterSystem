@@ -1,27 +1,29 @@
 using System.Net;
 using System.Net.Mail;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using VoterSystem.DataAccess.Config;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
 
-public class EmailService(IOptions<EmailSettings> emailSettingsOptions) : IEmailService
+public class EmailService(IOptions<EmailSettings> emailSettingsOptions,
+    ILogger<EmailService> logger) : IEmailService
 {
     private readonly EmailSettings _emailSettings = emailSettingsOptions.Value;
     
     public async Task<Option<ServiceError>> SendEmailAsync(string to, string subject, string body)
     {
-        using MailMessage mail = new MailMessage();
+        using var mail = new MailMessage();
         mail.From = new MailAddress(_emailSettings.FromEmail);
         mail.To.Add(to);
         mail.Subject = subject;
         mail.Body = body;
         mail.IsBodyHtml = true;
         
-        using SmtpClient smtp = new SmtpClient(_emailSettings.Host, _emailSettings.Port);
+        using var smtp = new SmtpClient(_emailSettings.Host, _emailSettings.Port);
         smtp.Credentials = new NetworkCredential(_emailSettings.UserName, _emailSettings.Password);
-        smtp.EnableSsl = true;
+        smtp.EnableSsl = _emailSettings.EnableSsl;
 
         try
         {
@@ -30,7 +32,8 @@ public class EmailService(IOptions<EmailSettings> emailSettingsOptions) : IEmail
         }
         catch (Exception ex)
         {
-            return new BadRequestError(ex.Message);
+            logger.LogWarning(ex, "Failed to send email");
+            return new BadRequestError("Failed to send email", ex);
         }
     }
 }

@@ -38,36 +38,63 @@
                     Login as admin
                 </button>
             </div>
-            
-            <EditForm Model="LoginViewModel" OnValidSubmit="HandleLogin">
-                <DataAnnotationsValidator />
 
-                <div class="mb-3">
-                    <label class="form-label" for="email">Email:</label>
-                    <InputText class="form-control form-control" id="email" @bind-Value="LoginViewModel.Email" />
-                    <ValidationMessage For="@(() => LoginViewModel.Email)" class="text-danger" />
-                </div>
+            @if (_pendingTwoFactorChallengeId is null)
+            {
+                <EditForm Model="LoginViewModel" OnValidSubmit="HandleLogin">
+                    <DataAnnotationsValidator />
 
-                <div class="mb-3">
-                    <label class="form-label" for="password">Password:</label>
-                    <InputText class="form-control form-control" id="password" @bind-Value="LoginViewModel.Password" type="password" />
-                    <ValidationMessage For="@(() => LoginViewModel.Password)" class="text-danger" />
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="email">Email:</label>
+                        <InputText class="form-control form-control" id="email" @bind-Value="LoginViewModel.Email" />
+                        <ValidationMessage For="@(() => LoginViewModel.Email)" class="text-danger" />
+                    </div>
 
-                <div class="d-flex justify-content-between">
-                    <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-box-arrow-in-right me-1"></i> Login
-                    </button>
+                    <div class="mb-3">
+                        <label class="form-label" for="password">Password:</label>
+                        <InputText class="form-control form-control" id="password" @bind-Value="LoginViewModel.Password" type="password" />
+                        <ValidationMessage For="@(() => LoginViewModel.Password)" class="text-danger" />
+                    </div>
 
-                    <button class="btn btn-link text-muted" type="button" @onclick="ForgotPassword">
-                        <i class="bi bi-box-arrow-in-right me-1"></i> Forgot Password?
-                    </button>
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                        </button>
 
-                    <button class="btn btn-outline-primary" type="button" @onclick="Register">
-                        <i class="bi bi-person-plus me-1"></i> Register
-                    </button>
-                </div>
-            </EditForm>
+                        <button class="btn btn-link text-muted" type="button" @onclick="ForgotPassword">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Forgot Password?
+                        </button>
+
+                        <button class="btn btn-outline-primary" type="button" @onclick="Register">
+                            <i class="bi bi-person-plus me-1"></i> Register
+                        </button>
+                    </div>
+                </EditForm>
+            }
+            else
+            {
+                <EditForm Model="LoginViewModel" OnValidSubmit="HandleTwoFactorLogin">
+                    <DataAnnotationsValidator />
+
+                    <p class="text-muted">A 6 digit verification code has been sent to your email address.</p>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="two-factor-code">Two-factor code:</label>
+                        <InputText class="form-control form-control" id="two-factor-code" @bind-Value="LoginViewModel.TwoFactorCode" />
+                        <ValidationMessage For="@(() => LoginViewModel.TwoFactorCode)" class="text-danger" />
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-shield-check me-1"></i> Verify code
+                        </button>
+
+                        <button class="btn btn-outline-secondary" type="button" @onclick="CancelTwoFactorLogin">
+                            Back
+                        </button>
+                    </div>
+                </EditForm>
+            }
         }
     }
 </div>
@@ -80,6 +107,7 @@
 
     private LoginViewModel LoginViewModel { get; set; } = new();
     private bool _tryAutoLogin = true;
+    private Guid? _pendingTwoFactorChallengeId;
     
     protected override async Task OnInitializedAsync()
     {
@@ -102,11 +130,41 @@
 
     private async Task HandleLogin()
     {
-        var success = await AuthenticationService.LoginAsync(LoginViewModel);
+        var result = await AuthenticationService.LoginAsync(LoginViewModel);
+        Console.WriteLine($"Result is {result}");
+        if (result.Succeeded)
+        {
+            NavigationManager.NavigateTo("/votings");
+        }
+        else if (result.RequiresTwoFactor)
+        {
+            _pendingTwoFactorChallengeId = result.ChallengeId;
+            LoginViewModel.TwoFactorCode = null;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task HandleTwoFactorLogin()
+    {
+        if (_pendingTwoFactorChallengeId is null)
+        {
+            return;
+        }
+
+        var success = await AuthenticationService.CompleteTwoFactorLoginAsync(
+            _pendingTwoFactorChallengeId.Value,
+            LoginViewModel.TwoFactorCode ?? string.Empty);
         if (success)
         {
             NavigationManager.NavigateTo("/votings");
         }
+    }
+
+    private Task CancelTwoFactorLogin()
+    {
+        _pendingTwoFactorChallengeId = null;
+        LoginViewModel.TwoFactorCode = null;
+        return Task.CompletedTask;
     }
     
     private async Task LoginAsUser(int number)

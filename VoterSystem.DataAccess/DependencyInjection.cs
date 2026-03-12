@@ -63,6 +63,7 @@ public static class DependencyInjection
         services.AddScoped<IVoteService, VoteService>();
         services.AddScoped<IVotingService, VotingService>();
         services.AddScoped<IVoteChoiceService, VoteChoiceService>();
+        services.AddSingleton<ITwoFactorChallengeStore, InMemoryTwoFactorChallengeStore>();
 
         services.AddSingleton<IEmailService, EmailService>();
 

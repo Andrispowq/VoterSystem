@@ -18,6 +18,8 @@ public class UserServiceTests : UnitTestBase, IDisposable
     private readonly Mock<UserManager<User>> _mockUserManager;
     private readonly Mock<SignInManager<User>> _mockSignInManager;
     private readonly Mock<ITokenIssuer> _mockTokenIssuer = new();
+    private readonly Mock<IEmailService> _mockEmailService = new();
+    private readonly Mock<ITwoFactorChallengeStore> _mockTwoFactorChallengeStore = new();
 
     private User _user = null!;
     private User _adminUser = null!;
@@ -33,7 +35,9 @@ public class UserServiceTests : UnitTestBase, IDisposable
             NullLogger<UserService>.Instance,
             _mockUserManager.Object,
             _mockSignInManager.Object,
-            _mockTokenIssuer.Object
+            _mockTokenIssuer.Object,
+            _mockEmailService.Object,
+            _mockTwoFactorChallengeStore.Object
         );
 
         SeedDatabase();
@@ -165,6 +169,51 @@ public class UserServiceTests : UnitTestBase, IDisposable
 
         // Assert
         Assert.True(result.HasValue);
+        Assert.NotNull(result.Value.Tokens);
+        Assert.Equal("accessToken", result.Value.Tokens!.AuthToken);
+    }
+
+    [Fact]
+    public async Task Login_WhenTwoFactorEnabled_ReturnsChallengeAndSendsEmail()
+    {
+        var email = "user@test.com";
+        var password = "password123";
+        _user.TwoFactorEnabled = true;
+
+        _mockUserManager.Setup(x => x.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync(_user);
+        _mockSignInManager
+            .Setup(x => x.PasswordSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(),
+                It.IsAny<bool>())).ReturnsAsync(SignInResult.Success);
+        _mockTwoFactorChallengeStore
+            .Setup(x => x.CreateChallengeAsync(_user.Id, It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.Parse("11111111-1111-1111-1111-111111111111"));
+        _mockEmailService
+            .Setup(x => x.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new Option<ServiceError>.None());
+
+        var result = await _userService.LoginAsync(email, password);
+
+        Assert.True(result.HasValue);
+        Assert.True(result.Value.RequiresTwoFactor);
+        Assert.Equal(Guid.Parse("11111111-1111-1111-1111-111111111111"), result.Value.Challenge!.ChallengeId);
+        _mockEmailService.Verify(x => x.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CompleteTwoFactorLogin_WhenChallengeValid_ReturnsTokens()
+    {
+        var challengeId = Guid.NewGuid();
+        var code = "123456";
+        _mockTwoFactorChallengeStore
+            .Setup(x => x.VerifyChallengeAsync(challengeId, code, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_user.Id);
+        _mockUserManager.Setup(x => x.FindByIdAsync(_user.Id.ToString())).ReturnsAsync(_user);
+        _mockTokenIssuer.Setup(x => x.GenerateJwtToken(_user)).Returns("accessToken");
+        _mockUserManager.Setup(x => x.UpdateAsync(_user)).ReturnsAsync(IdentityResult.Success);
+
+        var result = await _userService.CompleteTwoFactorLoginAsync(challengeId, code);
+
+        Assert.True(result.HasValue);
         Assert.Equal("accessToken", result.Value.AuthToken);
     }
 
@@ -280,6 +329,22 @@ public class UserServiceTests : UnitTestBase, IDisposable
 
         Assert.True(result.IsSome);
         Assert.IsType<ConflictError>(result.AsSome.Value);
+    }
+
+    [Fact]
+    public async Task EnableTwoFactorAsync_ReturnsNone_WhenSuccessful()
+    {
+        _mockUserService_GetCurrentUserAsync_ReturnsValidUser();
+        _mockUserManager
+            .Setup(x => x.SetTwoFactorEnabledAsync(It.IsAny<User>(), true))
+            .ReturnsAsync(IdentityResult.Success);
+        _mockEmailService
+            .Setup(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new Option<ServiceError>.None());
+
+        var result = await _userService.EnableTwoFactorAsync();
+
+        Assert.True(result.IsNone);
     }
 
     [Fact]

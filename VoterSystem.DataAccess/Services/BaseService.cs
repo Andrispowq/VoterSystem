@@ -104,7 +104,6 @@ public abstract class BaseService<TType, TService>
         var context = httpContextAccessor.HttpContext;
         if (context is null)
         {
-            Logger.LogWarning("Context was null");
             return [];
         }
 
@@ -112,7 +111,6 @@ public abstract class BaseService<TType, TService>
         var identity = user.Identity;
         if (identity is null || !identity.IsAuthenticated)
         {
-            Logger.LogWarning("Identity was null or not authenticated");
             return [];
         }
 

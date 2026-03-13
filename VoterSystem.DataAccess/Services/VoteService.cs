@@ -84,6 +84,11 @@ public class VoteService(
             return new ConflictError("User already voted on this voting");
         }
 
+        if (!voteChoice.Voting.IsOngoing)
+        {
+            return new BadRequestError("Voting isn't active, you may not vote at this time!");
+        }
+            
         try
         {
             var participation = new VotingParticipation

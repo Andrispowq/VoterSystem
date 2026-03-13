@@ -20,6 +20,7 @@ public class UserService(
     ITwoFactorChallengeStore twoFactorChallengeStore) 
     : BaseService<User, UserService>(httpContextAccessor, logger), IUserService
 {
+    private readonly ILogger<UserService> _logger = logger;
     private static readonly TimeSpan TwoFactorChallengeTtl = TimeSpan.FromMinutes(5);
 
     protected override bool CanAccessAll(bool admin) => admin;
@@ -67,9 +68,8 @@ public class UserService(
         var result = await signInManager.PasswordSignInAsync(user.UserName!, password, 
             isPersistent: false, lockoutOnFailure: true);
         if (result.IsLockedOut) return new UnauthorizedError("Too many failed attempts");
-        if (!result.Succeeded) return new UnauthorizedError("Unsuccessful login attempt");
 
-        if (user.TwoFactorEnabled)
+        if (result.RequiresTwoFactor || user.TwoFactorEnabled)
         {
             var code = Random.Shared.Next(0, 1_000_000).ToString("D6");
             var challengeId = await twoFactorChallengeStore.CreateChallengeAsync(user.Id, code, TwoFactorChallengeTtl);
@@ -80,7 +80,7 @@ public class UserService(
                 EmailText.GetTwoFactorCodeEmail(user.Email!, code));
             if (emailResult.IsSome)
             {
-                logger.LogWarning("Failed to send 2FA code in email, error: {Message}", emailResult);
+                _logger.LogWarning("Failed to send 2FA code in email, error: {Message}", emailResult);
             }
 
             return LoginResultDto.FromChallenge(new TwoFactorChallengeDto
@@ -89,6 +89,8 @@ public class UserService(
                 Message = "Two-factor authentication required"
             });
         }
+        
+        if (!result.Succeeded) return new UnauthorizedError("Unsuccessful login attempt");
 
         var tokens = await IssueTokensAsync(user);
         if (tokens.IsError) return tokens.Error;
@@ -235,7 +237,7 @@ public class UserService(
         return new ConflictError(result.Errors.First().Description);
     }
 
-    public async Task<Result<User, ServiceError>> GetCurrentUserAsync()
+    private async Task<Result<User, ServiceError>> GetCurrentUserAsync()
     {
         var userId = MaybeUserId;
         if (userId is null) return new NotFoundError("No user present");

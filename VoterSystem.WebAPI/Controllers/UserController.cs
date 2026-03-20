@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
-using VoterSystem.Shared;
 using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 using VoterSystem.WebAPI.Config;
@@ -37,7 +36,8 @@ public class UserController(IUserService userService, IEmailService emailService
             Email = request.Email,
             Name = request.Name,
             UserName = request.Email,
-            Role = newRole
+            Role = newRole,
+            LoginMode = UserLoginMode.Password
         };
         
         var result = await userService.CreateUser(user, request.Password);
@@ -65,7 +65,7 @@ public class UserController(IUserService userService, IEmailService emailService
         }
 
         var tokens = result.Value.Tokens!;
-        Response.Cookies.Append(TokenIssuer.AuthTokenKey, tokens.AuthToken);
+        Response.Cookies.Append(TokenIssuerKeys.AuthTokenKey, tokens.AuthToken);
         
         return Ok(tokens);
     }
@@ -79,7 +79,7 @@ public class UserController(IUserService userService, IEmailService emailService
         var result = await userService.CompleteTwoFactorLoginAsync(request.ChallengeId, request.Code);
         if (result.IsError) return result.ToHttpResult();
 
-        Response.Cookies.Append(TokenIssuer.AuthTokenKey, result.Value.AuthToken);
+        Response.Cookies.Append(TokenIssuerKeys.AuthTokenKey, result.Value.AuthToken);
         return Ok(result.Value);
     }
     
@@ -254,7 +254,7 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(NotFoundError))]
     public async Task<IActionResult> LogoutAsync()
     {
-        Response.Cookies.Delete(TokenIssuer.AuthTokenKey);
+        Response.Cookies.Delete(TokenIssuerKeys.AuthTokenKey);
         return (await userService.LogoutAsync()).ToHttpResult();
     }
 

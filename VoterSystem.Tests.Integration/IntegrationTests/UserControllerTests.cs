@@ -419,7 +419,8 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
                 UserName = AdminLogin.Email,
                 Email = AdminLogin.Email,
                 Name = "Test Admin",
-                Role = Role.Admin
+                Role = Role.Admin,
+                LoginMode = UserLoginMode.Password
             };
             userManager.CreateAsync(adminUser, AdminLogin.Password).Wait();
             userManager.AddToRoleAsync(adminUser, "Admin").Wait();
@@ -434,7 +435,8 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
                 UserName = UserLogin.Email,
                 Email = UserLogin.Email,
                 Name = "Test User",
-                Role = Role.User
+                Role = Role.User,
+                LoginMode = UserLoginMode.Password
             };
             userManager.CreateAsync(user, UserLogin.Password).Wait();
         }

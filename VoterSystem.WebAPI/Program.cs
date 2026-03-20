@@ -1,12 +1,8 @@
 using System.Globalization;
 using System.Security.Claims;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using VoterSystem.DataAccess;
-using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
@@ -44,47 +40,9 @@ public class Program
         //builder.Services.MapOpenApi();
 #pragma warning restore S125
 
+        builder.Services.AddAuth(builder.Configuration);
+
         builder.Services.BindWithEnvSubstitution<BlazorSettings>(builder.Configuration, "BlazorSettings");
-        var jwtSettings = builder.Services.BindWithEnvSubstitution<JwtSettings>(builder.Configuration, "JwtSettings");
-
-        builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidAudience = jwtSettings.Audience,
-                ValidIssuer = jwtSettings.Issuer,
-                ClockSkew = TimeSpan.Zero,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
-            };
-            
-            options.Events = new JwtBearerEvents
-            {
-                OnMessageReceived = context =>
-                {
-                    if (context.Request.Cookies.ContainsKey(TokenIssuer.AuthTokenKey))
-                    {
-                        context.Token = context.Request.Cookies[TokenIssuer.AuthTokenKey];
-                    }
-                    else
-                    {
-                        var accessToken = context.Request.Query["access_token"];
-                        var path = context.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/Hubs"))
-                        {
-                            context.Token = accessToken;
-                        }
-                    }
-
-                    return Task.CompletedTask;
-                }
-            };
-        });
-
         builder.Services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new OpenApiInfo

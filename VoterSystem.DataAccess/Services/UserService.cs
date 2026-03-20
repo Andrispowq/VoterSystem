@@ -311,4 +311,96 @@ public class UserService(
         if (user is null) return new NotFoundError("User not found");
         return user;
     }
+
+    public async Task<Result<TokensDto, ServiceError>> HandleExternalAuthAsync(ThirdPartyAuthRequest request, CancellationToken ct = default)
+    {
+        var provider = request.Provider.ToString();
+        var providerKey = request.ProviderKey;
+        var user = await userManager.FindByLoginAsync(provider, providerKey);
+        if (user is null)
+        {
+            var register = await HandleExternalRegisterAsync(request, ct);
+            if (register.IsError)
+            {
+                _logger.LogWarning("Failed to register user with external provider {Provider}: {Error}", 
+                    provider, register.Error);
+                return register.Error;
+            }
+            user = register.Value;
+        }
+
+        var result = await HandleExternalLoginAsync(user, ct);
+        if (result.IsError)
+        {
+            _logger.LogWarning("Failed to handle external login for user {UserId} with provider {Provider}: {Error}", 
+                user.Id, provider, result.Error);
+        }
+        return result;
+    }
+
+    private async Task<Result<User, ServiceError>> HandleExternalRegisterAsync(ThirdPartyAuthRequest request, CancellationToken ct = default)
+    {
+        var user = await userManager.FindByEmailAsync(request.Email);
+        if (user is null)
+        {
+            user = new User
+            {
+                UserName = request.Email,
+                Email = request.Email,
+                EmailConfirmed = true,
+                LoginMode = UserLoginMode.Social,
+                Role = Role.User
+            };
+
+            var createResult = await userManager.CreateAsync(user);
+            if (!createResult.Succeeded)
+            {
+                _logger.LogWarning("Failed to create new user for external registration: {Errors}", createResult.Errors.First().Description);
+                return new BadRequestError("Could not create new user");
+            }
+            const string role = nameof(Role.User);
+            await userManager.AddToRoleAsync(user, role);
+        }
+
+        // link
+        //
+        // login to existing account
+        var provider = request.Provider.ToString();
+        var providerKey = request.ProviderKey;
+        var info = new UserLoginInfo(provider, providerKey, provider);
+        var linkResult = await userManager.AddLoginAsync(user, info);
+        if (!linkResult.Succeeded)
+        {
+            _logger.LogWarning("Failed to link external login for user {UserId} with provider {Provider}: {Errors}", 
+                user.Id, provider, linkResult.Errors);
+            return new BadRequestError("Could not link Google login");
+        }
+
+        return user;
+    }
+
+    private async Task<Result<TokensDto, ServiceError>> HandleExternalLoginAsync(User user, CancellationToken ct)
+    {
+        var token = tokenIssuer.GenerateJwtToken(user);
+
+        var refreshToken = Guid.NewGuid();
+        user.RefreshToken = refreshToken;
+
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            _logger.LogWarning("Failed to create refresh token for user {UserId} during external login: {Error}", 
+                user.Id, result.Errors.First().Description);
+            return new BadRequestError("Failed to update user with refresh token");
+        }
+
+        var dto = new TokensDto
+        {
+            AuthToken = token,
+            RefreshToken = refreshToken,
+            UserId = user.Id
+        };
+
+        return dto;
+    }
 }

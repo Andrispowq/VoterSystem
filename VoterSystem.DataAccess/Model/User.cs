@@ -9,6 +9,7 @@ public class User : IdentityUser<Guid>, ISoftDeletable, IRoleControlled
     public Guid? RefreshToken { get; set; }
     public DateTime? DeletedAt { get; set; }
     public required Role Role { get; set; }
+    public required UserLoginMode LoginMode { get; set; }
     
     public virtual ICollection<Voting> Votings { get; set; } = [];
     public virtual ICollection<VotingParticipation> VotingParticipations { get; set; } = [];

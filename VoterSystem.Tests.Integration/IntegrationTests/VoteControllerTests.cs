@@ -134,7 +134,8 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
                 UserName = AdminLogin.Email,
                 Email = AdminLogin.Email,
                 Name = "Seed-Admin",
-                Role = Role.Admin
+                Role = Role.Admin,
+                LoginMode = UserLoginMode.Password
             };
             userManager.CreateAsync(admin, AdminLogin.Password).Wait();
             userManager.AddToRoleAsync(admin, "Admin").Wait();
@@ -149,7 +150,8 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
                 UserName = UserLogin.Email,
                 Email = UserLogin.Email,
                 Name = "Seed-User",
-                Role = Role.User
+                Role = Role.User,
+                LoginMode = UserLoginMode.Password
             };
             userManager.CreateAsync(user, UserLogin.Password).Wait();
             userManager.AddToRoleAsync(user, "User").Wait();

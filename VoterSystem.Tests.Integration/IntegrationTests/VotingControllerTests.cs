@@ -391,7 +391,8 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
             Email = creds.Email,
             UserName = creds.Email,
             Name = creds.Email.Split('@')[0],
-            Role = Enum.Parse<Role>(role)
+            Role = Enum.Parse<Role>(role),
+            LoginMode = UserLoginMode.Password
         };
         um.CreateAsync(user, creds.Password).Wait();
         um.AddToRoleAsync(user, role).Wait();

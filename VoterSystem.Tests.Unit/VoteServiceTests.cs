@@ -40,7 +40,8 @@ public class VoteServiceTests : UnitTestBase, IDisposable
             UserName = "admin@example.com",
             Email = "admin@example.com",
             Name = "admin",
-            Role = Role.Admin
+            Role = Role.Admin,
+            LoginMode = UserLoginMode.Password
         };
 
         var service = CreateService(admin.Id, Role.Admin);
@@ -60,7 +61,8 @@ public class VoteServiceTests : UnitTestBase, IDisposable
             UserName = "owner@example.com",
             Email = "owner@example.com",
             Name = "owner",
-            Role = Role.User
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
         };
         var service = CreateService(owner.Id);
 

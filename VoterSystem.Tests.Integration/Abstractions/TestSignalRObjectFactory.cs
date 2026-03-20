@@ -62,14 +62,16 @@ public class TestSignalRObjectFactory : BaseTest
             UserName = _user.Email,
             Name = _user.Name,
             Email = _user.Email,
-            Role = Role.User
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
         };
         var admin = new User
         {
             UserName = _adminUser.Email,
             Name = _adminUser.Name,
             Email = _adminUser.Email,
-            Role = Role.Admin
+            Role = Role.Admin,
+            LoginMode = UserLoginMode.Password
         };
         
         userService.CreateUser(user, _user.Password).Wait();

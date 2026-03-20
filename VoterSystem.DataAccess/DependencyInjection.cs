@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
@@ -65,8 +66,44 @@ public static class DependencyInjection
         services.AddScoped<IVoteChoiceService, VoteChoiceService>();
         services.AddSingleton<ITwoFactorChallengeStore, InMemoryTwoFactorChallengeStore>();
         services.AddScoped<IGroupService, GroupService>();
+        services.AddScoped<ITokenRequestService, TokenRequestService>();
+        services.AddScoped<IExternalUserService, UserService>();
+        services.AddScoped<TicketReceivedHandler>();
+
+        services.AddRedisCache(config);
+        services.AddScoped<ICacheService, RedisCacheService>();
 
         services.AddSingleton<IEmailService, EmailService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddRedisCache(this IServiceCollection services, IConfiguration configuration)
+    {
+        string? redisPass = null;
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "IntegrationTests")
+        {
+            redisPass = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? "redispass";
+        }
+
+        var connString = configuration.GetConnectionString("Redis")
+                         ?? throw new MissingFieldException("No Redis connection string specified");
+        var confOptions = ConfigurationOptions.Parse(connString);
+        confOptions.AbortOnConnectFail = false;
+        confOptions.ConnectRetry = 3;
+        confOptions.ConnectTimeout = 2000;
+        confOptions.AsyncTimeout = 2000;
+        confOptions.Password = redisPass;
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = connString;
+            options.InstanceName = "VoterSystem:";
+            options.ConfigurationOptions = confOptions;
+        });
+
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+            ConnectionMultiplexer.Connect(confOptions));
 
         return services;
     }
@@ -91,6 +128,8 @@ public static class DependencyInjection
         {
             foreach (var prop in typeof(T).GetProperties())
             {
+      
+                
                 if (prop.CanWrite)
                 {
                     prop.SetValue(options, prop.GetValue(instance));

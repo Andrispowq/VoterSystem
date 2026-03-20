@@ -31,7 +31,8 @@ public class UnitTestBase : IAsyncDisposable
                 Email = $"{id}@email.com",
                 Name = $"{id}",
                 UserName = $"{id}@email.com",
-                Role = Role.User
+                Role = Role.User,
+                LoginMode = UserLoginMode.Password
             };
         }
     }

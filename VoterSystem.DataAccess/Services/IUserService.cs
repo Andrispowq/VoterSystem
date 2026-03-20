@@ -1,4 +1,5 @@
 using VoterSystem.DataAccess.Model;
+using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
@@ -7,7 +8,7 @@ namespace VoterSystem.DataAccess.Services;
 /// <summary>
 /// Used for interacting with users, login, refresh, logout, and things of this nature
 /// </summary>
-public interface IUserService
+public interface IUserService : IExternalUserService
 {
     //CRUD
     Task<Result<List<User>, ServiceError>> GetAllUsersAsync();

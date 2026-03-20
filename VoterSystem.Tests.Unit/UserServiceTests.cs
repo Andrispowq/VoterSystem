@@ -80,7 +80,14 @@ public class UserServiceTests : UnitTestBase, IDisposable
     public async Task CreateUser_WhenRoleIsGiven_ReturnsNoError()
     {
         // Arrange
-        var user = new User { UserName = "user@test.com", Email = "user@test.com", Name = "user", Role = Role.User };
+        var user = new User
+        {
+            UserName = "user@test.com",
+            Email = "user@test.com",
+            Name = "user",
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
+        };
         var password = "Password123";
         _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), password)).ReturnsAsync(IdentityResult.Success);
         _mockUserManager.Setup(x => x.AddToRoleAsync(It.IsAny<User>(), Role.User.ToString()))
@@ -97,7 +104,14 @@ public class UserServiceTests : UnitTestBase, IDisposable
     public async Task CreateUser_WhenCreationFails_ReturnsError()
     {
         // Arrange
-        var user = new User { UserName = "user@test.com", Email = "user@test.com", Name = "user", Role = Role.User };
+        var user = new User
+        {
+            UserName = "user@test.com",
+            Email = "user@test.com",
+            Name = "user",
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
+        };
         var password = "Password123";
         _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), password))
             .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "User creation failed" }));
@@ -383,7 +397,8 @@ public class UserServiceTests : UnitTestBase, IDisposable
                     Email = email,
                     UserName = email,
                     Name = "test",
-                    Role = Role.User
+                    Role = Role.User,
+                    LoginMode = UserLoginMode.Password
                 }
             }.AsEnumerable().BuildMock());
         _mockUserManager.Setup(x => x.ConfirmEmailAsync(It.IsAny<User>(), token)).ReturnsAsync(IdentityResult.Success);
@@ -407,7 +422,8 @@ public class UserServiceTests : UnitTestBase, IDisposable
                     Email = email,
                     UserName = email,
                     Name = "test",
-                    Role = Role.User
+                    Role = Role.User,
+                    LoginMode = UserLoginMode.Password
                 }
             }.AsEnumerable().BuildMock());
         _mockUserManager.Setup(x => x.ConfirmEmailAsync(It.IsAny<User>(), token))
@@ -453,7 +469,8 @@ public class UserServiceTests : UnitTestBase, IDisposable
             Email = "validuser@test.com",
             UserName = "validuser@test.com",
             Id = id,
-            Role = Role.User
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
         });
     }
 
@@ -467,9 +484,23 @@ public class UserServiceTests : UnitTestBase, IDisposable
     private void SeedDatabase()
     {
         _user = new User
-            { UserName = "user@test.com", Email = "user@test.com", Name = "user", Id = Guid.NewGuid(), Role = Role.User };
+        {
+            UserName = "user@test.com",
+            Email = "user@test.com",
+            Name = "user",
+            Id = Guid.NewGuid(),
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
+        };
         _adminUser = new User
-            { UserName = "admin@test.com", Email = "admin@test.com", Name = "admin", Id = Guid.NewGuid(), Role = Role.Admin };
+        {
+            UserName = "admin@test.com",
+            Email = "admin@test.com",
+            Name = "admin",
+            Id = Guid.NewGuid(),
+            Role = Role.Admin,
+            LoginMode = UserLoginMode.Password
+        };
 
         Context.Users.AddRange(_user, _adminUser);
         Context.SaveChanges();

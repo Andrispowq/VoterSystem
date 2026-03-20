@@ -80,14 +80,12 @@ public static class DependencyInjection
                     var handler = context.HttpContext.RequestServices.GetRequiredService<TicketReceivedHandler>();
                     return handler.HandleAsync(context, ExternalLoginProvider.Google);
                 };
-            });
-            //TODO
-            /*.AddFacebook(nameof(ExternalLoginProvider.Facebook), opts =>
+            }).AddFacebook(nameof(ExternalLoginProvider.Facebook), opts =>
             {
-                var clientId = Environment.AuthFacebookClientId
+                var clientId = Environment.GetEnvironmentVariable("OAUTH_FACEBOOK_CLIENT_ID")
                                ?? configuration["Authorisation:Facebook:ClientId"] ?? "dummyId";
 
-                var clientSecret = Environment.AuthFacebookClientSecret
+                var clientSecret = Environment.GetEnvironmentVariable("OAUTH_FACEBOOK_CLIENT_SECRET")
                                    ?? configuration["Authorisation:Facebook:ClientSecret"] ?? "dummySecret";
 
                 opts.ClientId = clientId;
@@ -108,7 +106,7 @@ public static class DependencyInjection
                     var handler = context.HttpContext.RequestServices.GetRequiredService<TicketReceivedHandler>();
                     return handler.HandleAsync(context, ExternalLoginProvider.Facebook);
                 };
-            });*/
+            });
         }
 
         services.ConfigureExternalCookie(opts =>

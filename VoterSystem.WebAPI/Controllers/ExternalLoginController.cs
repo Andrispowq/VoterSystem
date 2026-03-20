@@ -31,7 +31,7 @@ public class ExternalLoginController(
         var url = provider switch
         {
             ExternalLoginProvider.Google => nameof(ExternalLoginCallbackGoogle),
-            //ExternalLoginProvider.Facebook => nameof(ExternalLoginCallbackFacebook),
+            ExternalLoginProvider.Facebook => nameof(ExternalLoginCallbackFacebook),
             _ => null
         };
 

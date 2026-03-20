@@ -47,7 +47,7 @@
             else
             {
                 <button class="btn btn-sm btn-outline-secondary" @onclick="ConfigureTwoFactorAsync">
-                    <i class="bi bi-shield-lock me-1"></i> Configure two-factor authentication (TODO)
+                    <i class="bi bi-shield-lock me-1"></i> Enable two-factor authentication
                 </button>
             }
         </div>
@@ -112,10 +112,15 @@
         await AuthenticationService.RequestEmailConfirmationAsync();
     }
 
-    private Task ConfigureTwoFactorAsync()
+    private async Task ConfigureTwoFactorAsync()
     {
-        Console.WriteLine("TODO: Open 2FA config flow");
-        return Task.CompletedTask;
+        var result = await AuthenticationService.EnableTwoFactorAsync();
+        if (result)
+        {
+            _user = await AuthenticationService.GetCurrentUserAsync();
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task HandlePasswordChange()

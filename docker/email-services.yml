@@ -1,0 +1,26 @@
+services:
+
+
+  mailhog-base:
+    image: mailhog/mailhog:v1.0.1
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # HTTP UI
+    networks:
+      - votersystem-internal-network
+
+  smtp-relay-base:
+    image: bytemark/smtp
+    container_name: smtp_relay
+    restart: always
+    environment:
+      # The upstream provider you are actually sending through
+      - RELAY_HOST=${SMTP_HOST?Please set the SMTP_HOST variable}
+      - RELAY_PORT=587
+      - RELAY_USERNAME=${SMTP_USER?Please set the SMTP_USER variable}
+      - RELAY_PASSWORD=${SMTP_PASSWORD?Please set the SMTP_PASSWORD variable}
+      # crucial: allow docker network to send mail
+      - MYNETWORKS=10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+    networks:
+      - votersystem-internal-network

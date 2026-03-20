@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -238,9 +239,17 @@ public sealed class GroupServiceTests : UnitTestBase
         Assert.True(result.IsNone, result.ToString());
     }
 
-    private void SetCurrentUser(Guid userId, params Role[] roles)
+    private void SetCurrentUser(Guid userId, Role role)
     {
-        var httpContext = BuildHttpContext(userId, roles);
-        _httpContextAccessor.Setup(a => a.HttpContext).Returns(httpContext);
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+            {
+                new(ClaimTypes.Role, role.ToString()),
+                new("id", userId.ToString())
+            }, "TestAuth"))
+        };
+
+        _httpContextAccessor.Setup(h => h.HttpContext).Returns(context);
     }
 }

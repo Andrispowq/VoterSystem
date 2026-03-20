@@ -39,7 +39,7 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
             var voting = new Voting
             {
                 Name = "Integration voting",
-                StartsAt = DateTime.UtcNow.AddHours(1),
+                StartsAt = DateTime.UtcNow.AddHours(-1),
                 EndsAt = DateTime.UtcNow.AddDays(2),
                 CreatedByUserId = admin.Id
             };
@@ -47,7 +47,8 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
             await ctx.SaveChangesAsync();
 
             var choice = new VoteChoice { Name = "Option-A", VotingId = voting.VotingId };
-            ctx.VoteChoices.Add(choice);
+            var choice2 = new VoteChoice { Name = "Option-B", VotingId = voting.VotingId };
+            ctx.VoteChoices.AddRange(choice, choice2);
             await ctx.SaveChangesAsync();
             choiceId = choice.ChoiceId;
         }

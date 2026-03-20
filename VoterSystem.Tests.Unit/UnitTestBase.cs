@@ -1,13 +1,14 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using VoterSystem.DataAccess;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Token;
 
 namespace VoterSystem.Tests.Unit;
 
-public abstract class UnitTestBase : IAsyncDisposable
+public class UnitTestBase : IAsyncDisposable
 {
     protected readonly VoterSystemDbContext Context;
 
@@ -20,7 +21,7 @@ public abstract class UnitTestBase : IAsyncDisposable
         Context = new VoterSystemDbContext(options);
     }
 
-    protected User NextValidUser
+    protected static User NextValidUser
     {
         get
         {
@@ -35,61 +36,54 @@ public abstract class UnitTestBase : IAsyncDisposable
         }
     }
 
-    protected Voting GetNextValidVoting(Guid creatorId)
+    protected static Voting GetNextValidVoting(Guid creatorId)
     {
         return new Voting
         {
             Name = Helpers.NextUniqueId,
-            StartsAt = DateTime.UtcNow.AddHours(1),
+            StartsAt = DateTime.UtcNow.AddHours(-1),
             EndsAt = DateTime.UtcNow.AddDays(2),
             CreatedByUserId = creatorId,
         };
     }
 
-    protected Voting GetNextInvalidVoting(Guid creatorId)
+    protected static Voting GetNextInvalidVoting(Guid creatorId)
     {
         return new Voting
         {
             Name = Helpers.NextUniqueId,
             StartsAt = DateTime.UtcNow.AddHours(1),
             EndsAt = DateTime.UtcNow.AddHours(2),
-            CreatedByUserId = creatorId,
+            CreatedByUserId = creatorId
         };
     }
 
-    protected static DefaultHttpContext BuildHttpContext(Guid userId, params Role[] roles)
+    protected static IHttpContextAccessor CreateHttpContextAccessor(
+        Guid? userId = null,
+        Role role = Role.User,
+        bool isAuthenticated = true)
     {
-        if (roles.Length == 0)
+        var context = new DefaultHttpContext();
+        if (isAuthenticated)
         {
-            roles = new[] { Role.User };
+            var claims = new List<Claim>
+            {
+                new(TokenIssuerKeys.UserIdKey, (userId ?? Guid.NewGuid()).ToString()),
+                new(TokenIssuerKeys.UsernameKey, Guid.NewGuid().ToString()),
+                new(ClaimTypes.Role, role.ToString())
+            };
+
+            context.User = new ClaimsPrincipal(
+                new ClaimsIdentity(claims, authenticationType: "TestAuth"));
         }
 
-        var claims = new List<Claim>
+        return new HttpContextAccessor
         {
-            new(TokenIssuerKeys.UserIdKey, userId.ToString()),
-            new(TokenIssuerKeys.UsernameKey, $"user-{userId}"),
-            new(ClaimTypes.NameIdentifier, userId.ToString())
-        };
-
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
-        }
-
-        var identity = new ClaimsIdentity(claims, "UnitTestsAuthType");
-        return new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(identity)
+            HttpContext = context
         };
     }
 
-    protected static DefaultHttpContext BuildAnonymousHttpContext()
-    {
-        return new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity())
-        };
-    }
+    protected static NullLogger<T> CreateLogger<T>() => NullLogger<T>.Instance;
 
     public async ValueTask DisposeAsync()
     {

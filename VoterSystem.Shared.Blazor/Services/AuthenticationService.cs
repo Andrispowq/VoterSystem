@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using Blazored.LocalStorage;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.Shared.Blazor.Exception;
@@ -57,9 +58,9 @@ public class AuthenticationService(
         }
     }
 
-    public async Task<bool> LoginAsync(LoginViewModel loginBindingViewModel)
+    public async Task<LoginAttemptResultDto> LoginAsync(LoginViewModel loginBindingViewModel)
     {
-        UserLoginRequestDto loginDto = new UserLoginRequestDto
+        var loginDto = new UserLoginRequestDto
         {
             Email = loginBindingViewModel.Email ?? "",
             Password = loginBindingViewModel.Password ?? ""
@@ -70,28 +71,66 @@ public class AuthenticationService(
         {
             response = await httpClient.PostAsJsonAsync("/api/v1/users/login", loginDto);
         }
-        catch (System.Exception)
+        catch (System.Exception ex)
         {
             ShowErrorMessage("Unknown error occured");
-            return false;
+            return LoginAttemptResultDto.Failure();
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Content is {content}, code is {response.StatusCode}");
+
+        if (response.StatusCode == HttpStatusCode.Accepted)
+        {
+            var challenge = await response.Content.ReadFromJsonAsync<TwoFactorChallengeDto>()
+                            ?? throw new System.Exception("Error with 2FA challenge response.");
+            
+            Console.WriteLine($"Challenge is {challenge}");
+
+            return LoginAttemptResultDto.TwoFactorRequired(challenge.ChallengeId);
         }
 
         if (response.IsSuccessStatusCode)
         {
             var responseBody = await response.Content.ReadFromJsonAsync<TokensDto>()
                                ?? throw new System.Exception("Error with auth response.");
+            Console.WriteLine($"Response is {responseBody}");
 
-            await localStorageService.SetItemAsStringAsync("AuthToken", responseBody.AuthToken);
-            await localStorageService.SetItemAsStringAsync("RefreshToken", responseBody.RefreshToken.ToString());
-            await localStorageService.SetItemAsStringAsync("UserId", responseBody.UserId.ToString());
-            await SetCurrentUserNameAsync(responseBody.UserId);
-
-            return true;
+            await StoreTokensAsync(responseBody);
+            return LoginAttemptResultDto.Success();
         }
 
         await HandleHttpError(response);
 
-        return false;
+        return LoginAttemptResultDto.Failure();
+    }
+
+    public async Task<bool> CompleteTwoFactorLoginAsync(Guid challengeId, string code)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/v1/users/login/2fa", new TwoFactorVerificationRequestDto
+            {
+                ChallengeId = challengeId,
+                Code = code
+            });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await HandleHttpError(response);
+                return false;
+            }
+
+            var responseBody = await response.Content.ReadFromJsonAsync<TokensDto>()
+                               ?? throw new System.Exception("Error with auth response.");
+            await StoreTokensAsync(responseBody);
+            return true;
+        }
+        catch (System.Exception)
+        {
+            ShowErrorMessage("Unknown error occured");
+            return false;
+        }
     }
 
     public async Task<bool> ChangePasswordAsync(ChangePasswordViewModel changePasswordBindingViewModel)
@@ -206,6 +245,20 @@ public class AuthenticationService(
         }
     }
 
+    public async Task<bool> EnableTwoFactorAsync()
+    {
+        try
+        {
+            await httpRequestUtility.ExecutePatchHttpRequestAsync("users/two-factor/enable");
+            return true;
+        }
+        catch (System.Exception)
+        {
+            ShowErrorMessage("Unknown error occured");
+            return false;
+        }
+    }
+
     public async Task<bool> ConfirmEmailAsync(UserEmailConfirmRequestDto dto)
     {
         try
@@ -259,5 +312,13 @@ public class AuthenticationService(
         {
             Console.WriteLine(ex.Message);
         }
+    }
+
+    private async Task StoreTokensAsync(TokensDto responseBody)
+    {
+        await localStorageService.SetItemAsStringAsync("AuthToken", responseBody.AuthToken);
+        await localStorageService.SetItemAsStringAsync("RefreshToken", responseBody.RefreshToken.ToString());
+        await localStorageService.SetItemAsStringAsync("UserId", responseBody.UserId.ToString());
+        await SetCurrentUserNameAsync(responseBody.UserId);
     }
 }

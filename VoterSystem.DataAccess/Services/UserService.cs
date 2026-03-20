@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared;
 using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
@@ -14,9 +15,14 @@ public class UserService(
     ILogger<UserService> logger,
     UserManager<User> userManager, 
     SignInManager<User> signInManager,
-    ITokenIssuer tokenIssuer) 
+    ITokenIssuer tokenIssuer,
+    IEmailService emailService,
+    ITwoFactorChallengeStore twoFactorChallengeStore) 
     : BaseService<User, UserService>(httpContextAccessor, logger), IUserService
 {
+    private readonly ILogger<UserService> _logger = logger;
+    private static readonly TimeSpan TwoFactorChallengeTtl = TimeSpan.FromMinutes(5);
+
     protected override bool CanAccessAll(bool admin) => admin;
 
     public async Task<bool> AnyAdmins()
@@ -54,7 +60,7 @@ public class UserService(
         return new Option<ServiceError>.None();
     }
 
-    public async Task<Result<TokensDto, ServiceError>> LoginAsync(string email, string password)
+    public async Task<Result<LoginResultDto, ServiceError>> LoginAsync(string email, string password)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user is null) return new NotFoundError("User not found");
@@ -62,8 +68,71 @@ public class UserService(
         var result = await signInManager.PasswordSignInAsync(user.UserName!, password, 
             isPersistent: false, lockoutOnFailure: true);
         if (result.IsLockedOut) return new UnauthorizedError("Too many failed attempts");
+
+        if (result.RequiresTwoFactor || user.TwoFactorEnabled)
+        {
+            var code = Random.Shared.Next(0, 1_000_000).ToString("D6");
+            var challengeId = await twoFactorChallengeStore.CreateChallengeAsync(user.Id, code, TwoFactorChallengeTtl);
+
+            var emailResult = await emailService.SendEmailAsync(
+                user.Email!,
+                "Your two-factor authentication code",
+                EmailText.GetTwoFactorCodeEmail(user.Email!, code));
+            if (emailResult.IsSome)
+            {
+                _logger.LogWarning("Failed to send 2FA code in email, error: {Message}", emailResult);
+            }
+
+            return LoginResultDto.FromChallenge(new TwoFactorChallengeDto
+            {
+                ChallengeId = challengeId,
+                Message = "Two-factor authentication required"
+            });
+        }
+        
         if (!result.Succeeded) return new UnauthorizedError("Unsuccessful login attempt");
 
+        var tokens = await IssueTokensAsync(user);
+        if (tokens.IsError) return tokens.Error;
+        return LoginResultDto.FromTokens(tokens.Value);
+    }
+
+    public async Task<Result<TokensDto, ServiceError>> CompleteTwoFactorLoginAsync(Guid challengeId, string code)
+    {
+        var verificationResult = await twoFactorChallengeStore.VerifyChallengeAsync(challengeId, code);
+        if (verificationResult.IsError) return verificationResult.Error;
+
+        var user = await userManager.FindByIdAsync(verificationResult.Value.ToString());
+        if (user is null) return new NotFoundError("User not found");
+
+        return await IssueTokensAsync(user);
+    }
+
+    public async Task<Option<ServiceError>> EnableTwoFactorAsync()
+    {
+        var user = await GetCurrentUserAsync();
+        if (user.IsError) return user.Error;
+
+        if (!user.Value.TwoFactorEnabled)
+        {
+            var setResult = await userManager.SetTwoFactorEnabledAsync(user.Value, true);
+            if (!setResult.Succeeded)
+            {
+                return new BadRequestError($"Failed to enable two-factor authentication: {setResult.Errors.First().Description}");
+            }
+        }
+
+        var emailResult = await emailService.SendEmailAsync(
+            user.Value.Email!,
+            "Two-factor authentication enabled",
+            EmailText.GetTwoFactorEnabledEmail(user.Value.Email!));
+        if (emailResult.IsSome) return emailResult.AsSome.Value;
+
+        return new Option<ServiceError>.None();
+    }
+
+    private async Task<Result<TokensDto, ServiceError>> IssueTokensAsync(User user)
+    {
         var accessToken = tokenIssuer.GenerateJwtToken(user);
 
         //Regenerate refresh token on login
@@ -168,9 +237,12 @@ public class UserService(
         return new ConflictError(result.Errors.First().Description);
     }
 
-    public async Task<Result<User, ServiceError>> GetCurrentUserAsync()
+    private async Task<Result<User, ServiceError>> GetCurrentUserAsync()
     {
-        var user = await userManager.FindByIdAsync(UserId.ToString());
+        var userId = MaybeUserId;
+        if (userId is null) return new NotFoundError("No user present");
+        
+        var user = await userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null) return new NotFoundError("User not found");
 
         return user;

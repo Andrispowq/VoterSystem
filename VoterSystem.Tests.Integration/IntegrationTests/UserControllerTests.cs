@@ -127,6 +127,51 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Login_ReturnsAccepted_AndSendsTwoFactorCode_WhenTwoFactorEnabled()
+    {
+        await AuthenticateAsync(AdminLogin);
+        var enableResponse = await HttpClient.SendAsync(
+            new HttpRequestMessage(HttpMethod.Patch, "/api/v1/users/two-factor/enable"));
+        Assert.Equal(HttpStatusCode.OK, enableResponse.StatusCode);
+
+        using var client = Factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/v1/users/login", AdminLogin);
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+
+        var challenge = await response.Content.ReadFromJsonAsync<TwoFactorChallengeDto>();
+        Assert.NotNull(challenge);
+        Assert.NotEqual(Guid.Empty, challenge!.ChallengeId);
+        Assert.Contains(Factory.EmailService.GetAll(), email =>
+            email.To == AdminLogin.Email &&
+            email.Subject.Contains("two-factor", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task CompleteTwoFactorLogin_ReturnsOk_WhenCodeMatchesChallenge()
+    {
+        await AuthenticateAsync(AdminLogin);
+        var enableResponse = await HttpClient.SendAsync(
+            new HttpRequestMessage(HttpMethod.Patch, "/api/v1/users/two-factor/enable"));
+        Assert.Equal(HttpStatusCode.OK, enableResponse.StatusCode);
+
+        using var client = Factory.CreateClient();
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/users/login", AdminLogin);
+        var challenge = await loginResponse.Content.ReadFromJsonAsync<TwoFactorChallengeDto>();
+        Assert.NotNull(challenge);
+
+        var code = Factory.EmailService.ExtractLatestTwoFactorCode(AdminLogin.Email);
+        var verifyResponse = await client.PostAsJsonAsync("/api/v1/users/login/2fa", new TwoFactorVerificationRequestDto
+        {
+            ChallengeId = challenge!.ChallengeId,
+            Code = code
+        });
+
+        Assert.Equal(HttpStatusCode.OK, verifyResponse.StatusCode);
+        Assert.Contains("Set-Cookie", verifyResponse.Headers.ToString());
+    }
+
     #endregion
 
     #region GetAllUsers
@@ -192,10 +237,10 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
     [Fact]
     public async Task GetUserById_ReturnsUnauthorized_ForUserAccessingAdmin()
     {
-        var adminTokensDto = await LoginAndGetTokensDtoAsync(AdminLogin); // no auth cookie set
+        var adminTokens = await LoginAndGetTokensAsync(AdminLogin); // no auth cookie set
         await AuthenticateAsync(UserLogin); // now sign-in as normal user
 
-        var response = await HttpClient.GetAsync($"/api/v1/users/{adminTokensDto.UserId}");
+        var response = await HttpClient.GetAsync($"/api/v1/users/{adminTokens.UserId}");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -243,6 +288,30 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         var response = await HttpClient.PutAsJsonAsync("/api/v1/users/change-password", dto);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    #endregion
+
+    #region TwoFactor
+
+    [Fact]
+    public async Task EnableTwoFactor_ReturnsOk_AndUpdatesCurrentUser()
+    {
+        await AuthenticateAsync(UserLogin);
+
+        var response = await HttpClient.SendAsync(
+            new HttpRequestMessage(HttpMethod.Patch, "/api/v1/users/two-factor/enable"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var currentUserResponse = await HttpClient.GetAsync("/api/v1/users");
+        var currentUser = await currentUserResponse.Content.ReadFromJsonAsync<UserDto>();
+
+        Assert.NotNull(currentUser);
+        Assert.True(currentUser!.TwoFactorEnabled);
+        Assert.Contains(Factory.EmailService.GetAll(), email =>
+            email.To == UserLogin.Email &&
+            email.Subject.Contains("enabled", StringComparison.OrdinalIgnoreCase));
     }
 
     #endregion
@@ -298,10 +367,10 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
     [Fact]
     public async Task RefreshToken_ReturnsOk_WhenValid()
     {
-        var TokensDto = await LoginAndGetTokensDtoAsync(UserLogin);
+        var tokens = await LoginAndGetTokensAsync(UserLogin);
 
         var response = await HttpClient.PostAsJsonAsync("/api/v1/users/refresh-token",
-            TokensDto.RefreshToken.ToString());
+            tokens.RefreshToken.ToString());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -387,7 +456,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         return users.Single(u => u.Email == email).Id;
     }
 
-    private async Task<TokensDto> LoginAndGetTokensDtoAsync(UserLoginRequestDto credentials)
+    private async Task<TokensDto> LoginAndGetTokensAsync(UserLoginRequestDto credentials)
     {
         // fresh client to avoid polluting the main CookieContainer
         using var client = Factory.CreateClient();
@@ -401,9 +470,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
             Assert.Fail($"Failed with the following response: {await response.Content.ReadAsStringAsync()}");
         }
         
-        var TokensDto = await response.Content.ReadFromJsonAsync<TokensDto>();
-        Assert.NotNull(TokensDto);
-        return TokensDto;
+        return (await response.Content.ReadFromJsonAsync<TokensDto>())!;
     }
 
     private async Task AuthenticateAsync(UserLoginRequestDto credentials)

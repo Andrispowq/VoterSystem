@@ -1,6 +1,7 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
@@ -10,36 +11,28 @@ namespace VoterSystem.Tests.Unit;
 
 public class VoteChoiceServiceTests : UnitTestBase, IDisposable
 {
-    private readonly VoteChoiceService _voteChoiceService;
-    private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
-    private readonly Mock<ILogger<VoteChoiceService>> _loggerMock = new();
-
     private User _user = null!;
     private User _otherUser = null!;
     private Voting _voting = null!;
     private Voting _startedVoting = null!;
     private VoteChoice _voteChoice = null!;
-    private VoteChoice _startedChoice1 = null!;
+    
+    private readonly Mock<IHttpContextAccessor> _httpContextAccessor;
 
     public VoteChoiceServiceTests()
     {
-        _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
-        _voteChoiceService = new VoteChoiceService(
-            Context,
-            _httpContextAccessorMock.Object,
-            _loggerMock.Object);
-
+        _httpContextAccessor = new Mock<IHttpContextAccessor>();
+        
         SeedDatabase();
-        SetCurrentUser(_user.Id);
     }
 
     [Fact]
     public async Task GetVoteChoices_ReturnsChoicesForVoting()
     {
-        // Act
-        var choices = await _voteChoiceService.GetVoteChoices(_voting);
+        var service = CreateService(_user.Id);
 
-        // Assert
+        var choices = await service.GetVoteChoices(_voting);
+
         Assert.NotNull(choices);
         Assert.Single(choices);
         Assert.Equal(_voteChoice.ChoiceId, choices.First().ChoiceId);
@@ -48,10 +41,10 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task GetChoiceById_ReturnsChoice_WhenExists()
     {
-        // Act
-        var result = await _voteChoiceService.GetChoiceById(_voteChoice.ChoiceId);
+        var service = CreateService(_user.Id);
 
-        // Assert
+        var result = await service.GetChoiceById(_voteChoice.ChoiceId);
+
         Assert.True(result.HasValue);
         Assert.Equal(_voteChoice.ChoiceId, result.Value.ChoiceId);
     }
@@ -59,10 +52,10 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task GetChoiceById_ReturnsNotFound_WhenNotExists()
     {
-        // Act
-        var result = await _voteChoiceService.GetChoiceById(-1);
+        var service = CreateService(_user.Id);
 
-        // Assert
+        var result = await service.GetChoiceById(-1);
+
         Assert.True(result.IsError);
         Assert.IsType<NotFoundError>(result.Error);
     }
@@ -70,18 +63,15 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task AddVotingChoice_ReturnsUnauthorized_WhenVotingStarted()
     {
+        var service = CreateService(_startedVoting.CreatedByUserId);
         var newChoice = new VoteChoice
-        { 
+        {
             Name = "New Choice",
-            VotingId = _startedVoting.VotingId 
+            VotingId = _startedVoting.VotingId
         };
-        
-        SetCurrentUser(_startedVoting.CreatedByUserId);
 
-        // Act
-        var result = await _voteChoiceService.AddVotingChoice(_startedVoting, newChoice);
+        var result = await service.AddVotingChoice(_startedVoting, newChoice);
 
-        // Assert
         Assert.True(result.IsSome);
         Assert.IsType<UnauthorizedError>(result.AsSome.Value);
     }
@@ -89,18 +79,15 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task AddVotingChoice_ReturnsUnauthorized_WhenUserNotCreator()
     {
+        var service = CreateService(_otherUser.Id);
         var newChoice = new VoteChoice
         {
             Name = "New Choice",
             VotingId = _voting.VotingId
         };
 
-        SetCurrentUser(_otherUser.Id);
+        var result = await service.AddVotingChoice(_voting, newChoice);
 
-        // Act
-        var result = await _voteChoiceService.AddVotingChoice(_voting, newChoice);
-
-        // Assert
         Assert.True(result.IsSome);
         Assert.IsType<UnauthorizedError>(result.AsSome.Value);
     }
@@ -108,18 +95,15 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task AddVotingChoice_AddsChoice_WhenAuthorized()
     {
+        var service = CreateService(_user.Id);
         var newChoice = new VoteChoice
         {
             Name = "New Choice",
             VotingId = _voting.VotingId
         };
 
-        SetCurrentUser(_user.Id);
+        var result = await service.AddVotingChoice(_voting, newChoice);
 
-        // Act
-        var result = await _voteChoiceService.AddVotingChoice(_voting, newChoice);
-
-        // Assert
         Assert.True(result.IsNone);
 
         var choices = await Context.VoteChoices.Where(c => c.VotingId == _voting.VotingId).ToListAsync();
@@ -129,6 +113,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task UpdateVotingChoice_ReturnsUnauthorized_WhenVotingStarted()
     {
+        var service = CreateService(_user.Id);
         var choice = new VoteChoice
         {
             ChoiceId = _voteChoice.ChoiceId,
@@ -137,10 +122,8 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
             Name = "Updated Choice"
         };
 
-        // Act
-        var result = await _voteChoiceService.UpdateVotingChoice(choice);
+        var result = await service.UpdateVotingChoice(choice);
 
-        // Assert
         Assert.True(result.IsSome);
         Assert.IsType<UnauthorizedError>(result.AsSome.Value);
     }
@@ -148,6 +131,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task UpdateVotingChoice_ReturnsNotFound_WhenChoiceMissing()
     {
+        var service = CreateService(_user.Id);
         var choice = new VoteChoice
         {
             ChoiceId = -1,
@@ -156,12 +140,8 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
             Name = "Nonexistent Choice"
         };
 
-        SetCurrentUser(_user.Id);
+        var result = await service.UpdateVotingChoice(choice);
 
-        // Act
-        var result = await _voteChoiceService.UpdateVotingChoice(choice);
-
-        // Assert
         Assert.True(result.IsSome);
         Assert.IsType<NotFoundError>(result.AsSome.Value);
     }
@@ -169,13 +149,12 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task UpdateVotingChoice_UpdatesChoice_WhenValid()
     {
-        SetCurrentUser(_user.Id);
+        var service = CreateService(_user.Id);
 
-        // Act
         _voteChoice.Name = "Updated Choice Name";
-        var result = await _voteChoiceService.UpdateVotingChoice(_voteChoice);
+        _voteChoice.Voting = _voting;
+        var result = await service.UpdateVotingChoice(_voteChoice);
 
-        // Assert
         Assert.True(result.IsNone);
 
         var savedChoice = await Context.VoteChoices.FindAsync(_voteChoice.ChoiceId);
@@ -185,19 +164,17 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task DeleteVotingChoice_ReturnsUnauthorized_WhenVotingStarted()
     {
-        // Act
-        SetCurrentUser(_user.Id);
-        
-        var result = await _voteChoiceService.DeleteVotingChoice(
+        var service = CreateService(_user.Id);
+
+        var result = await service.DeleteVotingChoice(
             new VoteChoice
             {
-                ChoiceId = _voteChoice.ChoiceId, 
+                ChoiceId = _voteChoice.ChoiceId,
                 VotingId = _startedVoting.VotingId,
                 Voting = _startedVoting,
                 Name = "masodik"
             });
 
-        // Assert
         Assert.True(result.IsSome);
         Assert.IsType<UnauthorizedError>(result.AsSome.Value);
     }
@@ -205,6 +182,7 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task DeleteVotingChoice_ReturnsNotFound_WhenChoiceMissing()
     {
+        var service = CreateService(_user.Id);
         var missingChoice = new VoteChoice
         {
             ChoiceId = -1,
@@ -213,10 +191,8 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
             Name = "elso valasztas"
         };
 
-        // Act
-        var result = await _voteChoiceService.DeleteVotingChoice(missingChoice);
+        var result = await service.DeleteVotingChoice(missingChoice);
 
-        // Assert
         Assert.True(result.IsSome);
         Assert.IsType<NotFoundError>(result.AsSome.Value);
     }
@@ -224,22 +200,34 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task DeleteVotingChoice_DeletesChoice_WhenValid()
     {
-        SetCurrentUser(_voting.CreatedByUserId);
+        var service = CreateService(_voting.CreatedByUserId);
+        _voteChoice.Voting = _voting;
 
-        // Act
-        var result = await _voteChoiceService.DeleteVotingChoice(_voteChoice);
+        var result = await service.DeleteVotingChoice(_voteChoice);
 
-        // Assert
         Assert.True(result.IsNone);
 
         var deletedChoice = await Context.VoteChoices.FindAsync(_voteChoice.ChoiceId);
         Assert.Null(deletedChoice);
     }
 
-    private void SetCurrentUser(Guid userId, params Role[] roles)
+    private VoteChoiceService CreateService(Guid userId, Role role = Role.User)
     {
-        var context = BuildHttpContext(userId, roles);
-        _httpContextAccessorMock.Setup(a => a.HttpContext).Returns(context);
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+            {
+                new(ClaimTypes.Role, role.ToString()),
+                new("id", userId.ToString())
+            }, "TestAuth"))
+        };
+
+        _httpContextAccessor.Setup(h => h.HttpContext).Returns(context);
+
+        return new VoteChoiceService(
+            Context,
+            _httpContextAccessor.Object,
+            new NullLogger<VoteChoiceService>());
     }
 
     private void SeedDatabase()
@@ -265,25 +253,25 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
         _voteChoice = new VoteChoice
         {
             VotingId = _voting.VotingId,
-            Name = "choice1",
-            Voting = _voting
+            Voting = _voting,
+            Name = "choice1"
         };
 
-        _startedChoice1 = new VoteChoice
+        var startedChoice1 = new VoteChoice
         {
             VotingId = _startedVoting.VotingId,
-            Name = "choice1",
-            Voting = _startedVoting
+            Voting = _startedVoting,
+            Name = "choice1"
         };
 
         var startedChoice2 = new VoteChoice
         {
             VotingId = _startedVoting.VotingId,
-            Name = "choice2",
-            Voting = _startedVoting
+            Voting = _startedVoting,
+            Name = "choice2"
         };
-        
-        Context.VoteChoices.AddRange(_voteChoice, _startedChoice1, startedChoice2);
+
+        Context.VoteChoices.AddRange(_voteChoice, startedChoice1, startedChoice2);
 
         Context.SaveChanges();
     }

@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using VoterSystem.DataAccess;
+using VoterSystem.DataAccess.Services;
 using VoterSystem.Shared;
 using VoterSystem.WebAPI;
 
@@ -15,6 +16,8 @@ namespace VoterSystem.Tests.Integration.Abstractions;
 
 public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    public RecordingEmailService EmailService { get; } = new();
+
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
         .WithUsername("root")
         .WithImage("postgres:latest")
@@ -34,6 +37,7 @@ public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
         {
             services.RemoveAll<DbContextOptions<VoterSystemDbContext>>();
             services.RemoveAll<VoterSystemDbContext>();
+            services.RemoveAll<IEmailService>();
             
             // Add an in-memory database
             var dataSourceProvider =
@@ -52,6 +56,8 @@ public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
                     warnings.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning);
                 });
             });
+
+            services.AddSingleton<IEmailService>(EmailService);
 
             //Seed the database with initial data
             /*using var scope = services.BuildServiceProvider().CreateScope();

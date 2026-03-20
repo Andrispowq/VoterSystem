@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VoterSystem.DataAccess;
@@ -11,9 +12,11 @@ using VoterSystem.DataAccess;
 namespace VoterSystem.DataAccess.Migrations
 {
     [DbContext(typeof(VoterSystemDbContext))]
-    partial class VoterSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260313120521_RemovedUnnecesaryColumn")]
+    partial class RemovedUnnecesaryColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -164,9 +167,11 @@ namespace VoterSystem.DataAccess.Migrations
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.Group", b =>
                 {
-                    b.Property<Guid>("GroupId")
+                    b.Property<long>("GroupId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("GroupId"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -196,8 +201,8 @@ namespace VoterSystem.DataAccess.Migrations
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.GroupMembers", b =>
                 {
-                    b.Property<Guid>("GroupId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("GroupId")
+                        .HasColumnType("bigint");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -377,8 +382,8 @@ namespace VoterSystem.DataAccess.Migrations
                     b.Property<DateTime>("EndsAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("GroupId")
-                        .HasColumnType("uuid");
+                    b.Property<long?>("GroupId")
+                        .HasColumnType("bigint");
 
                     b.Property<byte[]>("KeySalt")
                         .IsRequired()

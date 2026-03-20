@@ -1,4 +1,5 @@
 using VoterSystem.DataAccess.Model;
+using VoterSystem.Shared.Dto;
 
 namespace VoterSystem.DataAccess.Token;
 

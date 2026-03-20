@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
+using VoterSystem.Shared.Dto;
 
 namespace VoterSystem.DataAccess;
 

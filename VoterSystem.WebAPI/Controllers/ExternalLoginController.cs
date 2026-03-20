@@ -20,8 +20,14 @@ public class ExternalLoginController(
     [ProducesResponseType(StatusCodes.Status307TemporaryRedirect)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public IActionResult ExternalLoginAsync([FromRoute] ExternalLoginProvider provider)
+    public IActionResult ExternalLoginAsync([FromRoute] ExternalLoginProvider provider,
+        [FromQuery] string frontend)
     {
+        if (frontend is not ("admin" or "user"))
+        {
+            return BadRequest("Error: frontend query param must be set to 'admin' or 'user'");
+        }
+        
         var url = provider switch
         {
             ExternalLoginProvider.Google => nameof(ExternalLoginCallbackGoogle),
@@ -36,7 +42,8 @@ public class ExternalLoginController(
 
         var props = new AuthenticationProperties
         {
-            RedirectUri = Url.Action(url)
+            RedirectUri = Url.Action(url),
+            Items = { new KeyValuePair<string, string?>("frontend", frontend) }
         };
 
         return Challenge(props, provider.ToString());

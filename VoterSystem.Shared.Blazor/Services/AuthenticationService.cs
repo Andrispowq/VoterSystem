@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using Blazored.LocalStorage;
-using VoterSystem.DataAccess.Model;
 using VoterSystem.Shared.Blazor.Exception;
 using VoterSystem.Shared.Blazor.Infrastructure;
 using VoterSystem.Shared.Dto;
@@ -114,6 +113,30 @@ public class AuthenticationService(
                 ChallengeId = challengeId,
                 Code = code
             });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await HandleHttpError(response);
+                return false;
+            }
+
+            var responseBody = await response.Content.ReadFromJsonAsync<TokensDto>()
+                               ?? throw new System.Exception("Error with auth response.");
+            await StoreTokensAsync(responseBody);
+            return true;
+        }
+        catch (System.Exception)
+        {
+            ShowErrorMessage("Unknown error occured");
+            return false;
+        }
+    }
+
+    public async Task<bool> RedeemSigninTokensAsync(Guid requestId)
+    {
+        try
+        {
+            var response = await httpClient.PostAsync($"/api/v1/users/request-signin-tokens?id={requestId}", null);
 
             if (!response.IsSuccessStatusCode)
             {

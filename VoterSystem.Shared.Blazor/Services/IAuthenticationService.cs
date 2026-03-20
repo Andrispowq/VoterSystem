@@ -1,5 +1,4 @@
-﻿using VoterSystem.DataAccess.Model;
-using VoterSystem.Shared.Dto;
+﻿using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Blazor.ViewModels;
 
 namespace VoterSystem.Shared.Blazor.Services;
@@ -14,6 +13,7 @@ public interface IAuthenticationService
     //Our methods
     Task<LoginAttemptResultDto> LoginAsync(LoginViewModel loginBindingViewModel);
     Task<bool> CompleteTwoFactorLoginAsync(Guid challengeId, string code);
+    Task<bool> RedeemSigninTokensAsync(Guid requestId);
     Task<bool> ChangePasswordAsync(ChangePasswordViewModel changePasswordBindingViewModel);
     Task<Role?> GetCurrentRoleAsync();
     Task LogoutAsync();

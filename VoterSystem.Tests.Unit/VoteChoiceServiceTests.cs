@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.Tests.Unit;

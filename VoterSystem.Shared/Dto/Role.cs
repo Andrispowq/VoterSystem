@@ -1,4 +1,4 @@
-namespace VoterSystem.DataAccess.Model;
+namespace VoterSystem.Shared.Dto;
 
 public enum Role
 {

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using VoterSystem.DataAccess;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared.Dto;
 
 namespace VoterSystem.Tests.Unit;
 

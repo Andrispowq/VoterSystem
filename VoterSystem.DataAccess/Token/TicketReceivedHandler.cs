@@ -97,7 +97,19 @@ public sealed class TicketReceivedHandler(ILogger<ExternalLoginProvider> logger)
     private static void RedirectToFrontend(TicketReceivedContext context, int code, string message, Guid? key = null)
     {
         //TODO: decide this
-        var frontend = /*Environment.Frontend ?? */"https://localhost:6901";
+        var frontend = "https://localhost:6901";
+        if (context.Properties is not null &&
+            context.Properties.Items.TryGetValue("frontend", out var frontendType) && 
+            frontendType is not null)
+        {
+            frontend = frontendType switch
+            {
+                "admin" => Environment.GetEnvironmentVariable("ADMIN_HTTPS") ?? "https://localhost:6912",
+                "user" => Environment.GetEnvironmentVariable("WEB_HTTPS") ?? "https://localhost:6911",
+                _ => frontend
+            };
+        }
+        
         var url = $"{frontend}/signin-callback?code={code}&message={Uri.EscapeDataString(message)}";
         if (key.HasValue) url += "&key=" + key.Value;
         

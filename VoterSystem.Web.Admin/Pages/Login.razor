@@ -2,9 +2,11 @@
 @using VoterSystem.Shared.Blazor
 @using VoterSystem.Shared.Blazor.Services
 @using VoterSystem.Shared.Blazor.ViewModels
+@using VoterSystem.Shared.Dto
 @using VoterSystem.Web.Admin.Layout
 @inject NavigationManager NavigationManager
 @inject IAuthenticationService AuthenticationService
+@inject HttpClient HttpClient
 
 <div class="my-4 container">
 
@@ -70,6 +72,22 @@
                         </button>
                     </div>
                 </EditForm>
+
+                <div class="mt-4">
+                    <p class="text-muted mb-2">Or continue with</p>
+
+                    <button type="button"
+                            class="btn btn-outline-danger me-2"
+                            @onclick="() => StartExternalLogin(ExternalLoginProvider.Google)">
+                        <i class="bi bi-google me-1"></i> Login with Google
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            @onclick="() => StartExternalLogin(ExternalLoginProvider.Facebook)">
+                        <i class="bi bi-facebook me-1"></i> Login with Facebook
+                    </button>
+                </div>
             }
             else
             {
@@ -191,5 +209,17 @@
     {
         NavigationManager.NavigateTo("/forgot-password");
         await Task.CompletedTask;
+    }
+
+    private void StartExternalLogin(ExternalLoginProvider provider)
+    {
+        var baseAddress = HttpClient.BaseAddress?.ToString().TrimEnd('/');
+        if (string.IsNullOrEmpty(baseAddress))
+        {
+            return;
+        }
+
+        var url = $"{baseAddress}/api/v1/users/external-login/{provider}?frontend=admin";
+        NavigationManager.NavigateTo(url, true);
     }
 }

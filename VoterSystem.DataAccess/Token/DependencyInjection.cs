@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using VoterSystem.DataAccess.Config;
-using VoterSystem.DataAccess.Model;
+using VoterSystem.Shared.Dto;
 
 namespace VoterSystem.DataAccess.Token;
 

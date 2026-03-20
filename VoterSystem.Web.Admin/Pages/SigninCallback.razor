@@ -1,0 +1,86 @@
+﻿@page "/signin-callback"
+@using VoterSystem.Shared.Blazor.Services
+@inject NavigationManager NavigationManager
+@inject IAuthenticationService AuthenticationService
+
+<div class="my-4 container">
+    <h1>Signing in...</h1>
+
+    @if (_errorMessage is not null)
+    {
+        <div class="alert alert-danger">
+            @_errorMessage
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            Completing your login, please wait.
+        </div>
+    }
+</div>
+
+@code {
+    private const int SuccessCode = 200;
+    private const string HomeRoute = "/votings";
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "code")]
+    public int Code { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "message")]
+    public string? Message { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "key")]
+    public Guid? Key { get; set; }
+
+    private string? _errorMessage;
+    private bool _handled;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_handled)
+        {
+            return;
+        }
+
+        _handled = true;
+
+        if (Code == SuccessCode)
+        {
+            await HandleSuccessfulCallbackAsync();
+            return;
+        }
+
+        _errorMessage = FormatErrorMessage();
+    }
+
+    private async Task HandleSuccessfulCallbackAsync()
+    {
+        if (Key is null)
+        {
+            _errorMessage = "Login succeeded but no signin key was provided.";
+            return;
+        }
+
+        var success = await AuthenticationService.RedeemSigninTokensAsync(Key.Value);
+        if (success)
+        {
+            NavigationManager.NavigateTo(HomeRoute);
+            return;
+        }
+
+        _errorMessage = "Unable to redeem signin tokens. Please try again.";
+    }
+
+    private string FormatErrorMessage()
+    {
+        var decodedMessage = string.IsNullOrWhiteSpace(Message)
+            ? "Unknown error."
+            : Uri.UnescapeDataString(Message);
+
+        return $"Login failed ({Code}): {decodedMessage}";
+    }
+}

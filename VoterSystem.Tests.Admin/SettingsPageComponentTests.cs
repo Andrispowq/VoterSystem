@@ -22,7 +22,7 @@ public sealed class SettingsPageComponentTests : IDisposable
                 Email = "admin@example.com",
                 EmailConfirmed = true,
                 TwoFactorEnabled = false,
-                Role = VoterSystem.DataAccess.Model.Role.Admin,
+                Role = Role.Admin,
                 Participations = []
             })
             .ReturnsAsync(new UserDto
@@ -32,7 +32,7 @@ public sealed class SettingsPageComponentTests : IDisposable
                 Email = "admin@example.com",
                 EmailConfirmed = true,
                 TwoFactorEnabled = true,
-                Role = VoterSystem.DataAccess.Model.Role.Admin,
+                Role = Role.Admin,
                 Participations = []
             });
         _auth.Setup(x => x.EnableTwoFactorAsync()).ReturnsAsync(true);

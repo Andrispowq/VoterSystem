@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
+using VoterSystem.Shared.Dto;
 
 namespace VoterSystem.DataAccess.Model;
 

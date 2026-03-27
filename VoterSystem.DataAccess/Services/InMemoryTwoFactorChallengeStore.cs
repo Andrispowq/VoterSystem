@@ -9,6 +9,8 @@ public class InMemoryTwoFactorChallengeStore : ITwoFactorChallengeStore
 
     public Task<Guid> CreateChallengeAsync(Guid userId, string code, TimeSpan ttl, CancellationToken ct = default)
     {
+        //TODO: Identity?, Redis
+        
         var challengeId = Guid.NewGuid();
         _challenges[challengeId] = new TwoFactorChallengeEntry
         {

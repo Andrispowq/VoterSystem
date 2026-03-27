@@ -58,6 +58,11 @@ public class VoteChoiceService(
         {
             return new UnauthorizedError("Voting has already started");
         }
+        
+        if (choice.Voting.CreatedByUserId != UserId)
+        {
+            return new UnauthorizedError("Access not authorized");
+        }
 
         try
         { 
@@ -79,6 +84,11 @@ public class VoteChoiceService(
         if (choice.Voting.HasStarted)
         {
             return new UnauthorizedError("Voting has already started");
+        }
+        
+        if (choice.Voting.CreatedByUserId != UserId)
+        {
+            return new UnauthorizedError("Access not authorized");
         }
 
         try

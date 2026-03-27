@@ -345,6 +345,7 @@ public class UserService(
         {
             user = new User
             {
+                Name = request.Name,
                 UserName = request.Email,
                 Email = request.Email,
                 EmailConfirmed = true,

@@ -21,6 +21,10 @@ public class VotingService(
         }
 
         var query = ApplyGroupFilter(dbContext.Votings);
+        if (!IsAdmin)
+        {
+            query = query.Where(x => x.CreatedByUserId == UserId);
+        }
         return await query.ToListAsync();
     }
 
@@ -179,7 +183,9 @@ public class VotingService(
             return query;
         }
 
-        return query.Where(v => v.GroupId == null || v.Group!.Members.Any(m => m.UserId == UserId));
+        return query
+            .Where(v => 
+                v.GroupId == null || v.Group!.Members.Any(m => m.UserId == UserId));
     }
 
     private bool HasGroupAccess(Voting voting)

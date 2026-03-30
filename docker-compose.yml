@@ -75,6 +75,7 @@ services:
         WEB_HTTPS: ${WEB_HTTPS}
         ADMIN_HTTP: ${ADMIN_HTTP}
         ADMIN_HTTPS: ${ADMIN_HTTPS}
+        ALLOW_DB_PRUNE: ${ALLOW_DB_PRUNE}
     container_name: web
     ports:
       - "6901:80"

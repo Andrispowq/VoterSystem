@@ -35,7 +35,7 @@ public class DbInitializer
         ILogger<DbInitializer> logger,
         bool prune = false)
     {
-        if (prune)
+        if (prune || Environment.GetEnvironmentVariable("ALLOW_DB_PRUNE") == "true")
         {
             await context.Database.EnsureDeletedAsync();
         }

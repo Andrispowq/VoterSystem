@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Sustainsys.Saml2;
 using Sustainsys.Saml2.Configuration;
@@ -123,7 +124,7 @@ public static class DependencyInjection
         services.ConfigureExternalCookie(opts =>
         {
             opts.Cookie.SameSite = SameSiteMode.None;
-            opts.Cookie.SecurePolicy = CookieSecurePolicy.None;
+            opts.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             opts.Events = TicketReceivedHandler.Events;
         });
 
@@ -220,13 +221,22 @@ public static class DependencyInjection
 
             options.IdentityProviders.Add(identityProvider);
 
-            async Task Handler(TicketReceivedContext context)
-            {
-                var handler = context.HttpContext.RequestServices.GetRequiredService<TicketReceivedHandler>();
-                await handler.HandleAsync(context, ExternalLoginProvider.Saml);
-            }
-
             options.Events = (Func<TicketReceivedContext, Task>)Handler;
+            options.EventsType = typeof(Func<TicketReceivedContext, Task>);
         });
+    }
+    
+    private static async Task Handler(TicketReceivedContext context)
+    {
+        var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("SamlTicket");
+
+        logger.LogWarning("SAML TicketReceived fired. Name={Name}, Scheme={Scheme}",
+            context.Principal?.Identity?.Name,
+            context.Scheme.Name);
+
+        var handler = context.HttpContext.RequestServices.GetRequiredService<TicketReceivedHandler>();
+        await handler.HandleAsync(context, ExternalLoginProvider.Saml);
     }
 }

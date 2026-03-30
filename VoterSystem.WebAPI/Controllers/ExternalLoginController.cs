@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared.Dto;
@@ -12,8 +14,9 @@ namespace VoterSystem.WebAPI.Controllers;
 [Route("api/v1/users")]
 [Authorize]
 public class ExternalLoginController(
+    IExternalUserService externalUserService,
     ITokenRequestService tokenRequestService,
-    IAuthenticationSchemeProvider schemeProvider) : ControllerBase
+    ILogger<ExternalLoginController> logger) : ControllerBase
 {
     [HttpGet("external-login/{provider}")]
     [AllowAnonymous]
@@ -51,6 +54,7 @@ public class ExternalLoginController(
     }
 
     [HttpGet("external-callback-google")]
+    [AllowAnonymous]
     [ProducesResponseType<TokensDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -61,6 +65,7 @@ public class ExternalLoginController(
     }
 
     [HttpGet("external-callback-facebook")]
+    [AllowAnonymous]
     [ProducesResponseType<TokensDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -72,13 +77,78 @@ public class ExternalLoginController(
 
     [HttpGet("external-callback-saml")]
     [HttpPost("external-callback-saml")]
-    [ProducesResponseType<TokensDto>(StatusCodes.Status200OK)]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult ExternalLoginCallbackSaml()
+    public async Task<IActionResult> ExternalLoginCallbackSaml(
+        [FromServices] IAuthenticationSchemeProvider schemes,
+        CancellationToken ct = default)
     {
-        return NoContent();
+        var authResult = await HttpContext.AuthenticateAsync(IdentityConstants.ExternalScheme);
+
+        if (!authResult.Succeeded || authResult.Principal is null)
+        {
+            return RedirectToFrontend("user", 400, "External SAML sign-in cookie was not available.");
+            //return Unauthorized("External SAML sign-in cookie was not available.");
+        }
+
+        var principal = authResult.Principal;
+        var frontend = authResult.Properties?.Items.TryGetValue("frontend", out var f) == true
+            ? f ?? "user"
+            : "user";
+        
+        var claims = principal.Claims.ToList();
+        var id = GetClaim(claims, ClaimTypes.NameIdentifier, ExternalLoginProvider.Saml);
+        var email = GetClaim(claims, "email", ExternalLoginProvider.Saml);
+        var name = email;//GetClaim(claims, ClaimTypes.Name, ExternalLoginProvider.Saml);
+        
+        var result = await externalUserService.HandleExternalAuthAsync(
+            new ThirdPartyAuthRequest
+            {
+                Provider = ExternalLoginProvider.Saml,
+                Name = name,
+                Email = email,
+                ProviderKey = id
+            }, ct);
+
+        if (result.IsError)
+        {
+            return RedirectToFrontend(frontend, 400, result.Error.ToString());
+        }
+
+        var tokens = new TokensDto
+        {
+            AuthToken = result.Value.AuthToken,
+            RefreshToken = result.Value.RefreshToken,
+            UserId = result.Value.UserId,
+        };
+
+        var tokenResult = await tokenRequestService.
+            CreateRequestableTokensAsync(tokens, ct);
+        if (tokenResult.IsError)
+        {
+            return RedirectToFrontend(frontend, 400, tokenResult.Error.ToString());
+        }
+        
+        return RedirectToFrontend(frontend, 200, "Logged in successfully", tokenResult.Value);
+    }
+    
+    private IActionResult RedirectToFrontend(string frontendType, int code, string message, Guid? key = null)
+    {
+        //TODO: decide this
+        var frontend = frontendType switch
+        {
+            "admin" => Environment.GetEnvironmentVariable("ADMIN_HTTPS") ?? "https://localhost:6912",
+            "user" => Environment.GetEnvironmentVariable("WEB_HTTPS") ?? "https://localhost:6911",
+            _ => "https://localhost:6901"
+        };
+        
+        var url = $"{frontend}/signin-callback?code={code}&message={Uri.EscapeDataString(message)}";
+        if (key.HasValue) url += "&key=" + key.Value;
+
+        return Redirect(url);
     }
     
     [AllowAnonymous]
@@ -95,5 +165,51 @@ public class ExternalLoginController(
         Response.Cookies.Append(TokenIssuerKeys.UserIdKey, result.Value.UserId.ToString());
 
         return result.ToHttpResult();
+    }
+
+    private string GetClaim(List<Claim> claims, string type, ExternalLoginProvider provider)
+    {
+        var claim = claims.FirstOrDefault(c => c.Type == type);
+        if (claim is not null) return claim.Value;
+
+        if (type == ClaimTypes.Name)
+        {
+            var compositeName = BuildNameFromClaims(claims);
+            if (!string.IsNullOrWhiteSpace(compositeName))
+            {
+                return compositeName;
+            }
+        }
+
+        if (type == ClaimTypes.Email)
+        {
+            var upn = claims.FirstOrDefault(c => c.Type == ClaimTypes.Upn)?.Value;
+            if (!string.IsNullOrWhiteSpace(upn))
+            {
+                return upn;
+            }
+
+            var nameId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(nameId))
+            {
+                return nameId;
+            }
+        }
+        
+        logger.LogWarning("TicketReceivedHandler: {Type} can not be claimed for provider {Provider}", type, provider);
+        //throw new MissingFieldException("Claim missing");
+        return string.Empty;
+    }
+    
+    private static string? BuildNameFromClaims(List<Claim> claims)
+    {
+        var givenName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value;
+        var surname = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value;
+
+        var parts = new[] { givenName, surname }
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToArray();
+
+        return parts.Length == 0 ? null : string.Join(' ', parts);
     }
 }

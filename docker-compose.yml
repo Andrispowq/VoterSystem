@@ -156,7 +156,7 @@ services:
     image: kenchan0130/simplesamlphp
     container_name: idp
     ports:
-      - "8080:8080"
+      - "6941:8080"
     environment:
       SIMPLESAMLPHP_SP_ENTITY_ID: ${SAML_SP_ENTITY_ID}
       SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: ${SAML_SP_ENTITY_ID}/Acs

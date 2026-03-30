@@ -174,8 +174,7 @@ public static class DependencyInjection
                 throw new InvalidOperationException("Authorisation:Saml:PublicOrigin or ReturnUrl must be configured when SAML authentication is enabled.");
             }
 
-            if (!string.IsNullOrWhiteSpace(samlSettings.SigningCertificateBase64) &&
-                samlSettings.SigningCertificateBase64 == "${SAML_SIGNING_CERT_BASE64}")
+            if (!string.IsNullOrWhiteSpace(samlSettings.SigningCertificateBase64))
             {
                 var certData = Convert.FromBase64String(samlSettings.SigningCertificateBase64);
                 var certificate = string.IsNullOrWhiteSpace(samlSettings.SigningCertificatePassword)

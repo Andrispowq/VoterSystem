@@ -23,7 +23,7 @@ public static class DependencyInjection
         
         // Database
         var connectionString = config.GetConnectionString("VoterSystemConnection");
-        connectionString = Utils.ReplaceFromEnv(connectionString ?? "");
+        connectionString = Utils.ReplaceFromEnv(string.Empty, connectionString ?? "");
 
         //For integration tests, don't even register the regular DB
         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "IntegrationTest")
@@ -118,7 +118,7 @@ public static class DependencyInjection
                 .Where(pair => pair.Value is not null)
                 .Select(pair => new KeyValuePair<string, string>(
                     pair.Key,
-                    Utils.ReplaceFromEnv(pair.Value!)))!)
+                    Utils.ReplaceFromEnv(string.Empty, pair.Value!)))!)
             .Build();
 
         var instance = new T();

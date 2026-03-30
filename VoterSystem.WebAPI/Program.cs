@@ -84,7 +84,7 @@ public class Program
                 {
                     var urls = builder.Configuration
                         .GetSection("BlazorUrls")
-                        .Get<List<string>>()?.Select(Utils.ReplaceFromEnv).ToList();
+                        .Get<List<string>>()?.Select(x => Utils.ReplaceFromEnv(x, x)).ToList();
 
                     if (urls == null || !urls.Any())
                         throw new MissingFieldException(

@@ -5,16 +5,16 @@ namespace VoterSystem.Shared;
 
 public static partial class Utils
 {
-    public static string ReplaceFromEnv(string value)
+    public static string ReplaceFromEnv(string @default, string value)
     {
         if (string.IsNullOrEmpty(value))
-            return value;
+            return @default;
 
         return EnvRegex().Replace(value, match =>
         {
             var envKey = match.Groups[1].Value;
             var envValue = Environment.GetEnvironmentVariable(envKey);
-            return envValue ?? match.Value; // keep original if not found
+            return envValue ?? @default; // keep original if not found
         });
     }
 

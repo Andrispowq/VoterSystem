@@ -43,7 +43,7 @@ public class UnitTestBase : IAsyncDisposable
         return new Voting
         {
             Name = Helpers.NextUniqueId,
-            StartsAt = DateTime.UtcNow.AddHours(-1),
+            StartsAt = DateTime.UtcNow.AddHours(1),
             EndsAt = DateTime.UtcNow.AddDays(2),
             CreatedByUserId = creatorId,
         };

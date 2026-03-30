@@ -86,7 +86,8 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
         var votings = await service.GetAllVotings();
 
         Assert.True(votings.HasValue);
-        Assert.Equal(2, votings.Value.Count);
+        Assert.Single(votings.Value);
+        Assert.Equal(voting2.VotingId, votings.Value[0].VotingId);
     }
 
     [Fact]

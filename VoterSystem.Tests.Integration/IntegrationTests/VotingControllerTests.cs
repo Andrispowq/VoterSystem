@@ -279,7 +279,7 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
     #region Group Access
 
     [Fact]
-    public async Task GetVotings_ReturnsOnlyAccessibleVotings()
+    public async Task GetVotings_ReturnsOnlyOwnVotings()
     {
         var userGroupId = await CreateGroupWithMembersAsync(UserLogin.Email);
         var otherGroupId = await CreateGroupWithMembersAsync(AnotherUserLogin.Email);
@@ -297,7 +297,7 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
         var ids = votings.Select(v => v.VotingId).ToList();
 
         Assert.Contains(userVotingId, ids);
-        Assert.Contains(globalVotingId, ids);
+        Assert.DoesNotContain(globalVotingId, ids);
         Assert.DoesNotContain(otherVotingId, ids);
     }
 

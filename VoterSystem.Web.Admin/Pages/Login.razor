@@ -87,6 +87,12 @@
                             @onclick="() => StartExternalLogin(ExternalLoginProvider.Facebook)">
                         <i class="bi bi-facebook me-1"></i> Login with Facebook
                     </button>
+
+                    <button type="button"
+                            class="btn btn-outline-dark mt-2 mt-sm-0 ms-sm-2"
+                            @onclick="() => StartExternalLogin(ExternalLoginProvider.Saml)">
+                        <i class="bi bi-shield-lock me-1"></i> Login with SAML
+                    </button>
                 </div>
             }
             else

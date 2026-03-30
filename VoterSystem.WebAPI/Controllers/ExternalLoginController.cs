@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
@@ -13,25 +12,27 @@ namespace VoterSystem.WebAPI.Controllers;
 [Route("api/v1/users")]
 [Authorize]
 public class ExternalLoginController(
-    ITokenRequestService tokenRequestService) : ControllerBase
+    ITokenRequestService tokenRequestService,
+    IAuthenticationSchemeProvider schemeProvider) : ControllerBase
 {
     [HttpGet("external-login/{provider}")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status307TemporaryRedirect)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public IActionResult ExternalLoginAsync([FromRoute] ExternalLoginProvider provider,
+    public async Task<IActionResult> ExternalLoginAsync([FromRoute] ExternalLoginProvider provider,
         [FromQuery] string frontend)
     {
         if (frontend is not ("admin" or "user"))
         {
             return BadRequest("Error: frontend query param must be set to 'admin' or 'user'");
         }
-        
+
         var url = provider switch
         {
             ExternalLoginProvider.Google => nameof(ExternalLoginCallbackGoogle),
             ExternalLoginProvider.Facebook => nameof(ExternalLoginCallbackFacebook),
+            ExternalLoginProvider.Saml => nameof(ExternalLoginCallbackSaml),
             _ => null
         };
 
@@ -65,6 +66,17 @@ public class ExternalLoginController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult ExternalLoginCallbackFacebook()
+    {
+        return NoContent();
+    }
+
+    [HttpGet("external-callback-saml")]
+    [HttpPost("external-callback-saml")]
+    [ProducesResponseType<TokensDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public IActionResult ExternalLoginCallbackSaml()
     {
         return NoContent();
     }

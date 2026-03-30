@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using VoterSystem.DataAccess.Model;
 using VoterSystem.Shared.Dto;
 
 namespace VoterSystem.DataAccess.Token;
@@ -74,9 +73,45 @@ public sealed class TicketReceivedHandler(ILogger<ExternalLoginProvider> logger)
     {
         var claim = claims.FirstOrDefault(c => c.Type == type);
         if (claim is not null) return claim.Value;
+
+        if (type == ClaimTypes.Name)
+        {
+            var compositeName = BuildNameFromClaims(claims);
+            if (!string.IsNullOrWhiteSpace(compositeName))
+            {
+                return compositeName;
+            }
+        }
+
+        if (type == ClaimTypes.Email)
+        {
+            var upn = claims.FirstOrDefault(c => c.Type == ClaimTypes.Upn)?.Value;
+            if (!string.IsNullOrWhiteSpace(upn))
+            {
+                return upn;
+            }
+
+            var nameId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(nameId))
+            {
+                return nameId;
+            }
+        }
         
         logger.LogWarning("TicketReceivedHandler: {Type} can not be claimed for provider {Provider}", type, provider);
         throw new MissingFieldException("Name missing");
+    }
+
+    private static string? BuildNameFromClaims(List<Claim> claims)
+    {
+        var givenName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value;
+        var surname = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value;
+
+        var parts = new[] { givenName, surname }
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToArray();
+
+        return parts.Length == 0 ? null : string.Join(' ', parts);
     }
 
     private static Func<RedirectContext<CookieAuthenticationOptions>, Task> OnRedirect(int code)

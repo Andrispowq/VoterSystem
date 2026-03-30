@@ -128,8 +128,6 @@ public static class DependencyInjection
         {
             foreach (var prop in typeof(T).GetProperties())
             {
-      
-                
                 if (prop.CanWrite)
                 {
                     prop.SetValue(options, prop.GetValue(instance));

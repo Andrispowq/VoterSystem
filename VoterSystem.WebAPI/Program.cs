@@ -1,5 +1,7 @@
 using System.Globalization;
+using System.Net;
 using System.Security.Claims;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using VoterSystem.DataAccess;
@@ -109,7 +111,23 @@ public class Program
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
-        app.UseExceptionHandler("/Home/Error");
+        app.UseExceptionHandler("/api/v1/error");
+
+        var proxyIp = Environment.GetEnvironmentVariable("FORWARDED_FOR_IP");
+        if (proxyIp is null && !app.Environment.IsDevelopment())
+        {
+            throw new MissingFieldException("FORWARDED_FOR_IP is needed");
+        }
+
+        if (!string.IsNullOrEmpty(proxyIp))
+        {
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
+                ForwardLimit = null,
+                KnownProxies = { IPAddress.Parse(proxyIp) },
+            });
+        }
 
         if ( /*app.Environment.IsDevelopment()*/true)
         {
@@ -119,7 +137,6 @@ public class Program
 #pragma warning disable S125
             //app.MapScalarApiReference(); 
 #pragma warning restore S125
-            app.UseCors("BlazorPolicy");
         }
 
         app.UseHsts();
@@ -128,6 +145,7 @@ public class Program
         //app.UseHttpsRedirection();
 #pragma warning restore S125
         app.UseRouting();
+        app.UseCors("BlazorPolicy");
 
         app.UseAuthentication();
         app.UseAuthorization();
@@ -137,6 +155,12 @@ public class Program
         app.MapHub<VotesHub>($"/Hubs/{nameof(VotesHub)}", options =>
         {
             options.CloseOnAuthenticationExpiration = true;
+        });
+        
+        app.MapGet("/", ctx =>
+        {
+            ctx.Response.Redirect("/swagger");
+            return Task.CompletedTask;
         });
 
         using (var scope = app.Services.CreateScope())

@@ -75,7 +75,6 @@ services:
         WEB_HTTPS: ${WEB_HTTPS}
         ADMIN_HTTP: ${ADMIN_HTTP}
         ADMIN_HTTPS: ${ADMIN_HTTPS}
-        ALLOW_DB_PRUNE: ${ALLOW_DB_PRUNE}
     container_name: web
     ports:
       - "6901:80"
@@ -162,7 +161,7 @@ services:
       SIMPLESAMLPHP_SP_ENTITY_ID: ${SAML_SP_ENTITY_ID}
       SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: ${SAML_SP_ENTITY_ID}/Acs
       SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: ${SAML_SP_ENTITY_ID}/Logout
-    profiles: [only-db]
+    profiles: [only-db, prod]
     networks:
       - votersystem-internal-network
 

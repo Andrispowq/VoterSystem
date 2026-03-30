@@ -88,6 +88,8 @@ public static class DependencyInjection
 
         var connString = configuration.GetConnectionString("Redis")
                          ?? throw new MissingFieldException("No Redis connection string specified");
+        connString = Utils.ReplaceFromEnv("", connString);
+        
         var confOptions = ConfigurationOptions.Parse(connString);
         confOptions.AbortOnConnectFail = false;
         confOptions.ConnectRetry = 3;

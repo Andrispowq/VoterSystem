@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
+using VoterSystem.Shared.Dto;
 
 namespace VoterSystem.DataAccess;
 
@@ -32,7 +33,7 @@ public class DbInitializer
         IVoteService voteService,
         RoleManager<UserRole> roleManager,
         ILogger<DbInitializer> logger,
-        bool prune = true)
+        bool prune = false)
     {
         if (prune)
         {
@@ -52,7 +53,8 @@ public class DbInitializer
                     Name = user.Email,
                     UserName = user.Email.Split("@")[0],
                     Email = user.Email,
-                    Role = user.Role
+                    Role = user.Role,
+                    LoginMode = UserLoginMode.Password
                 };
 
                 var result = await userService.CreateUser(usr, user.Password);

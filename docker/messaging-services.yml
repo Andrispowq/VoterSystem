@@ -1,0 +1,49 @@
+services:
+
+
+  rabbitmq-base:
+    image: rabbitmq:3.13.7-management
+    restart: unless-stopped
+    volumes:
+      - ../data/rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?Please set the RABBITMQ_DEFAULT_USER in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Please set the RABBITMQ_DEFAULT_PASS in .env}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-P 65536"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      votersystem-internal-network:
+        aliases:
+          - vs-rabbitmq
+
+  redis-base:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - ../data/redis-data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?Please set the REDIS_PASSWORD variable}
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "${REDIS_PASSWORD}",
+        "--maxclients",
+        "20000"
+      ]
+    networks:
+      - votersystem-internal-network

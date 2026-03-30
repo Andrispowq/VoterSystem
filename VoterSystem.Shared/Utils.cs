@@ -3,18 +3,18 @@ using System.Text.RegularExpressions;
 
 namespace VoterSystem.Shared;
 
-public static class Utils
+public static partial class Utils
 {
-    public static string ReplaceFromEnv(string value)
+    public static string ReplaceFromEnv(string @default, string value)
     {
         if (string.IsNullOrEmpty(value))
-            return value;
+            return @default;
 
-        return Regex.Replace(value, @"\$\{([^}]+)\}", match =>
+        return EnvRegex().Replace(value, match =>
         {
             var envKey = match.Groups[1].Value;
             var envValue = Environment.GetEnvironmentVariable(envKey);
-            return envValue ?? match.Value; // keep original if not found
+            return envValue ?? @default; // keep original if not found
         });
     }
 
@@ -22,4 +22,7 @@ public static class Utils
     {
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(bytes));
     }
+
+    [GeneratedRegex(@"\$\{([^}]+)\}")]
+    private static partial Regex EnvRegex();
 }

@@ -2,7 +2,6 @@ using Bunit;
 using Bunit.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using VoterSystem.DataAccess.Model;
 using VoterSystem.Shared.Blazor.Services;
 using VoterSystem.Shared.Blazor.Services.SignalR;
 using VoterSystem.Shared.Blazor.ViewModels;

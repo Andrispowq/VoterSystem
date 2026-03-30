@@ -12,8 +12,6 @@ public class TokenIssuer(IOptions<JwtSettings> jwtSettingOptions) : ITokenIssuer
 {
     private JwtSettings JwtSettings => jwtSettingOptions.Value;
     
-    public static string AuthTokenKey => "VotingSystemAuthToken";
-    
     public string GenerateJwtToken(User user)
     {
         var claims = new List<Claim>

@@ -1,5 +1,3 @@
-using VoterSystem.DataAccess.Model;
-
 namespace VoterSystem.Shared.Dto;
 
 public class UserDto

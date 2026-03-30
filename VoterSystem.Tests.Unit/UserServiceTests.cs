@@ -1,12 +1,13 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using MockQueryable;
 using Moq;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.Tests.Unit;
@@ -17,8 +18,9 @@ public class UserServiceTests : UnitTestBase, IDisposable
     private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
     private readonly Mock<UserManager<User>> _mockUserManager;
     private readonly Mock<SignInManager<User>> _mockSignInManager;
-    private readonly Mock<ILogger<UserService>> _loggerMock = new();
     private readonly Mock<ITokenIssuer> _mockTokenIssuer = new();
+    private readonly Mock<IEmailService> _mockEmailService = new();
+    private readonly Mock<ITwoFactorChallengeStore> _mockTwoFactorChallengeStore = new();
 
     private User _user = null!;
     private User _adminUser = null!;
@@ -31,16 +33,18 @@ public class UserServiceTests : UnitTestBase, IDisposable
 
         _userService = new UserService(
             _httpContextAccessorMock.Object,
-            _loggerMock.Object,
+            NullLogger<UserService>.Instance,
             _mockUserManager.Object,
             _mockSignInManager.Object,
-            _mockTokenIssuer.Object
+            _mockTokenIssuer.Object,
+            _mockEmailService.Object,
+            _mockTwoFactorChallengeStore.Object
         );
 
         SeedDatabase();
     }
 
-    private Mock<UserManager<User>> CreateUserManagerMock()
+    private static Mock<UserManager<User>> CreateUserManagerMock()
     {
         var store = new Mock<IUserStore<User>>();
         return new Mock<UserManager<User>>(
@@ -56,7 +60,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
         );
     }
 
-    private Mock<SignInManager<User>> CreateSignInManagerMock(Mock<UserManager<User>> userManagerMock)
+    private static Mock<SignInManager<User>> CreateSignInManagerMock(Mock<UserManager<User>> userManagerMock)
     {
         var contextAccessor = new Mock<IHttpContextAccessor>();
         var claimsFactory = new Mock<IUserClaimsPrincipalFactory<User>>();
@@ -77,7 +81,14 @@ public class UserServiceTests : UnitTestBase, IDisposable
     public async Task CreateUser_WhenRoleIsGiven_ReturnsNoError()
     {
         // Arrange
-        var user = new User { UserName = "user@test.com", Email = "user@test.com", Name = "user", Role = Role.User };
+        var user = new User
+        {
+            UserName = "user@test.com",
+            Email = "user@test.com",
+            Name = "user",
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
+        };
         var password = "Password123";
         _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), password)).ReturnsAsync(IdentityResult.Success);
         _mockUserManager.Setup(x => x.AddToRoleAsync(It.IsAny<User>(), Role.User.ToString()))
@@ -94,7 +105,14 @@ public class UserServiceTests : UnitTestBase, IDisposable
     public async Task CreateUser_WhenCreationFails_ReturnsError()
     {
         // Arrange
-        var user = new User { UserName = "user@test.com", Email = "user@test.com", Name = "user", Role = Role.User };
+        var user = new User
+        {
+            UserName = "user@test.com",
+            Email = "user@test.com",
+            Name = "user",
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
+        };
         var password = "Password123";
         _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), password))
             .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "User creation failed" }));
@@ -115,8 +133,8 @@ public class UserServiceTests : UnitTestBase, IDisposable
     public async Task Login_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        string email = "nonexistent@test.com";
-        string password = "password123";
+        const string email = "nonexistent@test.com";
+        const string password = "password123";
         _mockUserManager.Setup(x => x.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync(null as User);
 
         // Act
@@ -147,7 +165,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
     }
 
     [Fact]
-    public async Task Login_WhenSuccessful_ReturnsTokensDto()
+    public async Task Login_WhenSuccessful_ReturnsTokens()
     {
         // Arrange
         var email = "user@test.com";
@@ -165,6 +183,51 @@ public class UserServiceTests : UnitTestBase, IDisposable
         var result = await _userService.LoginAsync(email, password);
 
         // Assert
+        Assert.True(result.HasValue);
+        Assert.NotNull(result.Value.Tokens);
+        Assert.Equal("accessToken", result.Value.Tokens!.AuthToken);
+    }
+
+    [Fact]
+    public async Task Login_WhenTwoFactorEnabled_ReturnsChallengeAndSendsEmail()
+    {
+        var email = "user@test.com";
+        var password = "password123";
+        _user.TwoFactorEnabled = true;
+
+        _mockUserManager.Setup(x => x.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync(_user);
+        _mockSignInManager
+            .Setup(x => x.PasswordSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(),
+                It.IsAny<bool>())).ReturnsAsync(SignInResult.Success);
+        _mockTwoFactorChallengeStore
+            .Setup(x => x.CreateChallengeAsync(_user.Id, It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.Parse("11111111-1111-1111-1111-111111111111"));
+        _mockEmailService
+            .Setup(x => x.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new Option<ServiceError>.None());
+
+        var result = await _userService.LoginAsync(email, password);
+
+        Assert.True(result.HasValue);
+        Assert.True(result.Value.RequiresTwoFactor);
+        Assert.Equal(Guid.Parse("11111111-1111-1111-1111-111111111111"), result.Value.Challenge!.ChallengeId);
+        _mockEmailService.Verify(x => x.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CompleteTwoFactorLogin_WhenChallengeValid_ReturnsTokens()
+    {
+        var challengeId = Guid.NewGuid();
+        var code = "123456";
+        _mockTwoFactorChallengeStore
+            .Setup(x => x.VerifyChallengeAsync(challengeId, code, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_user.Id);
+        _mockUserManager.Setup(x => x.FindByIdAsync(_user.Id.ToString())).ReturnsAsync(_user);
+        _mockTokenIssuer.Setup(x => x.GenerateJwtToken(_user)).Returns("accessToken");
+        _mockUserManager.Setup(x => x.UpdateAsync(_user)).ReturnsAsync(IdentityResult.Success);
+
+        var result = await _userService.CompleteTwoFactorLoginAsync(challengeId, code);
+
         Assert.True(result.HasValue);
         Assert.Equal("accessToken", result.Value.AuthToken);
     }
@@ -196,7 +259,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
     public async Task GetAllUsersAsync_ReturnsUnauthorized_WhenNotAdmin()
     {
         _mockUserManager.Setup(x => x.Users).Returns(new List<User>().AsQueryable());
-        SetCurrentUserRole(false);
+        _mockUserService_IsCurrentUserAdmin_Returns(false);
 
         var result = await _userService.GetAllUsersAsync();
 
@@ -209,7 +272,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
     {
         var users = new List<User> { NextValidUser, NextValidUser };
         _mockUserManager.Setup(x => x.Users).Returns(users.AsQueryable().BuildMock());
-        SetCurrentUserRole(true);
+        _mockUserService_IsCurrentUserAdmin_Returns(true);
 
         var result = await _userService.GetAllUsersAsync();
 
@@ -284,6 +347,22 @@ public class UserServiceTests : UnitTestBase, IDisposable
     }
 
     [Fact]
+    public async Task EnableTwoFactorAsync_ReturnsNone_WhenSuccessful()
+    {
+        _mockUserService_GetCurrentUserAsync_ReturnsValidUser();
+        _mockUserManager
+            .Setup(x => x.SetTwoFactorEnabledAsync(It.IsAny<User>(), true))
+            .ReturnsAsync(IdentityResult.Success);
+        _mockEmailService
+            .Setup(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new Option<ServiceError>.None());
+
+        var result = await _userService.EnableTwoFactorAsync();
+
+        Assert.True(result.IsNone);
+    }
+
+    [Fact]
     public async Task GenerateEmailConfirmTokenAsync_ReturnsToken_WhenUserExists()
     {
         _mockUserService_GetCurrentUserAsync_ReturnsValidUser();
@@ -308,11 +387,21 @@ public class UserServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsNone_WhenSuccessful()
     {
-        var email = "test@test.com";
-        var token = "token";
+        const string email = "test@test.com";
+        const string token = "token";
 
         _mockUserManager.Setup(x => x.Users)
-            .Returns(new List<User> { new User { Email = email, Role = Role.User } }.AsQueryable().BuildMock());
+            .Returns(new List<User>
+            {
+                new()
+                {
+                    Email = email,
+                    UserName = email,
+                    Name = "test",
+                    Role = Role.User,
+                    LoginMode = UserLoginMode.Password
+                }
+            }.AsEnumerable().BuildMock());
         _mockUserManager.Setup(x => x.ConfirmEmailAsync(It.IsAny<User>(), token)).ReturnsAsync(IdentityResult.Success);
 
         var result = await _userService.ConfirmEmailAsync(email, token);
@@ -327,7 +416,17 @@ public class UserServiceTests : UnitTestBase, IDisposable
         var token = "token";
 
         _mockUserManager.Setup(x => x.Users)
-            .Returns(new List<User> { new User { Email = email, Role = Role.User } }.AsQueryable().BuildMock());
+            .Returns(new List<User>
+            {
+                new()
+                {
+                    Email = email,
+                    UserName = email,
+                    Name = "test",
+                    Role = Role.User,
+                    LoginMode = UserLoginMode.Password
+                }
+            }.AsEnumerable().BuildMock());
         _mockUserManager.Setup(x => x.ConfirmEmailAsync(It.IsAny<User>(), token))
             .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Error" }));
 
@@ -338,49 +437,70 @@ public class UserServiceTests : UnitTestBase, IDisposable
     }
 
     // Helper mocks for repeated setups
-    private void SetCurrentUserRole(bool isAdmin)
+    private void _mockUserService_IsCurrentUserAdmin_Returns(bool value)
     {
-        var context = BuildHttpContext(Guid.NewGuid(), isAdmin ? Role.Admin : Role.User);
-        _httpContextAccessorMock.Setup(a => a.HttpContext).Returns(context);
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+            {
+                new(ClaimTypes.Role, value ? "Admin" : "User")
+            }, "TestAuth"))
+        };
+
+        _httpContextAccessorMock.Setup(h => h.HttpContext).Returns(context);
     }
 
     private void _mockUserService_GetCurrentUserAsync_ReturnsValidUser()
     {
         var id = Guid.NewGuid();
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+            {
+                new(ClaimTypes.Role, "User"),
+                new("id", id.ToString())
+            }, "TestAuth"))
+        };
+
+        _httpContextAccessorMock.Setup(h => h.HttpContext).Returns(context);
         
-        var context = BuildHttpContext(id, Role.User);
-        _httpContextAccessorMock.Setup(a => a.HttpContext).Returns(context);
-        
-        _mockUserManager.Setup(x => x.FindByIdAsync(id.ToString())).ReturnsAsync(new User
+        _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(new User
         {
             Name = "Valid User",
             Email = "validuser@test.com",
             UserName = "validuser@test.com",
             Id = id,
-            Role = Role.User
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
         });
     }
 
     private void _mockUserService_GetCurrentUserAsync_ReturnsError()
     {
-        var id = Guid.NewGuid();
-        var context = BuildHttpContext(id, Role.User);
-        _httpContextAccessorMock.Setup(a => a.HttpContext).Returns(context);
-        _mockUserManager.Setup(x => x.FindByIdAsync(id.ToString())).ReturnsAsync((User?)null);
+        _mockUserManager.Setup(x => x.FindByIdAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
     }
 
     #region Helper Methods
 
     private void SeedDatabase()
     {
-        _user = new User { UserName = "user@test.com", Email = "user@test.com", Name = "user", Id = Guid.NewGuid(), Role = Role.User };
+        _user = new User
+        {
+            UserName = "user@test.com",
+            Email = "user@test.com",
+            Name = "user",
+            Id = Guid.NewGuid(),
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
+        };
         _adminUser = new User
         {
             UserName = "admin@test.com",
             Email = "admin@test.com",
             Name = "admin",
             Id = Guid.NewGuid(),
-            Role = Role.Admin
+            Role = Role.Admin,
+            LoginMode = UserLoginMode.Password
         };
 
         Context.Users.AddRange(_user, _adminUser);

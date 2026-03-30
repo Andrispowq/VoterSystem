@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Token;
+using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
 namespace VoterSystem.DataAccess.Services;
@@ -104,7 +105,6 @@ public abstract class BaseService<TType, TService>
         var context = httpContextAccessor.HttpContext;
         if (context is null)
         {
-            Logger.LogWarning("Context was null");
             return [];
         }
 
@@ -112,7 +112,6 @@ public abstract class BaseService<TType, TService>
         var identity = user.Identity;
         if (identity is null || !identity.IsAuthenticated)
         {
-            Logger.LogWarning("Identity was null or not authenticated");
             return [];
         }
 

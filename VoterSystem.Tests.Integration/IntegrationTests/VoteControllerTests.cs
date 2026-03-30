@@ -1,6 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using VoterSystem.DataAccess;
@@ -39,7 +37,7 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
             var voting = new Voting
             {
                 Name = "Integration voting",
-                StartsAt = DateTime.UtcNow.AddHours(1),
+                StartsAt = DateTime.UtcNow.AddHours(-1),
                 EndsAt = DateTime.UtcNow.AddDays(2),
                 CreatedByUserId = admin.Id
             };
@@ -47,7 +45,8 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
             await ctx.SaveChangesAsync();
 
             var choice = new VoteChoice { Name = "Option-A", VotingId = voting.VotingId };
-            ctx.VoteChoices.Add(choice);
+            var choice2 = new VoteChoice { Name = "Option-B", VotingId = voting.VotingId };
+            ctx.VoteChoices.AddRange(choice, choice2);
             await ctx.SaveChangesAsync();
             choiceId = choice.ChoiceId;
         }
@@ -135,7 +134,8 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
                 UserName = AdminLogin.Email,
                 Email = AdminLogin.Email,
                 Name = "Seed-Admin",
-                Role = Role.Admin
+                Role = Role.Admin,
+                LoginMode = UserLoginMode.Password
             };
             userManager.CreateAsync(admin, AdminLogin.Password).Wait();
             userManager.AddToRoleAsync(admin, "Admin").Wait();
@@ -150,7 +150,8 @@ public class VoteControllerTests(TestWebAppFactory factory) : TestObjectFactory(
                 UserName = UserLogin.Email,
                 Email = UserLogin.Email,
                 Name = "Seed-User",
-                Role = Role.User
+                Role = Role.User,
+                LoginMode = UserLoginMode.Password
             };
             userManager.CreateAsync(user, UserLogin.Password).Wait();
             userManager.AddToRoleAsync(user, "User").Wait();

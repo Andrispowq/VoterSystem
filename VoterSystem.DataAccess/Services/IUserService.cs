@@ -1,4 +1,5 @@
 using VoterSystem.DataAccess.Model;
+using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
 
@@ -7,7 +8,7 @@ namespace VoterSystem.DataAccess.Services;
 /// <summary>
 /// Used for interacting with users, login, refresh, logout, and things of this nature
 /// </summary>
-public interface IUserService
+public interface IUserService : IExternalUserService
 {
     //CRUD
     Task<Result<List<User>, ServiceError>> GetAllUsersAsync();
@@ -15,10 +16,12 @@ public interface IUserService
     //Helper
     Task<bool> AnyAdmins();
     //Auth userflow
-    Task<Result<TokensDto, ServiceError>> LoginAsync(string email, string password);
+    Task<Result<LoginResultDto, ServiceError>> LoginAsync(string email, string password);
+    Task<Result<TokensDto, ServiceError>> CompleteTwoFactorLoginAsync(Guid challengeId, string code);
     Task<Result<TokensDto, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken);
     Task<Option<ServiceError>> LogoutAsync();
     Task<Option<ServiceError>> ChangePasswordAsync(string oldPassword, string newPassword);
+    Task<Option<ServiceError>> EnableTwoFactorAsync();
     Task<Result<string, ServiceError>> GenerateEmailConfirmTokenAsync();
 
     Task<Option<ServiceError>> ConfirmEmailAsync(string email, string token);

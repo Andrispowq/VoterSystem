@@ -249,6 +249,9 @@ namespace VoterSystem.DataAccess.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("LoginMode")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -418,9 +421,6 @@ namespace VoterSystem.DataAccess.Migrations
 
                     b.Property<bool>("HasVoted")
                         .HasColumnType("boolean");
-
-                    b.Property<long>("VotingParticipationId")
-                        .HasColumnType("bigint");
 
                     b.HasKey("UserId", "VotingId");
 

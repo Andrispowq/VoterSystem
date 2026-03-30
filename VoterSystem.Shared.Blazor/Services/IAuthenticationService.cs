@@ -1,5 +1,4 @@
-﻿using VoterSystem.DataAccess.Model;
-using VoterSystem.Shared.Dto;
+﻿using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Blazor.ViewModels;
 
 namespace VoterSystem.Shared.Blazor.Services;
@@ -12,7 +11,9 @@ public interface IAuthenticationService
     Task<bool> DemoteAdminToUserAsync(Guid userId);
     
     //Our methods
-    Task<bool> LoginAsync(LoginViewModel loginBindingViewModel);
+    Task<LoginAttemptResultDto> LoginAsync(LoginViewModel loginBindingViewModel);
+    Task<bool> CompleteTwoFactorLoginAsync(Guid challengeId, string code);
+    Task<bool> RedeemSigninTokensAsync(Guid requestId);
     Task<bool> ChangePasswordAsync(ChangePasswordViewModel changePasswordBindingViewModel);
     Task<Role?> GetCurrentRoleAsync();
     Task LogoutAsync();
@@ -22,6 +23,7 @@ public interface IAuthenticationService
     Task<bool> RegisterAsync(RegisterViewModel registerViewModel);
     
     Task<bool> RequestEmailConfirmationAsync();
+    Task<bool> EnableTwoFactorAsync();
     Task<bool> ConfirmEmailAsync(UserEmailConfirmRequestDto dto);
     Task<bool> RequestPasswordResetAsync(string email);
     Task<bool> ResetPasswordAsync(UserPasswordResetRequestDto dto);

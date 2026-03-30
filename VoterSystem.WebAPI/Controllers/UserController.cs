@@ -10,6 +10,7 @@ using VoterSystem.Shared.Functional;
 using VoterSystem.WebAPI.Config;
 using VoterSystem.WebAPI.Dto;
 using VoterSystem.WebAPI.Functional;
+using EmailText = VoterSystem.Shared.EmailText;
 
 namespace VoterSystem.WebAPI.Controllers;
 
@@ -35,7 +36,8 @@ public class UserController(IUserService userService, IEmailService emailService
             Email = request.Email,
             Name = request.Name,
             UserName = request.Email,
-            Role = newRole
+            Role = newRole,
+            LoginMode = UserLoginMode.Password
         };
         
         var result = await userService.CreateUser(user, request.Password);
@@ -49,17 +51,36 @@ public class UserController(IUserService userService, IEmailService emailService
 
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokensDto))]
+    [ProducesResponseType(StatusCodes.Status202Accepted, Type = typeof(TwoFactorChallengeDto))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequestDto request)
     {
         var result = await userService.LoginAsync(request.Email, request.Password);
         if (result.IsError) return result.ToHttpResult();
+
+        if (result.Value.RequiresTwoFactor)
+        {
+            return Accepted(result.Value.Challenge);
+        }
+
+        var tokens = result.Value.Tokens!;
+        Response.Cookies.Append(TokenIssuerKeys.AuthTokenKey, tokens.AuthToken);
         
-        var TokensDto = result.Value;
-        Response.Cookies.Append(TokenIssuer.AuthTokenKey, TokensDto.AuthToken);
-        
-        return result.ToHttpResult();
+        return Ok(tokens);
+    }
+
+    [HttpPost("login/2fa")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokensDto))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CompleteTwoFactorLoginAsync([FromBody] TwoFactorVerificationRequestDto request)
+    {
+        var result = await userService.CompleteTwoFactorLoginAsync(request.ChallengeId, request.Code);
+        if (result.IsError) return result.ToHttpResult();
+
+        Response.Cookies.Append(TokenIssuerKeys.AuthTokenKey, result.Value.AuthToken);
+        return Ok(result.Value);
     }
     
     [Authorize]
@@ -71,7 +92,7 @@ public class UserController(IUserService userService, IEmailService emailService
         var users = await userService.GetAllUsersAsync();
         if (users.IsError) return users.Error.ToHttpResult();
         
-        List<UserDto> userDtos = [];
+        List<UserDto> userDtos = new List<UserDto>();
         foreach (var user in users.Value)
         {
             var result = await userService.GetUserRoleByIdAsync(user.Id);
@@ -122,6 +143,15 @@ public class UserController(IUserService userService, IEmailService emailService
         return changePassword.IsSome
             ? changePassword.ToHttpResult()
             : Ok();
+    }
+
+    [Authorize]
+    [HttpPatch("two-factor/enable")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> EnableTwoFactorAsync()
+    {
+        return (await userService.EnableTwoFactorAsync()).ToHttpResult();
     }
 
     [Authorize]
@@ -224,7 +254,7 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(NotFoundError))]
     public async Task<IActionResult> LogoutAsync()
     {
-        Response.Cookies.Delete(TokenIssuer.AuthTokenKey);
+        Response.Cookies.Delete(TokenIssuerKeys.AuthTokenKey);
         return (await userService.LogoutAsync()).ToHttpResult();
     }
 

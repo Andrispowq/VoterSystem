@@ -1,5 +1,4 @@
 @page "/votings"
-@using VoterSystem.DataAccess.Model
 @using VoterSystem.Shared.Blazor.Services
 @using VoterSystem.Shared.Blazor.Services.SignalR
 @using VoterSystem.Shared.Blazor.ViewModels
@@ -244,6 +243,14 @@
 
     private RenderFragment RenderVotingDetailsAndChoices(VotingDto voting) =>
         @<div>
+            @if (!string.IsNullOrWhiteSpace(voting.GroupName))
+            {
+                <div class="mb-2">
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-people me-1"></i> @voting.GroupName
+                    </span>
+                </div>
+            }
             <p class="mb-1">
                 <i class="bi bi-play-circle me-1"></i>
                 From: @voting.StartsAt.ToLocalTime()

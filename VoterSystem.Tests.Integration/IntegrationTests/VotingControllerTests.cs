@@ -279,7 +279,7 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
     #region Group Access
 
     [Fact]
-    public async Task GetVotings_ReturnsOnlyAccessibleVotings()
+    public async Task GetVotings_ReturnsOnlyOwnVotings()
     {
         var userGroupId = await CreateGroupWithMembersAsync(UserLogin.Email);
         var otherGroupId = await CreateGroupWithMembersAsync(AnotherUserLogin.Email);
@@ -297,7 +297,7 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
         var ids = votings.Select(v => v.VotingId).ToList();
 
         Assert.Contains(userVotingId, ids);
-        Assert.Contains(globalVotingId, ids);
+        Assert.DoesNotContain(globalVotingId, ids);
         Assert.DoesNotContain(otherVotingId, ids);
     }
 
@@ -391,7 +391,8 @@ public class VotingControllerTests(TestWebAppFactory factory) : TestObjectFactor
             Email = creds.Email,
             UserName = creds.Email,
             Name = creds.Email.Split('@')[0],
-            Role = Enum.Parse<Role>(role)
+            Role = Enum.Parse<Role>(role),
+            LoginMode = UserLoginMode.Password
         };
         um.CreateAsync(user, creds.Password).Wait();
         um.AddToRoleAsync(user, role).Wait();

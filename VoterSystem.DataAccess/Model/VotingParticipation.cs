@@ -1,12 +1,9 @@
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VoterSystem.DataAccess.Model;
 
 public class VotingParticipation : ITimestamped, IRoleControlled
 {
-    [Key]
-    public long VotingParticipationId { get; init; }
     public required Guid UserId { get; init; }
     public required long VotingId { get; init; }
     public required bool HasVoted { get; set; }

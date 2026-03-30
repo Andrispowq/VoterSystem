@@ -191,17 +191,22 @@ public class ChoiceControllerTests(TestWebAppFactory factory) : TestObjectFactor
     private async Task AuthenticateAsync(UserLoginRequestDto creds)
     {
         var resp = await HttpClient.PostAsJsonAsync("/api/v1/users/login", creds);
-        if (!resp.IsSuccessStatusCode)
+        var content = await resp.Content.ReadAsStringAsync();
+
+        try
         {
-            var message = await resp.Content.ReadAsStringAsync();
-            Assert.Fail($"Request failed, status code: {resp.StatusCode}, message: {message}");
+            resp.EnsureSuccessStatusCode();
+
+            var tokens = await resp.Content.ReadFromJsonAsync<TokensDto>()
+                         ?? throw new InvalidOperationException("No tokens returned");
+
+            HttpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", tokens.AuthToken);
         }
-
-        var TokensDto = await resp.Content.ReadFromJsonAsync<TokensDto>()
-                     ?? throw new InvalidOperationException("No TokensDto returned");
-
-        HttpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TokensDto.AuthToken);
+        catch (Exception e)
+        {
+            Assert.Fail($"Request failed: {e.Message}, content: {content}. Full exception: {e.ToString()}");
+        }
     }
 
     protected override void SeedRoles(RoleManager<UserRole> roleManager)
@@ -233,7 +238,8 @@ public class ChoiceControllerTests(TestWebAppFactory factory) : TestObjectFactor
             Email = creds.Email,
             UserName = creds.Email,
             Name = creds.Email.Split('@')[0],
-            Role = Enum.Parse<Role>(role)
+            Role = Enum.Parse<Role>(role),
+            LoginMode = UserLoginMode.Password
         };
         um.CreateAsync(user, creds.Password).Wait();
         um.AddToRoleAsync(user, role).Wait();

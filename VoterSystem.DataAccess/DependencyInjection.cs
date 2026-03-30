@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Model;
 using VoterSystem.DataAccess.Services;
@@ -22,7 +23,7 @@ public static class DependencyInjection
         
         // Database
         var connectionString = config.GetConnectionString("VoterSystemConnection");
-        connectionString = Utils.ReplaceFromEnv(connectionString ?? "");
+        connectionString = Utils.ReplaceFromEnv(string.Empty, connectionString ?? "");
 
         //For integration tests, don't even register the regular DB
         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "IntegrationTest")
@@ -63,9 +64,46 @@ public static class DependencyInjection
         services.AddScoped<IVoteService, VoteService>();
         services.AddScoped<IVotingService, VotingService>();
         services.AddScoped<IVoteChoiceService, VoteChoiceService>();
+        services.AddSingleton<ITwoFactorChallengeStore, InMemoryTwoFactorChallengeStore>();
         services.AddScoped<IGroupService, GroupService>();
+        services.AddScoped<ITokenRequestService, TokenRequestService>();
+        services.AddScoped<IExternalUserService, UserService>();
+        services.AddScoped<TicketReceivedHandler>();
+
+        services.AddRedisCache(config);
+        services.AddScoped<ICacheService, RedisCacheService>();
 
         services.AddSingleton<IEmailService, EmailService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddRedisCache(this IServiceCollection services, IConfiguration configuration)
+    {
+        string? redisPass = null;
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "IntegrationTests")
+        {
+            redisPass = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? "redispass";
+        }
+
+        var connString = configuration.GetConnectionString("Redis")
+                         ?? throw new MissingFieldException("No Redis connection string specified");
+        var confOptions = ConfigurationOptions.Parse(connString);
+        confOptions.AbortOnConnectFail = false;
+        confOptions.ConnectRetry = 3;
+        confOptions.ConnectTimeout = 2000;
+        confOptions.AsyncTimeout = 2000;
+        confOptions.Password = redisPass;
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = connString;
+            options.InstanceName = "VoterSystem:";
+            options.ConfigurationOptions = confOptions;
+        });
+
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+            ConnectionMultiplexer.Connect(confOptions));
 
         return services;
     }
@@ -80,7 +118,7 @@ public static class DependencyInjection
                 .Where(pair => pair.Value is not null)
                 .Select(pair => new KeyValuePair<string, string>(
                     pair.Key,
-                    Utils.ReplaceFromEnv(pair.Value!)))!)
+                    Utils.ReplaceFromEnv(string.Empty, pair.Value!)))!)
             .Build();
 
         var instance = new T();

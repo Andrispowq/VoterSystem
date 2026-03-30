@@ -15,6 +15,7 @@ public abstract class TestObjectFactory : BaseTest
 
     protected TestObjectFactory(TestWebAppFactory factory) : base(factory)
     {
+        factory.EmailService.Clear();
         DbContext = Scope.ServiceProvider.GetRequiredService<VoterSystemDbContext>();
 
         DbContext.Votings.ExecuteDelete();
@@ -45,11 +46,11 @@ public abstract class TestObjectFactory : BaseTest
         var login = await HttpClient.PostAsJsonAsync("/api/v1/users/login", credentials);
         login.EnsureSuccessStatusCode();
 
-        var tokensDto = await login.Content.ReadFromJsonAsync<TokensDto>()
+        var tokens = await login.Content.ReadFromJsonAsync<TokensDto>()
                      ?? throw new InvalidOperationException("No token returned");
 
         HttpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", tokensDto.AuthToken);
+            new AuthenticationHeaderValue("Bearer", tokens.AuthToken);
     }
 
     protected abstract void SeedRoles(RoleManager<UserRole> roleManager);

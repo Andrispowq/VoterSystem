@@ -266,7 +266,8 @@ public class GroupControllerTests(TestWebAppFactory factory) : TestObjectFactory
             Email = creds.Email,
             UserName = creds.Email,
             Name = creds.Email.Split('@')[0],
-            Role = role
+            Role = role,
+            LoginMode = UserLoginMode.Password
         };
 
         userManager.CreateAsync(user, creds.Password).Wait();

@@ -35,11 +35,11 @@ public static class DependencyInjection
         services.AddBlazoredLocalStorage();
 
         var urlS = config["ApiBaseUrl"] ?? "-";
-        urlS = Utils.ReplaceFromEnv(urlS);
+        urlS = Utils.ReplaceFromEnv("-", urlS);
         var url = new Uri(urlS);
         
-        RedirectUrls.WebBaseUrl = Utils.ReplaceFromEnv(config["WebBaseUrl"] ?? "localhost");
-        RedirectUrls.AdminBaseUrl = Utils.ReplaceFromEnv(config["AdminBaseUrl"] ?? "localhost");
+        RedirectUrls.WebBaseUrl = Utils.ReplaceFromEnv("localhost", config["WebBaseUrl"] ?? "localhost");
+        RedirectUrls.AdminBaseUrl = Utils.ReplaceFromEnv("localhost", config["AdminBaseUrl"] ?? "localhost");
 
         services.AddScoped(_ => new HttpClient { BaseAddress = url });
         services.AddScoped<IAuthenticationService, AuthenticationService>();

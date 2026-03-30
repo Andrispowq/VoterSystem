@@ -158,9 +158,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SIMPLESAMLPHP_SP_ENTITY_ID: https://localhost:6910
-      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: https://localhost:6910/Saml2/Acs
-      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: https://localhost:6910/Saml2/Logout
+      SIMPLESAMLPHP_SP_ENTITY_ID: ${SAML_SP_ENTITY_ID}
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: ${SAML_SP_ENTITY_ID}/Acs
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: ${SAML_SP_ENTITY_ID}/Logout
     profiles: [only-db]
     networks:
       - votersystem-internal-network

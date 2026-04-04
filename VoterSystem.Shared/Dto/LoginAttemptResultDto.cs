@@ -4,25 +4,24 @@ public record LoginAttemptResultDto
 {
     public required bool Succeeded { get; init; }
     public required bool RequiresTwoFactor { get; init; }
-    public required Guid? ChallengeId { get; init; }
+    public Guid? UserId { get; init; }
 
     public static LoginAttemptResultDto Success()
     {
         return new LoginAttemptResultDto
         {
             Succeeded = true,
-            RequiresTwoFactor = false,
-            ChallengeId = null
+            RequiresTwoFactor = false
         };
     }
 
-    public static LoginAttemptResultDto TwoFactorRequired(Guid challengeId)
+    public static LoginAttemptResultDto TwoFactorRequired(Guid userId)
     {
         return new LoginAttemptResultDto
         {
             Succeeded = false,
             RequiresTwoFactor = true,
-            ChallengeId = challengeId
+            UserId = userId
         };
     }
 
@@ -31,8 +30,7 @@ public record LoginAttemptResultDto
         return new LoginAttemptResultDto
         {
             Succeeded = false,
-            RequiresTwoFactor = false,
-            ChallengeId = null
+            RequiresTwoFactor = false
         };
     }
 }

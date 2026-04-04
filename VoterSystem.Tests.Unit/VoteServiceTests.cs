@@ -227,7 +227,7 @@ public class VoteServiceTests : UnitTestBase, IDisposable
         _user = NextValidUser;
         Context.Users.Add(_user);
 
-        _voting = GetNextValidVoting(_user.Id);
+        _voting = GetStartedValidVoting(_user.Id);
         Context.Votings.Add(_voting);
 
         _voteChoice = new VoteChoice

@@ -47,7 +47,7 @@
                 </button>
             </div>
 
-            @if (_pendingTwoFactorChallengeId is null)
+            @if (_pendingTwoFactorUserId is null)
             {
                 <EditForm Model="LoginViewModel" OnValidSubmit="HandleLogin">
                     <DataAnnotationsValidator/>
@@ -129,7 +129,7 @@
 
     private LoginViewModel LoginViewModel { get; set; } = new();
     private bool _tryAutoLogin = true;
-    private Guid? _pendingTwoFactorChallengeId;
+    private Guid? _pendingTwoFactorUserId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -160,7 +160,7 @@
         }
         else if (result.RequiresTwoFactor)
         {
-            _pendingTwoFactorChallengeId = result.ChallengeId;
+            _pendingTwoFactorUserId = result.UserId;
             LoginViewModel.TwoFactorCode = null;
             await InvokeAsync(StateHasChanged);
         }
@@ -168,13 +168,13 @@
 
     private async Task HandleTwoFactorLogin()
     {
-        if (_pendingTwoFactorChallengeId is null)
+        if (_pendingTwoFactorUserId is null)
         {
             return;
         }
 
         var success = await AuthenticationService.CompleteTwoFactorLoginAsync(
-            _pendingTwoFactorChallengeId.Value,
+            _pendingTwoFactorUserId.Value,
             LoginViewModel.TwoFactorCode ?? string.Empty);
         if (success)
         {
@@ -184,7 +184,7 @@
 
     private Task CancelTwoFactorLogin()
     {
-        _pendingTwoFactorChallengeId = null;
+        _pendingTwoFactorUserId = null;
         LoginViewModel.TwoFactorCode = null;
         return Task.CompletedTask;
     }

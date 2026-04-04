@@ -86,7 +86,7 @@ public class AuthenticationService(
             
             Console.WriteLine($"Challenge is {challenge}");
 
-            return LoginAttemptResultDto.TwoFactorRequired(challenge.ChallengeId);
+            return LoginAttemptResultDto.TwoFactorRequired(challenge.UserId);
         }
 
         if (response.IsSuccessStatusCode)
@@ -104,13 +104,13 @@ public class AuthenticationService(
         return LoginAttemptResultDto.Failure();
     }
 
-    public async Task<bool> CompleteTwoFactorLoginAsync(Guid challengeId, string code)
+    public async Task<bool> CompleteTwoFactorLoginAsync(Guid userId, string code)
     {
         try
         {
             var response = await httpClient.PostAsJsonAsync("/api/v1/users/login/2fa", new TwoFactorVerificationRequestDto
             {
-                ChallengeId = challengeId,
+                UserId = userId,
                 Code = code
             });
 

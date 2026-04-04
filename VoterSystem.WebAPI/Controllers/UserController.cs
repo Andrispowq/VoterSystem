@@ -76,7 +76,7 @@ public class UserController(IUserService userService, IEmailService emailService
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CompleteTwoFactorLoginAsync([FromBody] TwoFactorVerificationRequestDto request)
     {
-        var result = await userService.CompleteTwoFactorLoginAsync(request.ChallengeId, request.Code);
+        var result = await userService.CompleteTwoFactorLoginAsync(request.UserId, request.Code);
         if (result.IsError) return result.ToHttpResult();
 
         Response.Cookies.Append(TokenIssuerKeys.AuthTokenKey, result.Value.AuthToken);

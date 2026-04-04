@@ -241,11 +241,11 @@ public class VoteChoiceServiceTests : UnitTestBase, IDisposable
 
         Context.Users.AddRange(_user, _otherUser);
 
-        _voting = GetNextValidVoting(_user.Id);
+        _voting = GetUnstartedValidVoting(_user.Id);
         _voting.StartsAt = DateTime.UtcNow.AddHours(1);
         _voting.EndsAt = DateTime.UtcNow.AddDays(1);
 
-        _startedVoting = GetNextValidVoting(_user.Id);
+        _startedVoting = GetUnstartedValidVoting(_user.Id);
         _startedVoting.StartsAt = DateTime.UtcNow.AddHours(-1);
         _startedVoting.EndsAt = DateTime.UtcNow.AddHours(1);
 

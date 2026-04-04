@@ -31,7 +31,7 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     public async Task CreateVoting_WhenInvalidTimes_ReturnsBadRequest()
     {
         var service = CreateService(_user.Id);
-        var request = ToCreateRequest(GetNextInvalidVoting(_user.Id));
+        var request = ToCreateRequest(GetStartedValidVoting(_user.Id));
 
         var result = await service.CreateVoting(request);
 
@@ -43,7 +43,7 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     public async Task CreateVoting_AddsVoting()
     {
         var service = CreateService(_user.Id);
-        var request = ToCreateRequest(GetNextValidVoting(_user.Id));
+        var request = ToCreateRequest(GetUnstartedValidVoting(_user.Id));
 
         var result = await service.CreateVoting(request);
 
@@ -57,8 +57,8 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task GetAllVotingsAsync_ReturnsAllVotingsForAdmin()
     {
-        var voting = GetNextValidVoting(_user.Id);
-        var voting2 = GetNextValidVoting(_user2.Id);
+        var voting = GetUnstartedValidVoting(_user.Id);
+        var voting2 = GetUnstartedValidVoting(_user2.Id);
         Context.Votings.AddRange(voting, voting2);
         await Context.SaveChangesAsync();
 
@@ -76,8 +76,8 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task GetAllVotingsAsync_ReturnsAllVotingsForUser()
     {
-        var voting = GetNextValidVoting(_user.Id);
-        var voting2 = GetNextValidVoting(_user2.Id);
+        var voting = GetUnstartedValidVoting(_user.Id);
+        var voting2 = GetUnstartedValidVoting(_user2.Id);
         Context.Votings.AddRange(voting, voting2);
         await Context.SaveChangesAsync();
 
@@ -93,7 +93,7 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task GetVotingByIdAsync_ReturnsAnyForAdmin()
     {
-        var voting = GetNextValidVoting(_user.Id);
+        var voting = GetUnstartedValidVoting(_user.Id);
         Context.Votings.Add(voting);
         await Context.SaveChangesAsync();
 
@@ -107,7 +107,7 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task GetVotingByIdAsync_ReturnsVotingForOtherUser()
     {
-        var voting = GetNextValidVoting(_user.Id);
+        var voting = GetUnstartedValidVoting(_user.Id);
         Context.Votings.Add(voting);
         await Context.SaveChangesAsync();
 
@@ -121,7 +121,7 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task GetVotingByIdAsync_ReturnsVotingForOwner()
     {
-        var voting = GetNextValidVoting(_user.Id);
+        var voting = GetUnstartedValidVoting(_user.Id);
         Context.Votings.Add(voting);
         await Context.SaveChangesAsync();
 

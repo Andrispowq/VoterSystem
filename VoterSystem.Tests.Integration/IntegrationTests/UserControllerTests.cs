@@ -142,7 +142,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
 
         var challenge = await response.Content.ReadFromJsonAsync<TwoFactorChallengeDto>();
         Assert.NotNull(challenge);
-        Assert.NotEqual(Guid.Empty, challenge!.ChallengeId);
+        Assert.NotEqual(Guid.Empty, challenge.UserId);
         Assert.Contains(Factory.EmailService.GetAll(), email =>
             email.To == AdminLogin.Email &&
             email.Subject.Contains("two-factor", StringComparison.OrdinalIgnoreCase));
@@ -164,7 +164,7 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
         var code = Factory.EmailService.ExtractLatestTwoFactorCode(AdminLogin.Email);
         var verifyResponse = await client.PostAsJsonAsync("/api/v1/users/login/2fa", new TwoFactorVerificationRequestDto
         {
-            ChallengeId = challenge!.ChallengeId,
+            UserId = challenge.UserId,
             Code = code
         });
 

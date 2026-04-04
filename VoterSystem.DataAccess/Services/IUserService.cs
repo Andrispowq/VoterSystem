@@ -17,7 +17,7 @@ public interface IUserService : IExternalUserService
     Task<bool> AnyAdmins();
     //Auth userflow
     Task<Result<LoginResultDto, ServiceError>> LoginAsync(string email, string password);
-    Task<Result<TokensDto, ServiceError>> CompleteTwoFactorLoginAsync(Guid challengeId, string code);
+    Task<Result<TokensDto, ServiceError>> CompleteTwoFactorLoginAsync(Guid userId, string code);
     Task<Result<TokensDto, ServiceError>> RedeemRefreshTokenAsync(Guid refreshToken);
     Task<Option<ServiceError>> LogoutAsync();
     Task<Option<ServiceError>> ChangePasswordAsync(string oldPassword, string newPassword);

@@ -16,12 +16,12 @@ public class UserService(
     UserManager<User> userManager, 
     SignInManager<User> signInManager,
     ITokenIssuer tokenIssuer,
-    IEmailService emailService,
-    ITwoFactorChallengeStore twoFactorChallengeStore) 
+    IEmailService emailService) 
     : BaseService<User, UserService>(httpContextAccessor, logger), IUserService
 {
     private readonly ILogger<UserService> _logger = logger;
-    private static readonly TimeSpan TwoFactorChallengeTtl = TimeSpan.FromMinutes(5);
+
+    private static readonly string TokenProviderFor2Fa = TokenOptions.DefaultEmailProvider;
 
     protected override bool CanAccessAll(bool admin) => admin;
 
@@ -71,13 +71,11 @@ public class UserService(
 
         if (result.RequiresTwoFactor || user.TwoFactorEnabled)
         {
-            var code = Random.Shared.Next(0, 1_000_000).ToString("D6");
-            var challengeId = await twoFactorChallengeStore.CreateChallengeAsync(user.Id, code, TwoFactorChallengeTtl);
-
+            var token = await userManager.GenerateTwoFactorTokenAsync(user, TokenProviderFor2Fa);
             var emailResult = await emailService.SendEmailAsync(
                 user.Email!,
                 "Your two-factor authentication code",
-                EmailText.GetTwoFactorCodeEmail(user.Email!, code));
+                EmailText.GetTwoFactorCodeEmail(user.Email!, token));
             if (emailResult.IsSome)
             {
                 _logger.LogWarning("Failed to send 2FA code in email, error: {Message}", emailResult);
@@ -85,8 +83,8 @@ public class UserService(
 
             return LoginResultDto.FromChallenge(new TwoFactorChallengeDto
             {
-                ChallengeId = challengeId,
-                Message = "Two-factor authentication required"
+                Message = "Two-factor authentication required",
+                UserId = user.Id
             });
         }
         
@@ -97,13 +95,13 @@ public class UserService(
         return LoginResultDto.FromTokens(tokens.Value);
     }
 
-    public async Task<Result<TokensDto, ServiceError>> CompleteTwoFactorLoginAsync(Guid challengeId, string code)
+    public async Task<Result<TokensDto, ServiceError>> CompleteTwoFactorLoginAsync(Guid userId, string code)
     {
-        var verificationResult = await twoFactorChallengeStore.VerifyChallengeAsync(challengeId, code);
-        if (verificationResult.IsError) return verificationResult.Error;
-
-        var user = await userManager.FindByIdAsync(verificationResult.Value.ToString());
+        var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null) return new NotFoundError("User not found");
+        
+        var success = await userManager.VerifyTwoFactorTokenAsync(user, TokenProviderFor2Fa, code);
+        if (!success) return new BadRequestError("Failed to verify two factor authentication");
 
         return await IssueTokensAsync(user);
     }

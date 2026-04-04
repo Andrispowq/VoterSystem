@@ -20,7 +20,6 @@ public class UserServiceTests : UnitTestBase, IDisposable
     private readonly Mock<SignInManager<User>> _mockSignInManager;
     private readonly Mock<ITokenIssuer> _mockTokenIssuer = new();
     private readonly Mock<IEmailService> _mockEmailService = new();
-    private readonly Mock<ITwoFactorChallengeStore> _mockTwoFactorChallengeStore = new();
 
     private User _user = null!;
     private User _adminUser = null!;
@@ -37,8 +36,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
             _mockUserManager.Object,
             _mockSignInManager.Object,
             _mockTokenIssuer.Object,
-            _mockEmailService.Object,
-            _mockTwoFactorChallengeStore.Object
+            _mockEmailService.Object
         );
 
         SeedDatabase();
@@ -91,7 +89,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
         };
         var password = "Password123";
         _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), password)).ReturnsAsync(IdentityResult.Success);
-        _mockUserManager.Setup(x => x.AddToRoleAsync(It.IsAny<User>(), Role.User.ToString()))
+        _mockUserManager.Setup(x => x.AddToRoleAsync(It.IsAny<User>(), nameof(Role.User)))
             .ReturnsAsync(IdentityResult.Success);
 
         // Act
@@ -199,9 +197,6 @@ public class UserServiceTests : UnitTestBase, IDisposable
         _mockSignInManager
             .Setup(x => x.PasswordSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(),
                 It.IsAny<bool>())).ReturnsAsync(SignInResult.Success);
-        _mockTwoFactorChallengeStore
-            .Setup(x => x.CreateChallengeAsync(_user.Id, It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.Parse("11111111-1111-1111-1111-111111111111"));
         _mockEmailService
             .Setup(x => x.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new Option<ServiceError>.None());
@@ -210,23 +205,22 @@ public class UserServiceTests : UnitTestBase, IDisposable
 
         Assert.True(result.HasValue);
         Assert.True(result.Value.RequiresTwoFactor);
-        Assert.Equal(Guid.Parse("11111111-1111-1111-1111-111111111111"), result.Value.Challenge!.ChallengeId);
+        Assert.Equal(_user.Id, result.Value.Challenge!.UserId);
         _mockEmailService.Verify(x => x.SendEmailAsync(email, It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
     public async Task CompleteTwoFactorLogin_WhenChallengeValid_ReturnsTokens()
     {
-        var challengeId = Guid.NewGuid();
-        var code = "123456";
-        _mockTwoFactorChallengeStore
-            .Setup(x => x.VerifyChallengeAsync(challengeId, code, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(_user.Id);
+        const string code = "123456";
+        _mockUserManager
+            .Setup(x => x.VerifyTwoFactorTokenAsync(It.IsAny<User>(), It.IsAny<string>(), code))
+            .ReturnsAsync(true);
         _mockUserManager.Setup(x => x.FindByIdAsync(_user.Id.ToString())).ReturnsAsync(_user);
         _mockTokenIssuer.Setup(x => x.GenerateJwtToken(_user)).Returns("accessToken");
         _mockUserManager.Setup(x => x.UpdateAsync(_user)).ReturnsAsync(IdentityResult.Success);
 
-        var result = await _userService.CompleteTwoFactorLoginAsync(challengeId, code);
+        var result = await _userService.CompleteTwoFactorLoginAsync(_user.Id, code);
 
         Assert.True(result.HasValue);
         Assert.Equal("accessToken", result.Value.AuthToken);
@@ -271,7 +265,7 @@ public class UserServiceTests : UnitTestBase, IDisposable
     public async Task GetAllUsersAsync_ReturnsUsers_WhenAdmin()
     {
         var users = new List<User> { NextValidUser, NextValidUser };
-        _mockUserManager.Setup(x => x.Users).Returns(users.AsQueryable().BuildMock());
+        _mockUserManager.Setup(x => x.Users).Returns(users.AsEnumerable().BuildMock());
         _mockUserService_IsCurrentUserAdmin_Returns(true);
 
         var result = await _userService.GetAllUsersAsync();

@@ -12,7 +12,7 @@ public interface IAuthenticationService
     
     //Our methods
     Task<LoginAttemptResultDto> LoginAsync(LoginViewModel loginBindingViewModel);
-    Task<bool> CompleteTwoFactorLoginAsync(Guid challengeId, string code);
+    Task<bool> CompleteTwoFactorLoginAsync(Guid userId, string code);
     Task<bool> RedeemSigninTokensAsync(Guid requestId);
     Task<bool> ChangePasswordAsync(ChangePasswordViewModel changePasswordBindingViewModel);
     Task<Role?> GetCurrentRoleAsync();

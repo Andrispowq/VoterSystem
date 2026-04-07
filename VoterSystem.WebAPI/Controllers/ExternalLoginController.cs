@@ -142,6 +142,7 @@ public class ExternalLoginController(
         {
             "admin" => Environment.GetEnvironmentVariable("ADMIN_HTTPS") ?? "https://localhost:6912",
             "user" => Environment.GetEnvironmentVariable("WEB_HTTPS") ?? "https://localhost:6911",
+            "mobile" => Environment.GetEnvironmentVariable("MOBILE_LINK") ?? "com.akmeczo.votersystem:/",
             _ => "https://localhost:6901"
         };
         

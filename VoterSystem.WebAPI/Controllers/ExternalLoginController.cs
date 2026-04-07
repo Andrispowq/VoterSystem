@@ -28,7 +28,7 @@ public class ExternalLoginController(
     {
         if (frontend is not ("admin" or "user" or "mobile"))
         {
-            return BadRequest("Error: frontend query param must be set to 'admin' or 'user'");
+            return BadRequest("Error: frontend query param must be set to 'admin' or 'user' or 'mobile'");
         }
 
         var url = provider switch
@@ -38,6 +38,8 @@ public class ExternalLoginController(
             ExternalLoginProvider.Saml => nameof(ExternalLoginCallbackSaml),
             _ => null
         };
+        
+        logger.LogWarning("OAuth return url for provider {Provider} is {Url}", provider, url);
 
         if (url is null)
         {
@@ -49,6 +51,9 @@ public class ExternalLoginController(
             RedirectUri = Url.Action(url),
             Items = { new KeyValuePair<string, string?>("frontend", frontend) }
         };
+        
+        logger.LogWarning("OAuth properties are: redirect url: {RedirectUrl}, frontend: {Frontend}", 
+            props.RedirectUri, props.Items["frontend"]);
 
         return Challenge(props, provider.ToString());
     }

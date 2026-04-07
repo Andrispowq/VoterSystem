@@ -27,6 +27,7 @@ If you want to run the components locally, you can also use the ``only-db`` prof
     { "name": "WEB_HTTPS", "value": "https://localhost:6911" },
     { "name": "ADMIN_HTTP", "value": "http://localhost:6902" },
     { "name": "ADMIN_HTTPS", "value": "https://localhost:6912" },
+    { "name": "MOBILE_LINK", "value": "com.akmeczo.votersystem:/" },
     { "name": "DB_IP", "value": "db" },
     { "name": "DB_ROOT_PASSWORD", "value": "root" },
     { "name": "DB_USER", "value": "server_access" },
@@ -51,10 +52,8 @@ If you want to run the components locally, you can also use the ``only-db`` prof
     { "name": "SAML_ENABLED", "value": "true" },
     { "name": "SAML_RETURN_URL", "value": "https://localhost:6910" },
     { "name": "SAML_SIGN_REQUESTS", "value": "false" },
-    { "name": "SAML_SIGNING_CERT_BASE64_NO", "value": "MIICmjCCAYICCQDX5sKPsYV3+jANBgkqhkiG9w0BAQsFADAPMQ0wCwYDVQQDDAR0ZXN0MB4XDTE5MTIyMzA5MDI1MVoXDTIwMDEyMjA5MDI1MVowDzENMAsGA1UEAwwEdGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMdtDJ278DQTp84O5Nq5F8s5YOR34GFOGI2Swb/3pU7X7918lVljiKv7WVM65S59nJSyXV+fa15qoXLfsdRnq3yw0hTSTs2YDX+jl98kK3ksk3rROfYh1LIgByj4/4NeNpExgeB6rQk5Ay7YS+ARmMzEjXa0favHxu5BOdB2y6WvRQyjPS2lirT/PKWBZc04QZepsZ56+W7bd557tdedcYdY/nKI1qmSQClG2qgslzgqFOv1KCOw43a3mcK/TiiD8IXyLMJNC6OFW3xTL/BG6SOZ3dQ9rjQOBga+6GIaQsDjC4Xp7Kx+FkSvgaw0sJV8gt1mlZy+27Sza6d+hHD2pWECAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAm2fk1+gd08FQxK7TL04O8EK1f0bzaGGUxWzlh98a3Dm8+OPhVQRi/KLsFHliLC86lsZQKunYdDB+qd0KUk2oqDG6tstG/htmRYD/S/jNmt8gyPAVi11dHUqW3IvQgJLwxZtoAv6PNs188hvT1WK3VWJ4YgFKYi5XQYnR5sv69Vsr91lYAxyrIlMKahjSW1jTD3ByRfAQghsSLk6fV0OyJHyhuF1TxOVBVf8XOdaqfmvD90JGIPGtfMLPUX4m35qaGAU48PwCL7L3cRHYs9wZWc0ifXZcBENLtHYCLi5txR8c5lyHB9d3AQHzKHMFNjLswn5HsckKg83RH7+eVqHqGw==" },
     { "name": "SAML_SIGNING_CERT_BASE64", "value": "" },
     { "name": "SAML_SIGNING_CERT_PASSWORD", "value": "" },
-    
     { "name": "SAML_PUBLIC_ORIGIN", "value": "https://localhost:6910" },
     { "name": "SAML_SP_ENTITY_ID", "value": "https://localhost:6910/Saml2" },
     { "name": "SAML_METADATA_URL", "value": "http://localhost:8080/simplesaml/saml2/idp/metadata.php" },

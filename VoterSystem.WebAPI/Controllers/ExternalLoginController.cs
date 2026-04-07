@@ -23,10 +23,10 @@ public class ExternalLoginController(
     [ProducesResponseType(StatusCodes.Status307TemporaryRedirect)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> ExternalLoginAsync([FromRoute] ExternalLoginProvider provider,
+    public IActionResult ExternalLogin([FromRoute] ExternalLoginProvider provider,
         [FromQuery] string frontend)
     {
-        if (frontend is not ("admin" or "user"))
+        if (frontend is not ("admin" or "user" or "mobile"))
         {
             return BadRequest("Error: frontend query param must be set to 'admin' or 'user'");
         }

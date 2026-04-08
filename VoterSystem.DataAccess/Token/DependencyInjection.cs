@@ -123,8 +123,11 @@ public static class DependencyInjection
 
         services.ConfigureExternalCookie(opts =>
         {
-            opts.Cookie.SameSite = SameSiteMode.None;
-            opts.Cookie.SecurePolicy = CookieSecurePolicy.None;
+            // The external sign-in cookie is written by our app after the provider callback
+            // and only needs to survive the local redirect to the frontend/API callback.
+            // OAuth correlation cookies still need SameSite=None separately.
+            opts.Cookie.SameSite = SameSiteMode.Lax;
+            opts.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             opts.Events = TicketReceivedHandler.Events;
         });
 
@@ -220,9 +223,6 @@ public static class DependencyInjection
             }
 
             options.IdentityProviders.Add(identityProvider);
-
-            options.Events = (Func<TicketReceivedContext, Task>)Handler;
-            options.EventsType = typeof(Func<TicketReceivedContext, Task>);
         });
     }
     

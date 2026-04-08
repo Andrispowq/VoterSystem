@@ -34,7 +34,8 @@ public class VotingService(
             .Include(x => x.VotingParticipations));
 
         query = query.Where(x => x.CreatedByUserId != UserId &&
-                                 x.VotingParticipations.All(v => v.UserId != UserId));
+                                 x.VotingParticipations.All(v => v.UserId != UserId) &&
+                                 x.StartsAt <= DateTime.UtcNow && x.EndsAt >= DateTime.UtcNow && x.VoteChoices.Count >= 2);
 
         return await query.ToListAsync();
     }

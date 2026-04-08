@@ -121,7 +121,10 @@ services:
     extends:
       file: ./docker/email-services.yml
       service: mailhog-base
-    profiles: [only-db]
+    profiles: [only-db, prod]
+    ports:
+      - "1225:1025"
+      - "8225:8025"
     networks:
       - votersystem-internal-network
 

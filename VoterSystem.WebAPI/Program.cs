@@ -107,6 +107,9 @@ public class Program
 
         builder.Services.AddSignalR();
         builder.Services.AddSignalRServices();
+        
+        builder.Services.AddHsts(_ => { });
+        builder.Services.AddHttpsRedirection(_ => { });
 
         var app = builder.Build();
 
@@ -128,25 +131,15 @@ public class Program
                 KnownProxies = { IPAddress.Parse(proxyIp) },
             });
         }
-
-        if ( /*app.Environment.IsDevelopment()*/true)
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-            
-#pragma warning disable S125
-            //app.MapScalarApiReference(); 
-#pragma warning restore S125
-        }
-
-        app.UseHsts();
-
-#pragma warning disable S125
-        //app.UseHttpsRedirection();
-#pragma warning restore S125
+        
         app.UseRouting();
         app.UseCors("BlazorPolicy");
 
+        app.UseCookiePolicy();
+        
+        app.UseSwagger();
+        app.UseSwaggerUI();
+        
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

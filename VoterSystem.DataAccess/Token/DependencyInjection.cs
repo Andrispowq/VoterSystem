@@ -124,7 +124,7 @@ public static class DependencyInjection
         services.ConfigureExternalCookie(opts =>
         {
             opts.Cookie.SameSite = SameSiteMode.None;
-            opts.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            opts.Cookie.SecurePolicy = CookieSecurePolicy.None;
             opts.Events = TicketReceivedHandler.Events;
         });
 

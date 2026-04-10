@@ -21,6 +21,7 @@ public sealed class GroupService(
             .AsNoTracking()
             .Include(x => x.Members)
                 .ThenInclude(m => m.User)
+            .Where(x => x.DeletedAt == null)
             .Where(x => x.Members.Any(y => y.UserId == UserId))
             .ToListAsync(ct);
     }
@@ -32,7 +33,7 @@ public sealed class GroupService(
             .Include(x => x.Members)
                 .ThenInclude(m => m.User)
             .FirstOrDefaultAsync(x => x.GroupId == groupId, ct);
-        if (group is null) return new NotFoundError("Group not found");
+        if (group is null || group.IsDeleted) return new NotFoundError("Group not found");
 
         var access = CheckAccessOn(group, RoleControlAction.Access);
         if (access.IsSome) return access.AsSome.Value;
@@ -74,6 +75,12 @@ public sealed class GroupService(
 
             var result = await context.SaveChangesAsync(ct);
             if (result.IsSome) return result.AsSome.Value;
+            
+            await context.Entry(group)
+                .Collection(g => g.Members)
+                .Query()
+                .Include(m => m.User)
+                .LoadAsync(ct);
 
             return group;
         }
@@ -92,18 +99,21 @@ public sealed class GroupService(
 
         var group = await context.Groups.FindAsync([groupId], ct);
         if (group is null) return new NotFoundError("Group not found");
+        if (group.IsDeleted) return new BadRequestError("Group already deleted");
         
         var access = CheckAccessOn(group, RoleControlAction.Delete);
         if (access.IsSome) return access.AsSome.Value;
 
         try
         {
-            context.Groups.Remove(group);
+            group.DeletedAt = DateTime.UtcNow;
+            context.Groups.Update(group);
+            
             return await context.SaveChangesAsync(ct);
         }
         catch (Exception e)
         {
-            return new BadRequestError("Failed to create group", e);
+            return new BadRequestError("Failed to delete group", e);
         }
     }
 
@@ -116,6 +126,7 @@ public sealed class GroupService(
 
         var group = await context.Groups.FindAsync([groupId], ct);
         if (group is null) return new NotFoundError("Group not found");
+        if (group.IsDeleted) return new BadRequestError("Group has been deleted");
         
         var access = CheckAccessOn(group, RoleControlAction.Update);
         if (access.IsSome) return access.AsSome.Value;
@@ -150,6 +161,7 @@ public sealed class GroupService(
 
         var group = await context.Groups.FindAsync([groupId], ct);
         if (group is null) return new NotFoundError("Group not found");
+        if (group.IsDeleted) return new BadRequestError("Group has been deleted");
         
         var access = CheckAccessOn(group, RoleControlAction.Update);
         if (access.IsSome) return access.AsSome.Value;

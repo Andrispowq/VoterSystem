@@ -87,6 +87,11 @@ public class VotingService(
                 return new NotFoundError("Group not found");
             }
 
+            if (group.IsDeleted)
+            {
+                return new BadRequestError("Group has been deleted");
+            }
+
             if (group.Members.All(m => m.UserId != UserId))
             {
                 return new UnauthorizedError("You are not part of this group");
@@ -156,6 +161,11 @@ public class VotingService(
             
             var check = CheckAccessOn(item.Value, RoleControlAction.Delete);
             if (check.IsSome) return check.AsSome.Value;
+
+            if (item.Value.HasStarted)
+            {
+                return new BadRequestError("Voting has already started");
+            }
             
             dbContext.Votings.Remove(item.Value);
             if (commit) await dbContext.SaveChangesAsync();

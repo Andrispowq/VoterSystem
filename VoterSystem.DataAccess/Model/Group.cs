@@ -13,6 +13,7 @@ public class Group : IRoleControlled, ITimestamped, ISoftDeletable
     public required string Description { get; set; }
     public DateTime? DeletedAt { get; set; }
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+    public bool IsDeleted => DeletedAt.HasValue;
 
     public virtual User CreatorUser { get; init; } = null!;
     public virtual ICollection<GroupMembers> Members { get; set; } = [];
@@ -30,11 +31,11 @@ public class Group : IRoleControlled, ITimestamped, ISoftDeletable
 
     public bool CanUpdate(bool isAdmin, Guid userId)
     {
-        return isAdmin && CreatorUserId == userId;
+        return !IsDeleted && isAdmin && CreatorUserId == userId;
     }
 
     public bool CanDelete(bool isAdmin, Guid userId)
     {
-        return isAdmin && CreatorUserId == userId;
+        return !IsDeleted && isAdmin && CreatorUserId == userId;
     }
 }

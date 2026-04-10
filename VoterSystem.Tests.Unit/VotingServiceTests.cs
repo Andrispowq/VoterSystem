@@ -105,6 +105,67 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
     }
 
     [Fact]
+    public async Task CreateVoting_ReturnsBadRequest_WhenGroupDeleted()
+    {
+        var group = await CreateGroupWithMemberAsync(_user, _user);
+        group.DeletedAt = DateTime.UtcNow;
+        Context.Groups.Update(group);
+        await Context.SaveChangesAsync();
+
+        var request = ToCreateRequest(GetUnstartedValidVoting(_user.Id));
+        request.GroupId = group.GroupId;
+
+        var service = CreateService(_user.Id);
+
+        var result = await service.CreateVoting(request);
+
+        Assert.True(result.IsError);
+        Assert.IsType<BadRequestError>(result.Error);
+    }
+
+    [Fact]
+    public async Task DeleteVoting_ReturnsBadRequest_WhenVotingStarted()
+    {
+        var voting = GetStartedValidVoting(_user.Id);
+        Context.Votings.Add(voting);
+        await Context.SaveChangesAsync();
+        Context.VoteChoices.AddRange(
+            new VoteChoice
+            {
+                Name = "c1",
+                Description = "choice1",
+                VotingId = voting.VotingId
+            },
+            new VoteChoice
+            {
+                Name = "c2",
+                Description = "choice2",
+                VotingId = voting.VotingId
+            });
+        await Context.SaveChangesAsync();
+        var service = CreateService(_user.Id);
+
+        var result = await service.DeleteVoting(voting.VotingId);
+
+        Assert.True(result.IsSome);
+        Assert.IsType<BadRequestError>(result.AsSome.Value);
+    }
+
+    [Fact]
+    public async Task DeleteVoting_RemovesVoting_WhenNotStarted()
+    {
+        var voting = GetUnstartedValidVoting(_user.Id);
+        Context.Votings.Add(voting);
+        await Context.SaveChangesAsync();
+        var service = CreateService(_user.Id);
+
+        var result = await service.DeleteVoting(voting.VotingId);
+
+        Assert.True(result.IsNone);
+        Assert.False(Context.Votings.Any(v => v.VotingId == voting.VotingId));
+    }
+
+    [Fact]
     public async Task GetVotingByIdAsync_ReturnsVotingForOtherUser()
     {
         var voting = GetUnstartedValidVoting(_user.Id);
@@ -159,6 +220,29 @@ public class VotingsServiceTests : UnitTestBase, IDisposable
             StartsAt = voting.StartsAt,
             EndsAt = voting.EndsAt
         };
+    }
+
+    private async Task<Group> CreateGroupWithMemberAsync(User creator, User member)
+    {
+        var group = new Group
+        {
+            GroupId = Guid.NewGuid(),
+            CreatorUserId = creator.Id,
+            Name = $"Group-{Guid.NewGuid():N}",
+            Description = "Test"
+        };
+
+        await Context.Groups.AddAsync(group);
+        await Context.GroupMembers.AddAsync(new GroupMembers
+        {
+            GroupId = group.GroupId,
+            UserId = member.Id,
+            AddedByUserId = creator.Id
+        });
+
+        var result = await Context.SaveChangesAsync();
+        Assert.True(result.IsNone, result.ToString());
+        return group;
     }
 
     public void Dispose()

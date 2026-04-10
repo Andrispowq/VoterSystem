@@ -137,7 +137,8 @@ public class GroupControllerTests(TestWebAppFactory factory) : TestObjectFactory
         var response = await HttpClient.DeleteAsync($"/api/v1/groups/{group.GroupId}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.False(await DbContext.Groups.AnyAsync(g => g.GroupId == group.GroupId));
+        var deletedGroup = await DbContext.Groups.FirstOrDefaultAsync(g => g.GroupId == group.GroupId);
+        Assert.NotNull(deletedGroup?.DeletedAt);
     }
 
     [Fact]

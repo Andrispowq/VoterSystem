@@ -144,6 +144,30 @@ public class UserServiceTests : UnitTestBase, IDisposable
     }
 
     [Fact]
+    public async Task Login_WhenUserDeleted_ReturnsUnauthorized()
+    {
+        var email = "deleted@test.com";
+        var password = "password";
+        var deletedUser = new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = email,
+            Email = email,
+            Name = "deleted",
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password,
+            DeletedAt = DateTime.UtcNow
+        };
+
+        _mockUserManager.Setup(x => x.FindByEmailAsync(email)).ReturnsAsync(deletedUser);
+
+        var result = await _userService.LoginAsync(email, password);
+
+        Assert.True(result.IsError);
+        Assert.IsType<UnauthorizedError>(result.Error);
+    }
+
+    [Fact]
     public async Task Login_WhenCredentialsAreInvalid_ReturnsUnauthorizedError()
     {
         // Arrange
@@ -226,6 +250,31 @@ public class UserServiceTests : UnitTestBase, IDisposable
         Assert.Equal("accessToken", result.Value.AuthToken);
     }
 
+    [Fact]
+    public async Task RedeemRefreshToken_ReturnsUnauthorized_WhenUserDeleted()
+    {
+        var refreshToken = Guid.NewGuid();
+        var deletedUser = new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = "deleted@test.com",
+            Email = "deleted@test.com",
+            Name = "Deleted",
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password,
+            RefreshToken = refreshToken,
+            DeletedAt = DateTime.UtcNow
+        };
+
+        var users = new List<User> { deletedUser }.AsEnumerable().BuildMock();
+        _mockUserManager.Setup(x => x.Users).Returns(users);
+
+        var result = await _userService.RedeemRefreshTokenAsync(refreshToken);
+
+        Assert.True(result.IsError);
+        Assert.IsType<UnauthorizedError>(result.Error);
+    }
+
     #endregion
 
     [Fact]
@@ -237,6 +286,29 @@ public class UserServiceTests : UnitTestBase, IDisposable
         var result = await _userService.AnyAdmins();
 
         Assert.True(result);
+    }
+
+    [Fact]
+    public async Task AnyAdmins_ReturnsFalse_WhenAdminsAreDeleted()
+    {
+        var admins = new List<User>
+        {
+            new()
+            {
+                Id = Guid.NewGuid(),
+                UserName = "admin@test.com",
+                Email = "admin@test.com",
+                Name = "admin",
+                Role = Role.Admin,
+                LoginMode = UserLoginMode.Password,
+                DeletedAt = DateTime.UtcNow
+            }
+        };
+        _mockUserManager.Setup(x => x.GetUsersInRoleAsync("Admin")).ReturnsAsync(admins);
+
+        var result = await _userService.AnyAdmins();
+
+        Assert.False(result);
     }
 
     [Fact]
@@ -272,6 +344,37 @@ public class UserServiceTests : UnitTestBase, IDisposable
 
         Assert.True(result.HasValue);
         Assert.Equal(2, result.Value.Count);
+    }
+
+    [Fact]
+    public async Task GetCurrentUserAsync_ReturnsNotFound_WhenUserDeleted()
+    {
+        var id = Guid.NewGuid();
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+            {
+                new(ClaimTypes.Role, nameof(Role.User)),
+                new("id", id.ToString())
+            }, "TestAuth"))
+        };
+
+        _httpContextAccessorMock.Setup(h => h.HttpContext).Returns(context);
+        _mockUserManager.Setup(x => x.FindByIdAsync(id.ToString())).ReturnsAsync(new User
+        {
+            Id = id,
+            UserName = "deleted@test.com",
+            Email = "deleted@test.com",
+            Name = "deleted",
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password,
+            DeletedAt = DateTime.UtcNow
+        });
+
+        var result = await _userService.GetCurrentUserAsync();
+
+        Assert.True(result.IsError);
+        Assert.IsType<NotFoundError>(result.Error);
     }
 
     [Fact]

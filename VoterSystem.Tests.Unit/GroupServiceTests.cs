@@ -106,7 +106,7 @@ public sealed class GroupServiceTests : UnitTestBase
     }
 
     [Fact]
-    public async Task DeleteGroupAsync_RemovesGroupAndMemberships()
+    public async Task DeleteGroupAsync_SoftDeletesGroup()
     {
         var group = await CreateGroupAsync(_admin.Id);
         await AddMemberAsync(group.GroupId, _member.Id, _admin.Id);
@@ -115,8 +115,58 @@ public sealed class GroupServiceTests : UnitTestBase
         var result = await _service.DeleteGroupAsync(group.GroupId);
 
         Assert.True(result.IsNone);
-        Assert.False(Context.Groups.Any(g => g.GroupId == group.GroupId));
-        Assert.False(Context.GroupMembers.Any(m => m.GroupId == group.GroupId));
+        var storedGroup = await Context.Groups.FindAsync(group.GroupId);
+        Assert.NotNull(storedGroup);
+        Assert.NotNull(storedGroup.DeletedAt);
+        Assert.True(Context.GroupMembers.Any(m => m.GroupId == group.GroupId));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DoesNotReturnDeletedGroups()
+    {
+        var group = await CreateGroupAsync(_admin.Id);
+        await AddMemberAsync(group.GroupId, _member.Id, _admin.Id);
+        group.DeletedAt = DateTime.UtcNow;
+        Context.Groups.Update(group);
+        await Context.SaveChangesAsync();
+
+        SetCurrentUser(_member.Id, Role.User);
+
+        var result = await _service.GetAllAsync();
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ReturnsNotFound_WhenGroupDeleted()
+    {
+        var group = await CreateGroupAsync(_admin.Id);
+        await AddMemberAsync(group.GroupId, _member.Id, _admin.Id);
+        group.DeletedAt = DateTime.UtcNow;
+        Context.Groups.Update(group);
+        await Context.SaveChangesAsync();
+        SetCurrentUser(_member.Id, Role.User);
+
+        var result = await _service.GetByIdAsync(group.GroupId);
+
+        Assert.True(result.IsError);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task AddToGroupAsync_ReturnsBadRequest_WhenGroupDeleted()
+    {
+        var group = await CreateGroupAsync(_admin.Id);
+        await AddMemberAsync(group.GroupId, _admin.Id, _admin.Id);
+        group.DeletedAt = DateTime.UtcNow;
+        Context.Groups.Update(group);
+        await Context.SaveChangesAsync();
+        SetCurrentUser(_admin.Id, Role.Admin);
+
+        var result = await _service.AddToGroupAsync(group.GroupId, _member.Id);
+
+        Assert.True(result.IsSome);
+        Assert.IsType<BadRequestError>(result.AsSome.Value);
     }
 
     [Fact]

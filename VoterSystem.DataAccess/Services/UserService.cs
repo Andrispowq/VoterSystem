@@ -28,7 +28,7 @@ public class UserService(
     public async Task<bool> AnyAdmins()
     {
         var list = await userManager.GetUsersInRoleAsync("Admin");
-        return list.Count > 0;
+        return list.Any(u => u.DeletedAt is null);
     }
 
     public async Task<Result<List<User>, ServiceError>> GetAllUsersAsync()
@@ -38,7 +38,9 @@ public class UserService(
             return new UnauthorizedError("Access denied");
         }
         
-        return await userManager.Users.ToListAsync();
+        return await userManager.Users
+            .Where(u => u.DeletedAt == null)
+            .ToListAsync();
     }
 
     public async Task<Option<ServiceError>> CreateUser(User user, string password)
@@ -64,6 +66,7 @@ public class UserService(
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user is null) return new NotFoundError("User not found");
+        if (user.IsDeleted) return new UnauthorizedError("User has been deleted");
         
         var result = await signInManager.PasswordSignInAsync(user.UserName!, password, 
             isPersistent: false, lockoutOnFailure: true);
@@ -99,6 +102,7 @@ public class UserService(
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null) return new NotFoundError("User not found");
+        if (user.IsDeleted) return new UnauthorizedError("User has been deleted");
         
         var success = await userManager.VerifyTwoFactorTokenAsync(user, TokenProviderFor2Fa, code);
         if (!success) return new BadRequestError("Failed to verify two factor authentication");
@@ -133,10 +137,8 @@ public class UserService(
     {
         var accessToken = tokenIssuer.GenerateJwtToken(user);
 
-        //Regenerate refresh token on login
-        user.RefreshToken = Guid.NewGuid();
-        var updateResult = await userManager.UpdateAsync(user);
-        if (!updateResult.Succeeded) return new BadRequestError("Login failed");
+        var ensureRefresh = await EnsureRefreshTokenAsync(user);
+        if (ensureRefresh.IsSome) return ensureRefresh.AsSome.Value;
         
         return new TokensDto
         {
@@ -150,13 +152,12 @@ public class UserService(
     {
         var user = await userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         if (user is null) return new NotFoundError("Invalid refresh token");
+        if (user.IsDeleted) return new UnauthorizedError("User has been deleted");
 
         var accessToken = tokenIssuer.GenerateJwtToken(user);
 
-        //Regenerate refresh token on redeeming
-        user.RefreshToken = Guid.NewGuid();
-        var updateResult = await userManager.UpdateAsync(user);
-        if (!updateResult.Succeeded) return new BadRequestError("Login failed");
+        var ensureRefresh = await EnsureRefreshTokenAsync(user);
+        if (ensureRefresh.IsSome) return ensureRefresh.AsSome.Value;
         
         return new TokensDto
         {
@@ -242,6 +243,7 @@ public class UserService(
         
         var user = await userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null) return new NotFoundError("User not found");
+        if (user.IsDeleted) return new NotFoundError("User not found");
 
         return user;
     }
@@ -250,6 +252,7 @@ public class UserService(
     {
         var user = await userManager.FindByIdAsync(id.ToString());
         if (user is null) return new NotFoundError("User not found");
+        if (user.IsDeleted) return new NotFoundError("User not found");
         
         if (!IsAdmin && user.Id != UserId)
             return new UnauthorizedError("You may now access this user");
@@ -261,6 +264,7 @@ public class UserService(
     {
         var user = await userManager.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user is null) return new NotFoundError("User not found");
+        if (user.IsDeleted) return new NotFoundError("User not found");
 
         return user;
     }
@@ -269,6 +273,7 @@ public class UserService(
     {
         var user = await userManager.FindByIdAsync(id.ToString());
         if (user is null) return new NotFoundError("User not found");
+        if (user.IsDeleted) return new NotFoundError("User not found");
         
         var result = await userManager.GetRolesAsync(user);
         return result.Select(Enum.Parse<Role>).FirstOrDefault();
@@ -283,6 +288,7 @@ public class UserService(
         
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null) return new NotFoundError("User not found");
+        if (user.IsDeleted) return new NotFoundError("User not found");
         
         user.Role = role;
         await userManager.UpdateAsync(user);
@@ -308,6 +314,10 @@ public class UserService(
         var provider = request.Provider.ToString();
         var providerKey = request.ProviderKey;
         var user = await userManager.FindByLoginAsync(provider, providerKey);
+        if (user is not null && user.IsDeleted)
+        {
+            return new UnauthorizedError("User has been deleted");
+        }
         if (user is null)
         {
             var register = await HandleExternalRegisterAsync(request);
@@ -320,6 +330,11 @@ public class UserService(
             user = register.Value;
         }
 
+        if (user.IsDeleted)
+        {
+            return new UnauthorizedError("User has been deleted");
+        }
+
         var result = await HandleExternalLoginAsync(user);
         if (result.IsError)
         {
@@ -329,9 +344,32 @@ public class UserService(
         return result;
     }
 
+    private async Task<Option<ServiceError>> EnsureRefreshTokenAsync(User user)
+    {
+        if (user.RefreshToken.HasValue)
+        {
+            return new Option<ServiceError>.None();
+        }
+
+        user.RefreshToken = Guid.NewGuid();
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            _logger.LogWarning("Failed to persist refresh token for user {UserId}: {Error}",
+                user.Id, updateResult.Errors.FirstOrDefault()?.Description);
+            return new BadRequestError("Login failed");
+        }
+
+        return new Option<ServiceError>.None();
+    }
+
     private async Task<Result<User, ServiceError>> HandleExternalRegisterAsync(ThirdPartyAuthRequest request)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
+        if (user is not null && user.IsDeleted)
+        {
+            return new UnauthorizedError("User has been deleted");
+        }
         if (user is null)
         {
             user = new User
@@ -341,7 +379,8 @@ public class UserService(
                 Email = request.Email,
                 EmailConfirmed = true,
                 LoginMode = UserLoginMode.Social,
-                Role = Role.User
+                Role = Role.User,
+                RefreshToken = Guid.NewGuid()
             };
 
             var createResult = await userManager.CreateAsync(user);
@@ -371,26 +410,6 @@ public class UserService(
 
     private async Task<Result<TokensDto, ServiceError>> HandleExternalLoginAsync(User user)
     {
-        var token = tokenIssuer.GenerateJwtToken(user);
-
-        var refreshToken = Guid.NewGuid();
-        user.RefreshToken = refreshToken;
-
-        var result = await userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-        {
-            _logger.LogWarning("Failed to create refresh token for user {UserId} during external login: {Error}", 
-                user.Id, result.Errors.First().Description);
-            return new BadRequestError("Failed to update user with refresh token");
-        }
-
-        var dto = new TokensDto
-        {
-            AuthToken = token,
-            RefreshToken = refreshToken,
-            UserId = user.Id
-        };
-
-        return dto;
+        return await IssueTokensAsync(user);
     }
 }

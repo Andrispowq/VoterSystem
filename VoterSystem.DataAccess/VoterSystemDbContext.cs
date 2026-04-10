@@ -117,7 +117,8 @@ public class VoterSystemDbContext(DbContextOptions<VoterSystemDbContext> options
             
             entity.HasOne(v => v.Group)
                 .WithMany(user => user.Votings)
-                .HasForeignKey(v => v.GroupId);
+                .HasForeignKey(v => v.GroupId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

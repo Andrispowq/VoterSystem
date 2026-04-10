@@ -110,7 +110,7 @@ public class VotingService(
             return new BadRequestError("Bad start time");
         }
 
-        if (voting.EndsAt <= DateTime.UtcNow.AddDays(1)|| voting.StartsAt.AddDays(1) > voting.EndsAt)
+        if (voting.EndsAt <= DateTime.UtcNow.AddDays(1) || voting.StartsAt.AddDays(1) > voting.EndsAt)
         {
             return new BadRequestError("Bad end time");
         }

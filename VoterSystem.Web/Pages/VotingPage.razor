@@ -84,8 +84,6 @@ else
 
     private Task OnVoteClicked()
     {
-        Console.WriteLine($"Trying to vote on {_selectedChoiceId}");
-        
         if (_selectedChoiceId > 0)
             _confirmModal?.Show();
 
@@ -94,9 +92,7 @@ else
 
     private async Task SubmitVoteAsync()
     {
-        Console.WriteLine($"Voting on {_selectedChoiceId}");
         await VotingsService.VoteAsync(_selectedChoiceId);
-
         NavigationManager.NavigateTo("/home");
     }
 }

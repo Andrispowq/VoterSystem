@@ -155,7 +155,6 @@
     private async Task HandleLogin()
     {
         var result = await AuthenticationService.LoginAsync(LoginViewModel);
-        Console.WriteLine($"Result is {result}");
         if (result.Succeeded)
         {
             NavigationManager.NavigateTo("/votings");

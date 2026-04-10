@@ -1,5 +1,4 @@
-﻿using System.Net.Http.Headers;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace VoterSystem.Shared.Blazor.Services;
 
@@ -33,14 +32,5 @@ public abstract class BaseService(IToastService toastService)
     protected void ShowErrorMessage(string message)
     {
         toastService.ShowToast(message);
-    }
-
-    protected int GetPagedListTotalCount(HttpResponseHeaders headers)
-    {
-        if (headers.TryGetValues("X-Count", out var values) && int.TryParse(values.FirstOrDefault(), out int count))
-        {
-            return count;
-        }
-        throw new ArgumentException("No totalCount number found.");
     }
 }

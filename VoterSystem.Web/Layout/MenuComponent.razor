@@ -1,6 +1,5 @@
 ﻿@using VoterSystem.Shared.Blazor.Services
 @using VoterSystem.Shared.Blazor.Config
-@using VoterSystem.Shared.Dto
 @inject IAuthenticationService AuthenticationService
 @inject NavigationManager NavigationManager
 
@@ -36,20 +35,10 @@
 @code {
 
     private string? _userName;
-    private Role? _currentRole;
-    private bool _collapseNavMenu = true;
-
-    private string? NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
 
     protected override async Task OnInitializedAsync()
     {
         _userName = await AuthenticationService.GetCurrentlyLoggedInUserAsync();
-        _currentRole = await AuthenticationService.GetCurrentRoleAsync() ?? Role.User;
-    }
-
-    private void ToggleNavMenu()
-    {
-        _collapseNavMenu = !_collapseNavMenu;
     }
 
     private async Task Logout()

@@ -4,7 +4,6 @@
 @using VoterSystem.Shared.Dto
 @inject NavigationManager NavigationManager
 @inject IVotingsService VotingsService
-@inject IAuthenticationService AuthService
 
 <PageTitle>Home · VoterSystem</PageTitle>
 
@@ -80,13 +79,9 @@ else
 @code {
     private List<VotingDto> _votings = new();
     private bool _isLoading = true;
-    private Guid? _currentUserId;
 
     protected override async Task OnInitializedAsync()
     {
-        var user = await AuthService.GetCurrentUserAsync();
-        _currentUserId = user?.Id;
-
         var all = await VotingsService.GetVotableVotingsAsync();
         if (all is null) return;
 

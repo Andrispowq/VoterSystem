@@ -21,7 +21,9 @@ public class EmailService(IOptions<EmailSettings> emailSettingsOptions,
         mail.Body = body;
         mail.IsBodyHtml = true;
         
-        using var smtp = new SmtpClient(_emailSettings.Host, _emailSettings.Port);
+        using var smtp = _emailSettings.Port is null ? 
+            new SmtpClient(_emailSettings.Host)
+            : new SmtpClient(_emailSettings.Host, _emailSettings.Port.Value);
         smtp.Credentials = new NetworkCredential(_emailSettings.UserName, _emailSettings.Password);
         smtp.EnableSsl = _emailSettings.EnableSsl;
 

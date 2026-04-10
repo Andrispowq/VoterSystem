@@ -75,12 +75,6 @@ public sealed class GroupService(
             var result = await context.SaveChangesAsync(ct);
             if (result.IsSome) return result.AsSome.Value;
 
-            await context.Entry(group)
-                .Collection(g => g.Members)
-                .Query()
-                .Include(m => m.User)
-                .LoadAsync(ct);
-
             return group;
         }
         catch (Exception e)

@@ -137,7 +137,7 @@
         StateHasChanged();
     }
 
-    private void CancelDeleteAsync()
+    private static void CancelDeleteAsync()
     {
         Console.WriteLine("Cancelled deletion");
     }
@@ -152,7 +152,6 @@
         try
         {
             var result = await VotingsService.GetVotingResultAsync(votingId);
-            Console.WriteLine($"Loaded result for voting ID {votingId}: {result is not null}");
 
             if (result is not null)
             {

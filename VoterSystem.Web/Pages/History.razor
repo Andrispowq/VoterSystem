@@ -97,7 +97,7 @@
         {
             foreach (var voting in ViewModel.Votings.Where(v => v.IsOngoing || v.HasEnded))
             {
-                await LoadVotingResult(voting.VotingId); // fire and forget
+                await LoadVotingResult(voting.VotingId);
             }
         }
         
@@ -219,10 +219,7 @@
             <ul class="list-group list-group-flush">
                 @foreach (var choice in voting.VoteChoices)
                 {
-                     var isSelected = /*_userVotesByVotingId.TryGetValue(voting.VotingId, out var selectedChoiceId)
-                                          && selectedChoiceId == choice.ChoiceId;*/false;
-
-                    <li class="list-group-item d-flex justify-content-between align-items-start @(isSelected ? "list-group-item-success fw-bold" : "")">
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
                         <div>
                             <strong>@choice.Name</strong>
                             @if (!string.IsNullOrWhiteSpace(choice.Description))

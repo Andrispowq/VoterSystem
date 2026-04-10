@@ -27,11 +27,9 @@ public class ToastService(AppConfig appConfig) : IToastService
     private void RemoveToast(string message)
     {
         //if show more toast with same message the last is the oldest one
-        int lastIndex = _toasts.LastIndexOf(message);
-        if (lastIndex >= 0)
-        {
-            _toasts.RemoveAt(lastIndex);
-            OnToastChanged?.Invoke();
-        }
+        var lastIndex = _toasts.LastIndexOf(message);
+        if (lastIndex < 0) return;
+        _toasts.RemoveAt(lastIndex);
+        OnToastChanged?.Invoke();
     }
 }

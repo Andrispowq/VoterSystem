@@ -1,5 +1,4 @@
 using Bunit;
-using Bunit.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using VoterSystem.Shared.Blazor.Services;
@@ -11,8 +10,6 @@ public class EmailConfirmPageComponentTests : IDisposable
 {
     private readonly TestContext _context = new();
     private readonly Mock<IAuthenticationService> _authenticationServiceMock = new();
-    // https://bunit.dev/docs/test-doubles/fake-navigation-manager.html
-    private readonly FakeNavigationManager _fakeNavigationManager;
 
     public EmailConfirmPageComponentTests()
     {
@@ -22,7 +19,6 @@ public class EmailConfirmPageComponentTests : IDisposable
             .ReturnsAsync("admin");
         
         _context.Services.AddSingleton(_authenticationServiceMock.Object);
-        _fakeNavigationManager = _context.Services.GetRequiredService<FakeNavigationManager>();
     }
 
     public void Dispose() => _context.Dispose();

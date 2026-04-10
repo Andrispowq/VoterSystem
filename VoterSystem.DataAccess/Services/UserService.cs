@@ -235,7 +235,7 @@ public class UserService(
         return new ConflictError(result.Errors.First().Description);
     }
 
-    private async Task<Result<User, ServiceError>> GetCurrentUserAsync()
+    public async Task<Result<User, ServiceError>> GetCurrentUserAsync()
     {
         var userId = MaybeUserId;
         if (userId is null) return new NotFoundError("No user present");
@@ -303,21 +303,14 @@ public class UserService(
         return new Option<ServiceError>.None();
     }
 
-    public async Task<Result<User, ServiceError>> GetCurrentUserAsync(CancellationToken ct = default)
-    {
-        var user = await userManager.FindByIdAsync(UserId.ToString());
-        if (user is null) return new NotFoundError("User not found");
-        return user;
-    }
-
-    public async Task<Result<TokensDto, ServiceError>> HandleExternalAuthAsync(ThirdPartyAuthRequest request, CancellationToken ct = default)
+    public async Task<Result<TokensDto, ServiceError>> HandleExternalAuthAsync(ThirdPartyAuthRequest request)
     {
         var provider = request.Provider.ToString();
         var providerKey = request.ProviderKey;
         var user = await userManager.FindByLoginAsync(provider, providerKey);
         if (user is null)
         {
-            var register = await HandleExternalRegisterAsync(request, ct);
+            var register = await HandleExternalRegisterAsync(request);
             if (register.IsError)
             {
                 _logger.LogWarning("Failed to register user with external provider {Provider}: {Error}", 
@@ -327,7 +320,7 @@ public class UserService(
             user = register.Value;
         }
 
-        var result = await HandleExternalLoginAsync(user, ct);
+        var result = await HandleExternalLoginAsync(user);
         if (result.IsError)
         {
             _logger.LogWarning("Failed to handle external login for user {UserId} with provider {Provider}: {Error}", 
@@ -336,7 +329,7 @@ public class UserService(
         return result;
     }
 
-    private async Task<Result<User, ServiceError>> HandleExternalRegisterAsync(ThirdPartyAuthRequest request, CancellationToken ct = default)
+    private async Task<Result<User, ServiceError>> HandleExternalRegisterAsync(ThirdPartyAuthRequest request)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user is null)
@@ -361,9 +354,7 @@ public class UserService(
             await userManager.AddToRoleAsync(user, role);
         }
 
-        // link
-        //
-        // login to existing account
+        // link login to existing account
         var provider = request.Provider.ToString();
         var providerKey = request.ProviderKey;
         var info = new UserLoginInfo(provider, providerKey, provider);
@@ -378,7 +369,7 @@ public class UserService(
         return user;
     }
 
-    private async Task<Result<TokensDto, ServiceError>> HandleExternalLoginAsync(User user, CancellationToken ct)
+    private async Task<Result<TokensDto, ServiceError>> HandleExternalLoginAsync(User user)
     {
         var token = tokenIssuer.GenerateJwtToken(user);
 

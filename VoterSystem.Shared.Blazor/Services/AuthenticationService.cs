@@ -76,15 +76,10 @@ public class AuthenticationService(
             return LoginAttemptResultDto.Failure();
         }
 
-        var content = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"Content is {content}, code is {response.StatusCode}");
-
         if (response.StatusCode == HttpStatusCode.Accepted)
         {
             var challenge = await response.Content.ReadFromJsonAsync<TwoFactorChallengeDto>()
                             ?? throw new System.Exception("Error with 2FA challenge response.");
-            
-            Console.WriteLine($"Challenge is {challenge}");
 
             return LoginAttemptResultDto.TwoFactorRequired(challenge.UserId);
         }
@@ -93,7 +88,6 @@ public class AuthenticationService(
         {
             var responseBody = await response.Content.ReadFromJsonAsync<TokensDto>()
                                ?? throw new System.Exception("Error with auth response.");
-            Console.WriteLine($"Response is {responseBody}");
 
             await StoreTokensAsync(responseBody);
             return LoginAttemptResultDto.Success();

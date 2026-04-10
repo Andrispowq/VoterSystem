@@ -116,7 +116,7 @@ public class ExternalLoginController(
                 Name = name,
                 Email = email,
                 ProviderKey = id
-            }, ct);
+            });
 
         if (result.IsError)
         {
@@ -178,30 +178,36 @@ public class ExternalLoginController(
         var claim = claims.FirstOrDefault(c => c.Type == type);
         if (claim is not null) return claim.Value;
 
-        if (type == ClaimTypes.Name)
+        switch (type)
         {
-            var compositeName = BuildNameFromClaims(claims);
-            if (!string.IsNullOrWhiteSpace(compositeName))
+            case ClaimTypes.Name:
             {
-                return compositeName;
+                var compositeName = BuildNameFromClaims(claims);
+                if (!string.IsNullOrWhiteSpace(compositeName))
+                {
+                    return compositeName;
+                }
+
+                break;
+            }
+            case ClaimTypes.Email:
+            {
+                var upn = claims.FirstOrDefault(c => c.Type == ClaimTypes.Upn)?.Value;
+                if (!string.IsNullOrWhiteSpace(upn))
+                {
+                    return upn;
+                }
+
+                var nameId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrWhiteSpace(nameId))
+                {
+                    return nameId;
+                }
+
+                break;
             }
         }
 
-        if (type == ClaimTypes.Email)
-        {
-            var upn = claims.FirstOrDefault(c => c.Type == ClaimTypes.Upn)?.Value;
-            if (!string.IsNullOrWhiteSpace(upn))
-            {
-                return upn;
-            }
-
-            var nameId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrWhiteSpace(nameId))
-            {
-                return nameId;
-            }
-        }
-        
         logger.LogWarning("TicketReceivedHandler: {Type} can not be claimed for provider {Provider}", type, provider);
         //throw new MissingFieldException("Claim missing");
         return string.Empty;

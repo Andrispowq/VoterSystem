@@ -132,20 +132,16 @@ public class HttpRequestUtility(
 
         var response = await httpClient.SendAsync(request, cancellationToken);
 
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-        {
-            var loginResponseDto = await RedeemTokenAsync(cancellationToken);
+        if (response.StatusCode != System.Net.HttpStatusCode.Unauthorized) return response;
+        var loginResponseDto = await RedeemTokenAsync(cancellationToken);
 
-            if (!string.IsNullOrEmpty(loginResponseDto.AuthToken))
-            {
-                var newRequest = CloneRequest(request);
-                newRequest.Headers.Authorization =
-                    new AuthenticationHeaderValue("Bearer", loginResponseDto.AuthToken);
+        if (string.IsNullOrEmpty(loginResponseDto.AuthToken)) return response;
+        var newRequest = CloneRequest(request);
+        newRequest.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", loginResponseDto.AuthToken);
 
-                response.Dispose();
-                response = await httpClient.SendAsync(newRequest, cancellationToken);
-            }
-        }
+        response.Dispose();
+        response = await httpClient.SendAsync(newRequest, cancellationToken);
 
         return response;
     }
@@ -183,18 +179,17 @@ public class HttpRequestUtility(
         var content = new StringContent(refreshToken, Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync("/api/v1/users/refresh-token", content, cancellationToken);
 
-        if (response.IsSuccessStatusCode)
-        {
-            var responseData = await response.Content.ReadAsStringAsync(cancellationToken);
-            var loginResponseDto = JsonSerializer.Deserialize<TokensDto>(responseData, jsonOptions) ?? throw new HttpRequestException();
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestErrorException(response);
+        
+        var responseData = await response.Content.ReadAsStringAsync(cancellationToken);
+        var loginResponseDto = JsonSerializer.Deserialize<TokensDto>(responseData, jsonOptions) ?? throw new HttpRequestException();
 
-            await localStorageService.SetItemAsStringAsync("RefreshToken", loginResponseDto.RefreshToken.ToString(), cancellationToken);
-            await localStorageService.SetItemAsStringAsync("AuthToken", loginResponseDto.AuthToken, cancellationToken);
+        await localStorageService.SetItemAsStringAsync("RefreshToken", loginResponseDto.RefreshToken.ToString(), cancellationToken);
+        await localStorageService.SetItemAsStringAsync("AuthToken", loginResponseDto.AuthToken, cancellationToken);
 
-            return loginResponseDto;
-        }
+        return loginResponseDto;
 
-        throw new HttpRequestErrorException(response);
     }
 
     public bool IsAccessTokenExpired(string token)

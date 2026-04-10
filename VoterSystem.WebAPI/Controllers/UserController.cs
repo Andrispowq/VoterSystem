@@ -92,7 +92,7 @@ public class UserController(IUserService userService, IEmailService emailService
         var users = await userService.GetAllUsersAsync();
         if (users.IsError) return users.Error.ToHttpResult();
         
-        List<UserDto> userDtos = new List<UserDto>();
+        var userDtos = new List<UserDto>();
         foreach (var user in users.Value)
         {
             var result = await userService.GetUserRoleByIdAsync(user.Id);
@@ -140,9 +140,7 @@ public class UserController(IUserService userService, IEmailService emailService
     public async Task<IActionResult> ChangePasswordAsync([FromBody] UserChangePasswordRequestDto dto)
     {
         var changePassword = await userService.ChangePasswordAsync(dto.OldPassword, dto.NewPassword);
-        return changePassword.IsSome
-            ? changePassword.ToHttpResult()
-            : Ok();
+        return changePassword.ToHttpResult();
     }
 
     [Authorize]
@@ -194,9 +192,7 @@ public class UserController(IUserService userService, IEmailService emailService
             var convertedToken = Encoding.ASCII.GetString(Convert.FromBase64String(dto.Token));
 
             var confirm = await userService.ConfirmEmailAsync(dto.Email, convertedToken);
-            return confirm.IsSome
-                ? confirm.ToHttpResult()
-                : Ok();
+            return confirm.ToHttpResult();
         }
         catch
         {
@@ -238,9 +234,7 @@ public class UserController(IUserService userService, IEmailService emailService
             var convertedToken = Encoding.ASCII.GetString(Convert.FromBase64String(dto.Token));
 
             var confirm = await userService.ResetPasswordAsync(dto.Email, convertedToken, dto.NewPassword);
-            return confirm.IsSome
-                ? confirm.ToHttpResult()
-                : Ok();
+            return confirm.ToHttpResult();
         }
         catch
         {
@@ -281,7 +275,7 @@ public class UserController(IUserService userService, IEmailService emailService
     {
         if (!Guid.TryParse(refreshToken, out var token))
         {
-            return BadRequest("Mal-formatted Guid");
+            return BadRequest("Malformatted Guid");
         }
         
         return (await userService.RedeemRefreshTokenAsync(token)).ToHttpResult();

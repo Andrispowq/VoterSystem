@@ -73,7 +73,7 @@ public class ChoiceController(IVotingService votingService, IVoteChoiceService v
     [HttpDelete("{choiceId:long}")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CreateChoice(long votingId, long choiceId)
+    public async Task<IActionResult> DeleteChoice(long votingId, long choiceId)
     {
         var voting  = await votingService.GetVotingById(votingId);
         if (voting.IsError) return voting.Error.ToHttpResult();

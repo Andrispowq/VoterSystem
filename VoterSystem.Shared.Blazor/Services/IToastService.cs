@@ -1,9 +1,8 @@
-﻿namespace VoterSystem.Shared.Blazor.Services
+﻿namespace VoterSystem.Shared.Blazor.Services;
+
+public interface IToastService
 {
-    public interface IToastService
-    {
-        public event Action? OnToastChanged;
-        public IReadOnlyList<string> Toasts { get; }
-        public void ShowToast(string message);
-    }
+    public event Action? OnToastChanged;
+    public IReadOnlyList<string> Toasts { get; }
+    public void ShowToast(string message);
 }

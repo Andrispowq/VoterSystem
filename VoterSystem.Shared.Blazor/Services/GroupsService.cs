@@ -12,7 +12,7 @@ public class GroupsService(IHttpRequestUtility httpRequestUtility, IToastService
         try
         {
             var result = await httpRequestUtility.ExecuteGetHttpRequestAsync<List<GroupDto>>("groups");
-            return result.Response ?? [];
+            return result.Response;
         }
         catch (HttpRequestErrorException ex)
         {

@@ -192,7 +192,6 @@
     private async Task GoToHome()
     {
         var role = await AuthenticationService.GetCurrentRoleAsync();
-        Console.WriteLine($"Role is {role}");
         if (role != Role.User)
         {
             _adminLoginModal?.Show();   

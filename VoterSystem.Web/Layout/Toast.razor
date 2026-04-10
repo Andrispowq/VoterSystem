@@ -1,5 +1,6 @@
 ﻿@using VoterSystem.Shared.Blazor.Services
 @inject IToastService ToastService
+@implements IDisposable
 
 <div class="toast-container position-fixed top-0 end-0 mt-5 p-3">
     @foreach (var toast in ToastService.Toasts)

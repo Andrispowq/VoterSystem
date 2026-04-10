@@ -1,9 +1,9 @@
 @page "/groups"
 @layout MainLayout
 
-@using System.ComponentModel.DataAnnotations
 @using System.Linq
 @using VoterSystem.Shared.Blazor.Services
+@using VoterSystem.Shared.Blazor.ViewModels
 @using VoterSystem.Shared.Dto
 @using VoterSystem.Web.Admin.Layout
 
@@ -253,12 +253,9 @@ else
     {
         if (!_isAdmin || !_groupSearchValues.TryGetValue(group.GroupId, out var term) || string.IsNullOrWhiteSpace(term))
         {
-            Console.WriteLine("Not found anything");
             return [];
         }
         
-        Console.WriteLine("Searching for term");
-
         return _allUsers
             .Where(u => group.Members.All(m => m.UserId != u.Id))
             .Where(u => u.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
@@ -278,17 +275,6 @@ else
     private void ExpandGroup(Guid groupId)
     {
         _expandedGroups.Add(groupId);
-    }
-
-    private sealed class CreateGroupViewModel
-    {
-        [Required]
-        [StringLength(32, MinimumLength = 3)]
-        public string Name { get; set; } = string.Empty;
-
-        [Required]
-        [StringLength(255, MinimumLength = 3)]
-        public string Description { get; set; } = string.Empty;
     }
 
     private bool IsExpanded(Guid groupId)

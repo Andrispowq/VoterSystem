@@ -184,13 +184,16 @@
             <div class="card-header text-white @(voting.IsOngoing ? "bg-success" : voting.HasEnded ? "bg-primary" : "bg-danger")">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <button class="btn btn-sm border-0 bg-white text-dark me-2"
-                                style="box-shadow: none;"
-                                title="Delete voting"
-                                @onclick:stopPropagation
-                                @onclick="() => ShowDeleteConfirm(voting)">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        @if (!voting.HasStarted)
+                        {
+                            <button class="btn btn-sm border-0 bg-white text-dark me-2"
+                                    style="box-shadow: none;"
+                                    title="Delete voting"
+                                    @onclick:stopPropagation
+                                    @onclick="() => ShowDeleteConfirm(voting)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        }
                         <strong>@voting.Name</strong>
                     </div>
                     <span class="badge bg-light text-dark">

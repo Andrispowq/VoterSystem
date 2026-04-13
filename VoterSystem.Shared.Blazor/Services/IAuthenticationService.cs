@@ -6,7 +6,7 @@ namespace VoterSystem.Shared.Blazor.Services;
 public interface IAuthenticationService
 {
     //User management
-    Task<List<UserDto>> GetUsersAsync();
+    Task<List<UserDto>> GetUsersAsync(string? nameQuery = null);
     Task<bool> PromoteUserToAdminAsync(Guid userId);
     Task<bool> DemoteAdminToUserAsync(Guid userId);
     

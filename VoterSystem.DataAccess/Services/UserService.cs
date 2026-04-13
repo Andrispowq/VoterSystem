@@ -31,16 +31,25 @@ public class UserService(
         return list.Any(u => u.DeletedAt is null);
     }
 
-    public async Task<Result<List<User>, ServiceError>> GetAllUsersAsync()
+    public async Task<Result<List<User>, ServiceError>> GetAllUsersAsync(string? nameQuery = null)
     {
         if (!IsAdmin)
         {
             return new UnauthorizedError("Access denied");
         }
-        
-        return await userManager.Users
-            .Where(u => u.DeletedAt == null)
-            .ToListAsync();
+
+        var query = userManager.Users
+            .Where(u => u.DeletedAt == null);
+
+        if (!string.IsNullOrWhiteSpace(nameQuery))
+        {
+            var normalizedQuery = nameQuery.Trim().ToUpperInvariant();
+            query = query.Where(u => u.NormalizedUserName != null &&
+                                     /*u.NormalizedUserName.Contains(normalizedQuery)*/
+                                     EF.Functions.Like(u.NormalizedUserName, $"%{normalizedQuery}%"));
+        }
+
+        return await query.ToListAsync();
     }
 
     public async Task<Option<ServiceError>> CreateUser(User user, string password)

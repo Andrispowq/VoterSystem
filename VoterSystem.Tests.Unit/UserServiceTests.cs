@@ -347,6 +347,41 @@ public class UserServiceTests : UnitTestBase, IDisposable
     }
 
     [Fact]
+    public async Task GetAllUsersAsync_WithNameQuery_FiltersUsingNormalizedUserName()
+    {
+        var matchingUser = new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = "match@test.com",
+            NormalizedUserName = "MATCH@TEST.COM",
+            Email = "match@test.com",
+            Name = "Match",
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
+        };
+        var otherUser = new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = "other@test.com",
+            NormalizedUserName = "OTHER@TEST.COM",
+            Email = "other@test.com",
+            Name = "Other",
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
+        };
+
+        var users = new List<User> { matchingUser, otherUser };
+        _mockUserManager.Setup(x => x.Users).Returns(users.AsEnumerable().BuildMock());
+        _mockUserService_IsCurrentUserAdmin_Returns(true);
+
+        var result = await _userService.GetAllUsersAsync("match");
+
+        Assert.True(result.HasValue);
+        var returnedUser = Assert.Single(result.Value);
+        Assert.Equal(matchingUser.Id, returnedUser.Id);
+    }
+
+    [Fact]
     public async Task GetCurrentUserAsync_ReturnsNotFound_WhenUserDeleted()
     {
         var id = Guid.NewGuid();
@@ -430,8 +465,8 @@ public class UserServiceTests : UnitTestBase, IDisposable
     [Fact]
     public async Task ChangePasswordAsync_ReturnsConflict_WhenFailed()
     {
-        var oldPassword = "Pass1";
-        var newPassword = "Pass2";
+        const string oldPassword = "Pass1";
+        const string newPassword = "Pass2";
 
         _mockUserService_GetCurrentUserAsync_ReturnsValidUser();
         _mockUserManager.Setup(x => x.ChangePasswordAsync(It.IsAny<User>(), oldPassword, newPassword))

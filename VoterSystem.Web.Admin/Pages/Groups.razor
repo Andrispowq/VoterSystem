@@ -107,7 +107,7 @@ else
                                 <div class="mb-3">
                                     <label class="form-label">Add user by name or email</label>
                                     <input class="form-control" placeholder="Start typing to search" value="@GetSearchValue(group.GroupId)"
-                                           @oninput="e => UpdateSearch(group.GroupId, e.Value?.ToString() ?? string.Empty)" />
+                                           @oninput="async e => await UpdateSearchAsync(group.GroupId, e.Value?.ToString() ?? string.Empty)" />
                                     @{ var suggestions = GetSuggestions(group).ToList(); }
                                     @if (suggestions.Any())
                                     {
@@ -138,10 +138,10 @@ else
 
 @code {
     private List<GroupDto> _groups = [];
-    private List<UserDto> _allUsers = [];
     private bool _isAdmin;
     private bool _isLoading = true;
     private readonly Dictionary<Guid, string> _groupSearchValues = new();
+    private readonly Dictionary<Guid, List<UserDto>> _groupSearchResults = new();
     private readonly HashSet<Guid> _expandedGroups = [];
     private CreateGroupViewModel _newGroup = new();
 
@@ -150,15 +150,6 @@ else
         var currentUser = await AuthenticationService.GetCurrentUserAsync();
         _isAdmin = currentUser?.Role == Role.Admin;
         await LoadGroupsAsync();
-
-        if (_isAdmin)
-        {
-            _allUsers = await AuthenticationService.GetUsersAsync();
-            if (currentUser is not null && _allUsers.All(u => u.Id != currentUser.Id))
-            {
-                _allUsers.Add(currentUser);
-            }
-        }
 
         _isLoading = false;
     }
@@ -170,6 +161,7 @@ else
         foreach (var group in _groups)
         {
             _groupSearchValues[group.GroupId] = string.Empty;
+            _groupSearchResults[group.GroupId] = [];
             _expandedGroups.Add(group.GroupId);
         }
     }
@@ -206,6 +198,7 @@ else
         {
             _newGroup = new();
             _groupSearchValues[created.GroupId] = string.Empty;
+            _groupSearchResults[created.GroupId] = [];
             await RefreshGroupAsync(created.GroupId);
         }
     }
@@ -218,6 +211,7 @@ else
         await GroupsService.DeleteGroupAsync(groupId);
         _groups.RemoveAll(g => g.GroupId == groupId);
         _groupSearchValues.Remove(groupId);
+        _groupSearchResults.Remove(groupId);
         _expandedGroups.Remove(groupId);
     }
 
@@ -244,22 +238,44 @@ else
         return _groupSearchValues.TryGetValue(groupId, out var value) ? value : string.Empty;
     }
 
-    private void UpdateSearch(Guid groupId, string value)
+    private async Task UpdateSearchAsync(Guid groupId, string value)
     {
         _groupSearchValues[groupId] = value;
+
+        if (!_isAdmin)
+        {
+            return;
+        }
+
+        var trimmed = value.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            _groupSearchResults[groupId] = [];
+            return;
+        }
+
+        var matches = await AuthenticationService.GetUsersAsync(trimmed);
+        if (!_groupSearchValues.TryGetValue(groupId, out var latest) ||
+            !latest.Equals(trimmed, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _groupSearchResults[groupId] = matches;
     }
 
     private IEnumerable<UserDto> GetSuggestions(GroupDto group)
     {
-        if (!_isAdmin || !_groupSearchValues.TryGetValue(group.GroupId, out var term) || string.IsNullOrWhiteSpace(term))
+        if (!_isAdmin
+            || !_groupSearchValues.TryGetValue(group.GroupId, out var term)
+            || string.IsNullOrWhiteSpace(term)
+            || !_groupSearchResults.TryGetValue(group.GroupId, out var users))
         {
             return [];
         }
-        
-        return _allUsers
+
+        return users
             .Where(u => group.Members.All(m => m.UserId != u.Id))
-            .Where(u => u.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
-                        || u.Email.Contains(term, StringComparison.OrdinalIgnoreCase))
             .OrderBy(u => u.Email)
             .Take(5);
     }

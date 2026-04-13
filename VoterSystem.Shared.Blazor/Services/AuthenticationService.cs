@@ -15,11 +15,17 @@ public class AuthenticationService(
     IHttpRequestUtility httpRequestUtility)
     : BaseService(toastService), IAuthenticationService
 {
-    public async Task<List<UserDto>> GetUsersAsync()
+    public async Task<List<UserDto>> GetUsersAsync(string? nameQuery = null)
     {
         try
         {
-            var response = await httpRequestUtility.ExecuteGetHttpRequestAsync<List<UserDto>>("users/all");
+            var uri = "users/all";
+            if (!string.IsNullOrWhiteSpace(nameQuery))
+            {
+                uri += $"?nameQuery={Uri.EscapeDataString(nameQuery)}";
+            }
+
+            var response = await httpRequestUtility.ExecuteGetHttpRequestAsync<List<UserDto>>(uri);
             return response.Response;
         }
         catch (HttpRequestErrorException ex)

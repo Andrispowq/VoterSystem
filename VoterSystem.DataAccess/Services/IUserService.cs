@@ -11,7 +11,7 @@ namespace VoterSystem.DataAccess.Services;
 public interface IUserService : IExternalUserService
 {
     //CRUD
-    Task<Result<List<User>, ServiceError>> GetAllUsersAsync();
+    Task<Result<List<User>, ServiceError>> GetAllUsersAsync(string? nameQuery = null);
     Task<Option<ServiceError>> CreateUser(User user, string password);
     //Helper
     Task<bool> AnyAdmins();

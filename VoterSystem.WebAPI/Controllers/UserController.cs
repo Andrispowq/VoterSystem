@@ -87,9 +87,9 @@ public class UserController(IUserService userService, IEmailService emailService
     [HttpGet("all")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserDto>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetAllUsersAsync()
+    public async Task<IActionResult> GetAllUsersAsync([FromQuery] string? nameQuery = null)
     {
-        var users = await userService.GetAllUsersAsync();
+        var users = await userService.GetAllUsersAsync(nameQuery);
         if (users.IsError) return users.Error.ToHttpResult();
         
         var userDtos = new List<UserDto>();

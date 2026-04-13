@@ -179,7 +179,7 @@ public class VotesHubTests(TestWebAppFactory factory) : TestSignalRObjectFactory
         Assert.Empty(receivedNotifications);
     }
 
-    private void CompareResult(VotingResultsDto expected, VotingResultsDto actual)
+    private static void CompareResult(VotingResultsDto expected, VotingResultsDto actual)
     {
         Assert.Equal(expected.ChoiceResults.Count, actual.ChoiceResults.Count);
 

@@ -66,6 +66,8 @@ public class UserController(IUserService userService, IEmailService emailService
 
         var tokens = result.Value.Tokens!;
         Response.Cookies.Append(TokenIssuerKeys.AuthTokenKey, tokens.AuthToken);
+        Response.Cookies.Append(TokenIssuerKeys.RefreshTokenKey, tokens.RefreshToken.ToString());
+        Response.Cookies.Append(TokenIssuerKeys.UserIdKey, tokens.UserId.ToString());
         
         return Ok(tokens);
     }
@@ -80,6 +82,8 @@ public class UserController(IUserService userService, IEmailService emailService
         if (result.IsError) return result.ToHttpResult();
 
         Response.Cookies.Append(TokenIssuerKeys.AuthTokenKey, result.Value.AuthToken);
+        Response.Cookies.Append(TokenIssuerKeys.RefreshTokenKey, result.Value.RefreshToken.ToString());
+        Response.Cookies.Append(TokenIssuerKeys.UserIdKey, result.Value.UserId.ToString());
         return Ok(result.Value);
     }
     
@@ -249,6 +253,8 @@ public class UserController(IUserService userService, IEmailService emailService
     public async Task<IActionResult> LogoutAsync()
     {
         Response.Cookies.Delete(TokenIssuerKeys.AuthTokenKey);
+        Response.Cookies.Delete(TokenIssuerKeys.RefreshTokenKey);
+        Response.Cookies.Delete(TokenIssuerKeys.UserIdKey);
         return (await userService.LogoutAsync()).ToHttpResult();
     }
 
@@ -271,13 +277,8 @@ public class UserController(IUserService userService, IEmailService emailService
     [HttpPost("refresh-token")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokensDto))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> RefreshTokenAsync([FromBody] string refreshToken)
+    public async Task<IActionResult> RefreshTokenAsync([FromBody] RefreshTokenDto request)
     {
-        if (!Guid.TryParse(refreshToken, out var token))
-        {
-            return BadRequest("Malformatted Guid");
-        }
-        
-        return (await userService.RedeemRefreshTokenAsync(token)).ToHttpResult();
+        return (await userService.RedeemRefreshTokenAsync(request.RefreshToken)).ToHttpResult();
     }
 }

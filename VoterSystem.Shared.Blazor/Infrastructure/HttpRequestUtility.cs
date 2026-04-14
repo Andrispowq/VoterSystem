@@ -172,12 +172,22 @@ public class HttpRequestUtility(
 
     public async Task<TokensDto> RedeemTokenAsync(CancellationToken cancellationToken = default)
     {
-        var refreshToken = await localStorageService.GetItemAsStringAsync("RefreshToken", cancellationToken);
-        if (string.IsNullOrEmpty(refreshToken))
-            throw new ArgumentException(nameof(refreshToken));
+        var refreshTokenValue = await localStorageService.GetItemAsStringAsync("RefreshToken", cancellationToken);
+        if (string.IsNullOrEmpty(refreshTokenValue))
+            throw new ArgumentException(nameof(refreshTokenValue));
 
-        var content = new StringContent(refreshToken, Encoding.UTF8, "application/json");
-        var response = await httpClient.PostAsync("/api/v1/users/refresh-token", content, cancellationToken);
+        if (!Guid.TryParse(refreshTokenValue, out var refreshToken))
+            throw new ArgumentException("Invalid refresh token", nameof(refreshTokenValue));
+
+        var refreshRequest = new RefreshTokenDto
+        {
+            RefreshToken = refreshToken
+        };
+
+        var response = await httpClient.PostAsync(
+            "/api/v1/users/refresh-token",
+            CreateRequestBody(refreshRequest),
+            cancellationToken);
 
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestErrorException(response);

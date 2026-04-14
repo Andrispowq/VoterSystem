@@ -369,8 +369,9 @@ public class UserControllerTests(TestWebAppFactory factory) : TestObjectFactory(
     {
         var tokens = await LoginAndGetTokensAsync(UserLogin);
 
-        var response = await HttpClient.PostAsJsonAsync("/api/v1/users/refresh-token",
-            tokens.RefreshToken.ToString());
+        var response = await HttpClient.PostAsJsonAsync(
+            "/api/v1/users/refresh-token",
+            new RefreshTokenDto { RefreshToken = tokens.RefreshToken });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

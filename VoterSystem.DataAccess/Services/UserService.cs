@@ -45,8 +45,8 @@ public class UserService(
         {
             var normalizedQuery = nameQuery.Trim().ToUpperInvariant();
             query = query.Where(u => u.NormalizedUserName != null &&
-                                     /*u.NormalizedUserName.Contains(normalizedQuery)*/
-                                     EF.Functions.Like(u.NormalizedUserName, $"%{normalizedQuery}%"));
+                                     u.NormalizedUserName.Contains(normalizedQuery)
+                                     /*EF.Functions.Like(u.NormalizedUserName, $"%{normalizedQuery}%")*/);
         }
 
         return await query.ToListAsync();

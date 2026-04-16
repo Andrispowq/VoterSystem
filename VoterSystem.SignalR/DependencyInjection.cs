@@ -8,6 +8,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddSignalRServices(this IServiceCollection services)
     {
+        services.AddScoped<IVotingSubscriptionAuthorizationService, VotingSubscriptionAuthorizationService>();
         services.AddSingleton<IVoteNotificationService, VoteNotificationService>();
 
         return services;

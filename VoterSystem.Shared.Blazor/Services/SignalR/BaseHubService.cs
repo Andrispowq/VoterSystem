@@ -14,6 +14,11 @@ namespace VoterSystem.Shared.Blazor.Services.SignalR
 
         protected void InitHub(string hubName)
         {
+            if (HubConnection is not null)
+            {
+                return;
+            }
+
             var fullUri = new Uri(new Uri(appConfig.HubBaseUrl), hubName);
 
             HubConnection = new HubConnectionBuilder()
@@ -41,18 +46,26 @@ namespace VoterSystem.Shared.Blazor.Services.SignalR
 
         protected async Task ConnectHubAsync()
         {
-            if (HubConnection!.State == HubConnectionState.Disconnected)
+            if (HubConnection is not null && HubConnection.State == HubConnectionState.Disconnected)
             {
                 await HubConnection.StartAsync();
             }
         }
 
-        public async Task DisconnectHubAsync()
+        public virtual async Task DisconnectHubAsync()
         {
-            if (HubConnection!.State != HubConnectionState.Disconnected)
+            if (HubConnection is null)
+            {
+                return;
+            }
+
+            if (HubConnection.State != HubConnectionState.Disconnected)
             {
                 await HubConnection.StopAsync();
             }
+
+            await HubConnection.DisposeAsync();
+            HubConnection = null;
         }
     }
 }

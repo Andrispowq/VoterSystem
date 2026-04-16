@@ -3,6 +3,7 @@
 @using VoterSystem.Shared.Blazor.Services.SignalR
 @using VoterSystem.Shared.Blazor.ViewModels
 @using VoterSystem.Shared.Dto
+@using VoterSystem.Shared.SignalR.Models
 @using VoterSystem.Web.Admin.Layout
 @inject IVotingsService VotingsService
 @inject NavigationManager NavigationManager
@@ -81,8 +82,10 @@
     
     private Dictionary<long, VotingResultsDto> VotingResults { get; set; } = new();
     private HashSet<long> LoadingResults { get; set; } = new();
+    private HashSet<long> LiveResultsEnabledVotingIds { get; set; } = new();
     
     private CustomConfirmModal<long>? _deleteConfirmModal;
+    private Action<VotingUpdatedDto>? _voteUpdatedHandler;
     private Role _role;
 
     protected override async Task OnInitializedAsync()
@@ -110,19 +113,57 @@
             }
         }
         
-        VoteHubService.OnVotingResultUpdated += voting =>
+        if (_voteUpdatedHandler is not null)
+        {
+            VoteHubService.OnVotingResultUpdated -= _voteUpdatedHandler;
+        }
+
+        _voteUpdatedHandler = voting =>
         {
             VotingResults[voting.VotingId] = voting.VotingResults;
-            StateHasChanged();
+            _ = InvokeAsync(StateHasChanged);
         };
-
-        await VoteHubService.StartHubAsync();
+        VoteHubService.OnVotingResultUpdated += _voteUpdatedHandler;
     }
 
     public async ValueTask DisposeAsync()
     {
+        if (_voteUpdatedHandler is not null)
+        {
+            VoteHubService.OnVotingResultUpdated -= _voteUpdatedHandler;
+        }
+
         await VoteHubService.DisconnectHubAsync();
     }
+
+    private async Task ToggleLiveResultsAsync(VotingDto voting)
+    {
+        if (!CanToggleLiveResults(voting))
+        {
+            return;
+        }
+
+        if (IsLiveResultsEnabled(voting.VotingId))
+        {
+            var unsubscribed = await VoteHubService.UnsubscribeFromVotingAsync(voting.VotingId);
+            if (unsubscribed)
+            {
+                LiveResultsEnabledVotingIds.Remove(voting.VotingId);
+            }
+
+            return;
+        }
+
+        var subscribed = await VoteHubService.SubscribeToVotingAsync(voting.VotingId);
+        if (subscribed)
+        {
+            LiveResultsEnabledVotingIds.Add(voting.VotingId);
+        }
+    }
+
+    private static bool CanToggleLiveResults(VotingDto voting) => voting.IsOngoing;
+
+    private bool IsLiveResultsEnabled(long votingId) => LiveResultsEnabledVotingIds.Contains(votingId);
     
     private void ShowDeleteConfirm(VotingDto voting)
     {
@@ -131,6 +172,12 @@
 
     private async Task DeleteVotingAsync(long votingId)
     {
+        if (LiveResultsEnabledVotingIds.Contains(votingId))
+        {
+            await VoteHubService.UnsubscribeFromVotingAsync(votingId);
+            LiveResultsEnabledVotingIds.Remove(votingId);
+        }
+
         await VotingsService.DeleteVotingAsync(votingId);
 
         await OnInitializedAsync();
@@ -196,9 +243,23 @@
                         }
                         <strong>@voting.Name</strong>
                     </div>
-                    <span class="badge bg-light text-dark">
-                        @(voting.IsOngoing ? "Ongoing" : voting.HasEnded ? "Ended" : "Not started")
-                    </span>
+                    <div class="d-flex align-items-center">
+                        @if (CanToggleLiveResults(voting))
+                        {
+                            <button class="btn btn-sm @(IsLiveResultsEnabled(voting.VotingId) ? "btn-light text-dark" : "btn-outline-light") me-2"
+                                    title="Turn on/off live results"
+                                    aria-pressed="@IsLiveResultsEnabled(voting.VotingId)"
+                                    @onclick:stopPropagation
+                                    @onclick="() => ToggleLiveResultsAsync(voting)">
+                                <i class="bi @(IsLiveResultsEnabled(voting.VotingId) ? "bi-toggle-on" : "bi-toggle-off") me-1"></i>
+                                Live results
+                            </button>
+                        }
+
+                        <span class="badge bg-light text-dark">
+                            @(voting.IsOngoing ? "Ongoing" : voting.HasEnded ? "Ended" : "Not started")
+                        </span>
+                    </div>
                 </div>
             </div>
 

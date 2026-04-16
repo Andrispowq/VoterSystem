@@ -30,8 +30,16 @@ public class TestSignalRObjectFactory : BaseTest
         Password = "testUser123!"
     };
 
+    private readonly UserRegisterRequestDto _otherUser = new()
+    {
+        Email = "other-user@example.com",
+        Name = "Other Test User",
+        Password = "testOtherUser123!"
+    };
+
     protected UserLoginRequestDto AdminLogin => new() { Email = _adminUser.Email, Password = _adminUser.Password };
     protected UserLoginRequestDto UserLogin => new() { Email = _user.Email, Password = _user.Password };
+    protected UserLoginRequestDto OtherUserLogin => new() { Email = _otherUser.Email, Password = _otherUser.Password };
 
     protected TestSignalRObjectFactory(TestWebAppFactory factory, string hubName) : base(factory)
     {
@@ -73,9 +81,18 @@ public class TestSignalRObjectFactory : BaseTest
             Role = Role.Admin,
             LoginMode = UserLoginMode.Password
         };
+        var otherUser = new User
+        {
+            UserName = _otherUser.Email,
+            Name = _otherUser.Name,
+            Email = _otherUser.Email,
+            Role = Role.User,
+            LoginMode = UserLoginMode.Password
+        };
         
         userService.CreateUser(user, _user.Password).Wait();
         userService.CreateUser(admin, _adminUser.Password).Wait();
+        userService.CreateUser(otherUser, _otherUser.Password).Wait();
     }
     
     protected async Task<string> Login(UserLoginRequestDto user)

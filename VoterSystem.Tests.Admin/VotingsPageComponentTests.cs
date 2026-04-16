@@ -30,6 +30,13 @@ public sealed class VotingsPageTests : IDisposable
         _ctx.Services.AddSingleton(_userSvc.Object);
         _ctx.Services.AddSingleton(_voteHubService.Object);
 
+        _voteHubService
+            .Setup(x => x.SubscribeToVotingAsync(It.IsAny<long>()))
+            .ReturnsAsync(true);
+        _voteHubService
+            .Setup(x => x.UnsubscribeFromVotingAsync(It.IsAny<long>()))
+            .ReturnsAsync(true);
+
         _ctx.Services.AddSingleton(_votingSvc.Object);
         _nav = _ctx.Services.GetRequiredService<FakeNavigationManager>();
     }
@@ -132,5 +139,40 @@ public sealed class VotingsPageTests : IDisposable
         // Verify navigation
         cut.WaitForAssertion(() =>
             Assert.Equal($"http://localhost/votings/{voting.VotingId}", _nav.Uri));
+    }
+
+    [Fact]
+    public void ToggleLiveResults_SubscribesToVoting()
+    {
+        var voting = new VotingDto
+        {
+            VotingId = 1,
+            Name = "Ongoing voting",
+            StartsAt = DateTime.UtcNow.AddHours(-1),
+            EndsAt = DateTime.UtcNow.AddHours(1),
+            CreatedAt = DateTime.UtcNow,
+            HasStarted = true,
+            HasEnded = false,
+            IsOngoing = true,
+            VoteChoices = []
+        };
+
+        _votingSvc.Setup(s => s.GetVotingsAsync()).ReturnsAsync(new VotingsViewModel
+        {
+            Votings = [ voting ]
+        });
+
+        var cut = _ctx.RenderComponent<Votings>();
+
+        cut.WaitForAssertion(() =>
+        {
+            var toggleButton = cut.FindAll("button")
+                .First(button => button.TextContent.Contains("Toggle", StringComparison.Ordinal));
+
+            toggleButton.Click();
+        });
+
+        _voteHubService.Verify(service => service.SubscribeToVotingAsync(voting.VotingId), Times.Once);
+        cut.WaitForAssertion(() => Assert.Contains("bi-toggle-on", cut.Markup, StringComparison.Ordinal));
     }
 }

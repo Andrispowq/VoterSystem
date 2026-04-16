@@ -9,6 +9,8 @@ public class VoteNotificationService(IHubContext<VotesHub> hubContext) : IVoteNo
 {
     public async Task NotifyVotingResultChanged(VotingUpdatedDto voting)
     {
-        await hubContext.Clients.All.SendAsync("NotifyVotingResultChanged", voting);
+        await hubContext.Clients
+            .Group(VotingHubGroupNames.ForVoting(voting.VotingId))
+            .SendAsync(nameof(IVoteNotificationService.NotifyVotingResultChanged), voting);
     }
 }

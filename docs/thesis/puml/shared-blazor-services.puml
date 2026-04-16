@@ -1,0 +1,194 @@
+@startuml
+' Shared.Blazor services layer
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+package "VoterSystem.Shared.Blazor.Services" {
+
+    abstract class "BaseService" {
+        # HandleHttpError(HttpResponseMessage response) : Task
+        # ShowErrorMessage(string message) : void
+    }
+
+    interface "IAuthenticationService" {
+        + GetUsersAsync(string? nameQuery = null) : Task<List<UserDto>>
+        + PromoteUserToAdminAsync(Guid userId) : Task<bool>
+        + DemoteAdminToUserAsync(Guid userId) : Task<bool>
+        + LoginAsync(LoginViewModel loginBindingViewModel) : Task<LoginAttemptResultDto>
+        + CompleteTwoFactorLoginAsync(Guid userId, string code) : Task<bool>
+        + RedeemSigninTokensAsync(Guid requestId) : Task<bool>
+        + ChangePasswordAsync(ChangePasswordViewModel changePasswordBindingViewModel) : Task<bool>
+        + GetCurrentRoleAsync() : Task<Role?>
+        + LogoutAsync() : Task
+        + TryAutoLoginAsync() : Task<bool>
+        + GetCurrentlyLoggedInUserAsync() : Task<string?>
+        + GetCurrentUserAsync() : Task<UserDto?>
+        + RegisterAsync(RegisterViewModel registerViewModel) : Task<bool>
+        + RequestEmailConfirmationAsync() : Task<bool>
+        + EnableTwoFactorAsync() : Task<bool>
+        + ConfirmEmailAsync(UserEmailConfirmRequestDto dto) : Task<bool>
+        + RequestPasswordResetAsync(string email) : Task<bool>
+        + ResetPasswordAsync(UserPasswordResetRequestDto dto) : Task<bool>
+    }
+
+    interface "IGroupsService" {
+        + GetGroupsAsync() : Task<List<GroupDto>>
+        + GetGroupAsync(Guid id) : Task<GroupDto?>
+        + CreateGroupAsync(CreateGroupRequest request) : Task<GroupDto?>
+        + DeleteGroupAsync(Guid id) : Task
+        + AddUserAsync(Guid groupId, Guid userId) : Task
+        + RemoveUserAsync(Guid groupId, Guid userId) : Task
+    }
+
+    interface "IVotingsService" {
+        + GetVotedVotingsAsync() : Task<VotingsViewModel?>
+        + GetVotableVotingsAsync() : Task<VotingsViewModel?>
+        + GetVotingsAsync() : Task<VotingsViewModel?>
+        + GetVotingByIdAsync(long votingId) : Task<VotingDto?>
+        + GetVotingResultAsync(long votingId) : Task<VotingResultsDto?>
+        + UpdateEndTime(long votingId, DateTime newEndAt) : Task
+        + UpdateStartTime(long votingId, DateTime newStartAt) : Task
+        + AddVoteChoice(long votingId, string newChoiceName, string newChoiceDescription) : Task
+        + DeleteChoiceAsync(long votingId, long choiceId) : Task
+        + StartVotingAsync(long votingId) : Task
+        + CreateVotingAsync(VotingCreateRequestDto dto) : Task<VotingDto?>
+        + DeleteVotingAsync(long votingId) : Task
+        + GetMyVotesAsync() : Task<List<VotingParticipationDto>?>
+        + VoteAsync(long choiceId) : Task<bool>
+    }
+
+    interface "IToastService" {
+        + OnToastChanged : event Action?
+        + Toasts : IReadOnlyList<string>
+        + ShowToast(string message) : void
+    }
+
+    class "AuthenticationService" {
+        + GetUsersAsync(string? nameQuery = null) : Task<List<UserDto>>
+        + PromoteUserToAdminAsync(Guid userId) : Task<bool>
+        + DemoteAdminToUserAsync(Guid userId) : Task<bool>
+        + LoginAsync(LoginViewModel loginBindingViewModel) : Task<LoginAttemptResultDto>
+        + CompleteTwoFactorLoginAsync(Guid userId, string code) : Task<bool>
+        + RedeemSigninTokensAsync(Guid requestId) : Task<bool>
+        + ChangePasswordAsync(ChangePasswordViewModel changePasswordBindingViewModel) : Task<bool>
+        + GetCurrentRoleAsync() : Task<Role?>
+        + LogoutAsync() : Task
+        + TryAutoLoginAsync() : Task<bool>
+        + GetCurrentlyLoggedInUserAsync() : Task<string?>
+        + GetCurrentUserAsync() : Task<UserDto?>
+        + RegisterAsync(RegisterViewModel registerViewModel) : Task<bool>
+        + RequestEmailConfirmationAsync() : Task<bool>
+        + EnableTwoFactorAsync() : Task<bool>
+        + ConfirmEmailAsync(UserEmailConfirmRequestDto dto) : Task<bool>
+        + RequestPasswordResetAsync(string email) : Task<bool>
+        + ResetPasswordAsync(UserPasswordResetRequestDto dto) : Task<bool>
+    }
+
+    class "GroupsService" {
+        + GetGroupsAsync() : Task<List<GroupDto>>
+        + GetGroupAsync(Guid id) : Task<GroupDto?>
+        + CreateGroupAsync(CreateGroupRequest request) : Task<GroupDto?>
+        + DeleteGroupAsync(Guid id) : Task
+        + AddUserAsync(Guid groupId, Guid userId) : Task
+        + RemoveUserAsync(Guid groupId, Guid userId) : Task
+    }
+
+    class "VotingsService" {
+        + GetVotedVotingsAsync() : Task<VotingsViewModel?>
+        + GetVotableVotingsAsync() : Task<VotingsViewModel?>
+        + GetVotingsAsync() : Task<VotingsViewModel?>
+        + GetVotingByIdAsync(long votingId) : Task<VotingDto?>
+        + GetVotingResultAsync(long votingId) : Task<VotingResultsDto?>
+        + UpdateEndTime(long votingId, DateTime newEndAt) : Task
+        + UpdateStartTime(long votingId, DateTime newStartAt) : Task
+        + AddVoteChoice(long votingId, string newChoiceName, string newChoiceDescription) : Task
+        + DeleteChoiceAsync(long votingId, long choiceId) : Task
+        + StartVotingAsync(long votingId) : Task
+        + CreateVotingAsync(VotingCreateRequestDto dto) : Task<VotingDto?>
+        + DeleteVotingAsync(long votingId) : Task
+        + GetMyVotesAsync() : Task<List<VotingParticipationDto>?>
+        + VoteAsync(long choiceId) : Task<bool>
+    }
+
+    class "ToastService" {
+        + OnToastChanged : event Action?
+        + Toasts : IReadOnlyList<string>
+        + ShowToast(string message) : void
+    }
+
+    class "NetworkService" {
+        - _module : IJSObjectReference?
+        + OnConnectivityChanged : event Action<bool>?
+        + InitializeAsync() : Task
+        + UpdateConnectivity(bool isOnline) : void
+        + DisposeAsync() : ValueTask
+    }
+
+    "AuthenticationService" ..|> "IAuthenticationService"
+    "GroupsService" ..|> "IGroupsService"
+    "VotingsService" ..|> "IVotingsService"
+    "ToastService" ..|> "IToastService"
+
+    "AuthenticationService" --|> "BaseService"
+    "GroupsService" --|> "BaseService"
+
+    "BaseService" --> "IToastService"
+    "AuthenticationService" --> "HttpClient"
+    "AuthenticationService" --> "ILocalStorageService"
+    "AuthenticationService" --> "IHttpRequestUtility"
+    "GroupsService" --> "IHttpRequestUtility"
+    "VotingsService" --> "IHttpRequestUtility"
+    "ToastService" --> "AppConfig"
+    "NetworkService" --> "IJSRuntime"
+}
+
+package "VoterSystem.Shared.Blazor.Services.SignalR" {
+
+    interface "IBaseHubService" {
+        + DisconnectHubAsync() : Task
+    }
+
+    interface "IVoteHubService" {
+        + OnVotingResultUpdated : event Action<VotingUpdatedDto>?
+        + StartHubAsync() : Task
+        + DisconnectHubAsync() : Task
+    }
+
+    abstract class "BaseHubService" {
+        # HubConnection : HubConnection?
+        # InitHub(string hubName) : void
+        # ConnectHubAsync() : Task
+        + DisconnectHubAsync() : Task
+    }
+
+    class "VoteHubService" {
+        + OnVotingResultUpdated : event Action<VotingUpdatedDto>?
+        + StartHubAsync() : Task
+        + DisconnectHubAsync() : Task
+    }
+
+    "BaseHubService" ..|> "IBaseHubService"
+    "IVoteHubService" --|> "IBaseHubService"
+    "VoteHubService" ..|> "IVoteHubService"
+    "VoteHubService" --|> "BaseHubService"
+
+    "BaseHubService" --> "AppConfig"
+    "BaseHubService" --> "JsonSerializerOptions"
+    "BaseHubService" --> "ILocalStorageService"
+    "BaseHubService" --> "IHttpRequestUtility"
+    "BaseHubService" --> "HubConnection"
+    "VoteHubService" --> "VotingUpdatedDto"
+
+    note bottom of "BaseHubService"
+        Access tokens are loaded from local storage.
+        If the JWT is expired, the service redeems a
+        fresh access token through IHttpRequestUtility
+        before connecting to the hub.
+    end note
+
+    note bottom of "VoteHubService"
+        Subscribes to the NotifyVotingResultChanged
+        SignalR event exposed by /Hubs/VotesHub.
+    end note
+}
+@enduml

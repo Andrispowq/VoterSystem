@@ -1,0 +1,202 @@
+@startuml
+' DataAccess service layer
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+package "VoterSystem.DataAccess.Services" {
+
+    abstract class "BaseService<TType, TService>" {
+        # CanAccessAll(bool admin) : bool
+        # CheckAccessOnAll() : bool
+        # CheckAccessOn(TType resource, RoleControlAction action) : Option<ServiceError>
+        # UserId : Guid
+        # MaybeUserId : Guid?
+        # IsAdmin : bool
+        # IsUser : bool
+        # IsAuthenticated : bool
+        # BrowserFingerprint : string
+    }
+
+    interface "IUserService" {
+        + GetAllUsersAsync(string? nameQuery = null) : Task<Result<List<User>, ServiceError>>
+        + CreateUser(User user, string password) : Task<Option<ServiceError>>
+        + AnyAdmins() : Task<bool>
+        + LoginAsync(string email, string password) : Task<Result<LoginResultDto, ServiceError>>
+        + CompleteTwoFactorLoginAsync(Guid userId, string code) : Task<Result<TokensDto, ServiceError>>
+        + RedeemRefreshTokenAsync(Guid refreshToken) : Task<Result<TokensDto, ServiceError>>
+        + LogoutAsync() : Task<Option<ServiceError>>
+        + ChangePasswordAsync(string oldPassword, string newPassword) : Task<Option<ServiceError>>
+        + EnableTwoFactorAsync() : Task<Option<ServiceError>>
+        + GenerateEmailConfirmTokenAsync() : Task<Result<string, ServiceError>>
+        + ConfirmEmailAsync(string email, string token) : Task<Option<ServiceError>>
+        + GeneratePasswordResetTokenAsync(string email) : Task<Result<string, ServiceError>>
+        + ResetPasswordAsync(string email, string token, string newPassword) : Task<Option<ServiceError>>
+        + GetUserByIdAsync(Guid id) : Task<Result<User, ServiceError>>
+        + GetUserByEmailAsync(string email) : Task<Result<User, ServiceError>>
+        + GetUserRoleByIdAsync(Guid id) : Task<Result<Role, ServiceError>>
+        + SetUserRoleAsync(Guid userId, Role role) : Task<Option<ServiceError>>
+        + GetCurrentUserAsync() : Task<Result<User, ServiceError>>
+        + HandleExternalAuthAsync(ThirdPartyAuthRequest request) : Task<Result<TokensDto, ServiceError>>
+    }
+
+    interface "IVoteChoiceService" {
+        + GetVoteChoices(Voting voting) : Task<List<VoteChoice>>
+        + GetChoiceById(long choiceId) : Task<Result<VoteChoice, ServiceError>>
+        + AddVotingChoice(Voting voting, VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+        + UpdateVotingChoice(VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+        + DeleteVotingChoice(VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+    }
+
+    interface "IVoteService" {
+        + GetVotesForVoting(Voting voting) : Task<Result<List<AnonymousBallot>, ServiceError>>
+        + GetMyVotes() : Task<Result<List<VotingParticipation>, ServiceError>>
+        + CastVote(User user, VoteChoice voteChoice) : Task<Result<VoteResultDto, ServiceError>>
+    }
+
+    interface "IVotingService" {
+        + GetAllVotings() : Task<Result<List<Voting>, ServiceError>>
+        + GetVotableVotings() : Task<Result<List<Voting>, ServiceError>>
+        + GetVotedVotings() : Task<Result<List<Voting>, ServiceError>>
+        + GetVotingById(long id) : Task<Result<Voting, ServiceError>>
+        + CreateVoting(VotingCreateRequestDto request, bool commit = true) : Task<Result<Voting, ServiceError>>
+        + UpdateVoting(Voting voting, bool commit = true) : Task<Option<ServiceError>>
+        + DeleteVoting(long id, bool commit = true) : Task<Option<ServiceError>>
+        + HasVotedOnVoting(Voting voting) : Task<bool>
+    }
+
+    interface "IGroupService" {
+        + GetAllAsync(CancellationToken ct = default) : Task<List<Group>>
+        + GetByIdAsync(Guid groupId, CancellationToken ct = default) : Task<Result<Group, ServiceError>>
+        + CreateGroupAsync(CreateGroupRequest request, CancellationToken ct = default) : Task<Result<Group, ServiceError>>
+        + DeleteGroupAsync(Guid groupId, CancellationToken ct = default) : Task<Option<ServiceError>>
+        + AddToGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default) : Task<Option<ServiceError>>
+        + RemoveFromGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default) : Task<Option<ServiceError>>
+    }
+
+    interface "IEmailService" {
+        + SendEmailAsync(string to, string subject, string body) : Task<Option<ServiceError>>
+    }
+
+    interface "ICacheService" {
+        + GetStringAsync(string key, CancellationToken ct = default) : Task<Result<string, ServiceError>>
+        + GetAsync<T>(string key, CancellationToken ct = default) : Task<Result<T, ServiceError>>
+        + GetAndDeleteAsync<T>(string key, CancellationToken ct = default) : Task<Result<T, ServiceError>>
+        + SetAsync<T>(string key, T value, TimeSpan? ttl = null, CancellationToken ct = default) : Task<Option<ServiceError>>
+        + DeleteAsync(string key, CancellationToken ct = default) : Task<Option<ServiceError>>
+    }
+
+    interface "ITokenRequestService" {
+        + CreateRequestableTokensAsync(TokensDto tokens, CancellationToken ct = default) : Task<Result<Guid, ServiceError>>
+        + RequestTokensAsync(Guid id, CancellationToken ct = default) : Task<Result<TokensDto, ServiceError>>
+    }
+
+    class "UserService" {
+        + AnyAdmins() : Task<bool>
+        + GetAllUsersAsync(string? nameQuery = null) : Task<Result<List<User>, ServiceError>>
+        + CreateUser(User user, string password) : Task<Option<ServiceError>>
+        + LoginAsync(string email, string password) : Task<Result<LoginResultDto, ServiceError>>
+        + CompleteTwoFactorLoginAsync(Guid userId, string code) : Task<Result<TokensDto, ServiceError>>
+        + RedeemRefreshTokenAsync(Guid refreshToken) : Task<Result<TokensDto, ServiceError>>
+        + LogoutAsync() : Task<Option<ServiceError>>
+        + ChangePasswordAsync(string oldPassword, string newPassword) : Task<Option<ServiceError>>
+        + EnableTwoFactorAsync() : Task<Option<ServiceError>>
+        + GenerateEmailConfirmTokenAsync() : Task<Result<string, ServiceError>>
+        + ConfirmEmailAsync(string email, string token) : Task<Option<ServiceError>>
+        + GeneratePasswordResetTokenAsync(string email) : Task<Result<string, ServiceError>>
+        + ResetPasswordAsync(string email, string token, string newPassword) : Task<Option<ServiceError>>
+        + GetCurrentUserAsync() : Task<Result<User, ServiceError>>
+        + GetUserByIdAsync(Guid id) : Task<Result<User, ServiceError>>
+        + GetUserByEmailAsync(string email) : Task<Result<User, ServiceError>>
+        + GetUserRoleByIdAsync(Guid id) : Task<Result<Role, ServiceError>>
+        + SetUserRoleAsync(Guid userId, Role role) : Task<Option<ServiceError>>
+        + HandleExternalAuthAsync(ThirdPartyAuthRequest request) : Task<Result<TokensDto, ServiceError>>
+    }
+
+    class "VoteChoiceService" {
+        # CanAccessAll(bool admin) : bool
+        + GetVoteChoices(Voting voting) : Task<List<VoteChoice>>
+        + GetChoiceById(long choiceId) : Task<Result<VoteChoice, ServiceError>>
+        + AddVotingChoice(Voting voting, VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+        + UpdateVotingChoice(VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+        + DeleteVotingChoice(VoteChoice choice, bool commit = true) : Task<Option<ServiceError>>
+    }
+
+    class "VoteService" {
+        - _votingSettings : VotingSettings
+        # CanAccessAll(bool admin) : bool
+        + GetVotesForVoting(Voting voting) : Task<Result<List<AnonymousBallot>, ServiceError>>
+        + GetMyVotes() : Task<Result<List<VotingParticipation>, ServiceError>>
+        + CastVote(User user, VoteChoice voteChoice) : Task<Result<VoteResultDto, ServiceError>>
+    }
+
+    class "VotingService" {
+        # CanAccessAll(bool admin) : bool
+        + GetAllVotings() : Task<Result<List<Voting>, ServiceError>>
+        + GetVotableVotings() : Task<Result<List<Voting>, ServiceError>>
+        + GetVotedVotings() : Task<Result<List<Voting>, ServiceError>>
+        + GetVotingById(long id) : Task<Result<Voting, ServiceError>>
+        + CreateVoting(VotingCreateRequestDto request, bool commit = true) : Task<Result<Voting, ServiceError>>
+        + UpdateVoting(Voting voting, bool commit = true) : Task<Option<ServiceError>>
+        + DeleteVoting(long id, bool commit = true) : Task<Option<ServiceError>>
+        + HasVotedOnVoting(Voting voting) : Task<bool>
+    }
+
+    class "GroupService" {
+        # CanAccessAll(bool admin) : bool
+        + GetAllAsync(CancellationToken ct = default) : Task<List<Group>>
+        + GetByIdAsync(Guid groupId, CancellationToken ct = default) : Task<Result<Group, ServiceError>>
+        + CreateGroupAsync(CreateGroupRequest request, CancellationToken ct = default) : Task<Result<Group, ServiceError>>
+        + DeleteGroupAsync(Guid groupId, CancellationToken ct = default) : Task<Option<ServiceError>>
+        + AddToGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default) : Task<Option<ServiceError>>
+        + RemoveFromGroupAsync(Guid groupId, Guid userId, CancellationToken ct = default) : Task<Option<ServiceError>>
+    }
+
+    class "EmailService" {
+        - _emailSettings : EmailSettings
+        + SendEmailAsync(string to, string subject, string body) : Task<Option<ServiceError>>
+    }
+
+    class "RedisCacheService" {
+        - _db : IDatabase
+        - _ttl : TimeSpan
+        + GetStringAsync(string key, CancellationToken ct = default) : Task<Result<string, ServiceError>>
+        + GetAsync<T>(string key, CancellationToken ct = default) : Task<Result<T, ServiceError>>
+        + GetAndDeleteAsync<T>(string key, CancellationToken ct = default) : Task<Result<T, ServiceError>>
+        + SetAsync<T>(string key, T value, TimeSpan? ttl = null, CancellationToken ct = default) : Task<Option<ServiceError>>
+        + DeleteAsync(string key, CancellationToken ct = default) : Task<Option<ServiceError>>
+    }
+
+    class "TokenRequestService" {
+        + CreateRequestableTokensAsync(TokensDto tokens, CancellationToken ct = default) : Task<Result<Guid, ServiceError>>
+        + RequestTokensAsync(Guid id, CancellationToken ct = default) : Task<Result<TokensDto, ServiceError>>
+    }
+
+    "UserService" ..|> "IUserService"
+    "VoteChoiceService" ..|> "IVoteChoiceService"
+    "VoteService" ..|> "IVoteService"
+    "VotingService" ..|> "IVotingService"
+    "GroupService" ..|> "IGroupService"
+    "EmailService" ..|> "IEmailService"
+    "RedisCacheService" ..|> "ICacheService"
+    "TokenRequestService" ..|> "ITokenRequestService"
+
+    "UserService" --|> "BaseService<TType, TService>"
+    "VoteChoiceService" --|> "BaseService<TType, TService>"
+    "VoteService" --|> "BaseService<TType, TService>"
+    "VotingService" --|> "BaseService<TType, TService>"
+    "GroupService" --|> "BaseService<TType, TService>"
+
+    "UserService" --> "ITokenIssuer"
+    "UserService" --> "IEmailService"
+    "VoteService" --> "VotingSettings"
+    "TokenRequestService" --> "ICacheService"
+    "EmailService" --> "EmailSettings"
+
+    note bottom of "ICacheService"
+        The real interface also contains
+        list, set, range, TTL, append,
+        and remove helpers for Redis-backed
+        cache structures.
+    end note
+}
+@enduml

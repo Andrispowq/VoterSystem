@@ -1,0 +1,107 @@
+@startuml
+' DataAccess configuration and token/auth support
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+package "VoterSystem.DataAccess.Config" {
+    class "JwtSettings" <<record>> {
+        + SecretKey : string
+        + Audience : string
+        + Issuer : string
+        + AccessTokenExpirationMinutes : int
+    }
+
+    class "EmailSettings" {
+        + Host : string
+        + Port : int?
+        + EnableSsl : bool
+        + UserName : string
+        + Password : string
+        + FromEmail : string
+    }
+
+    class "UserSettings" <<record>> {
+        + MinimumPasswordLength : int
+    }
+
+    class "VotingSettings" {
+        + MasterKey : string
+    }
+
+    class "SamlSettings" {
+        + Enabled : bool
+        + PublicOrigin : string?
+        + CallbackPath : string
+        + ReturnUrl : string?
+        + ServiceProviderEntityId : string
+        + IdentityProviderEntityId : string
+        + MetadataUrl : string?
+        + SingleSignOnUrl : string?
+        + SingleLogoutUrl : string?
+        + AllowUnsolicitedAuthnResponse : bool
+        + SignAuthnRequests : bool
+        + SigningCertificateBase64 : string?
+        + SigningCertificatePassword : string?
+    }
+}
+
+package "VoterSystem.DataAccess.Token" {
+    interface "ITokenIssuer" {
+        + GenerateJwtToken(User user) : string
+    }
+
+    interface "IExternalUserService" {
+        + HandleExternalAuthAsync(ThirdPartyAuthRequest request) : Task<Result<TokensDto, ServiceError>>
+    }
+
+    interface "ITokenRequestService" {
+        + CreateRequestableTokensAsync(TokensDto tokens, CancellationToken ct = default) : Task<Result<Guid, ServiceError>>
+        + RequestTokensAsync(Guid id, CancellationToken ct = default) : Task<Result<TokensDto, ServiceError>>
+    }
+
+    class "TokenIssuer" {
+        - JwtSettings : JwtSettings
+        + GenerateJwtToken(User user) : string
+    }
+
+    class "ThirdPartyAuthRequest" {
+        + Provider : ExternalLoginProvider
+        + Name : string
+        + Email : string
+        + ProviderKey : string
+    }
+
+    class "TicketReceivedHandler" {
+        + Events : CookieAuthenticationEvents
+        + HandleAsync(TicketReceivedContext context, ExternalLoginProvider provider, CancellationToken ct = default) : Task
+    }
+
+    class "TokenIssuerKeys" <<static>> {
+        + AuthTokenKey : string
+        + RefreshTokenKey : string
+        + UserIdKey : string
+        + UsernameKey : string
+    }
+
+    class "DependencyInjection" <<static>> {
+        + AddAuth(IServiceCollection services, IConfiguration config) : IServiceCollection
+        - ConfigureSaml(AuthenticationBuilder authBuilder, SamlSettings samlSettings) : void
+    }
+
+    class "TokenRequestService" {
+        + CreateRequestableTokensAsync(TokensDto tokens, CancellationToken ct = default) : Task<Result<Guid, ServiceError>>
+        + RequestTokensAsync(Guid id, CancellationToken ct = default) : Task<Result<TokensDto, ServiceError>>
+    }
+
+    "TokenIssuer" ..|> "ITokenIssuer"
+    "TokenRequestService" ..|> "ITokenRequestService"
+    "TokenIssuer" --> "JwtSettings"
+    "TokenRequestService" --> "ICacheService"
+    "TicketReceivedHandler" --> "IExternalUserService"
+    "TicketReceivedHandler" --> "ITokenRequestService"
+    "DependencyInjection" --> "JwtSettings"
+    "DependencyInjection" --> "SamlSettings"
+    "DependencyInjection" --> "TicketReceivedHandler"
+    "DependencyInjection" --> "TokenIssuerKeys"
+}
+@enduml

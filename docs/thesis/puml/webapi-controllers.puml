@@ -1,0 +1,105 @@
+@startuml
+' WebAPI controller layer
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+package "VoterSystem.WebAPI.Controllers" {
+
+    class "ChoiceController" {
+        + GetChoices(long votingId) : Task<IActionResult>
+        + GetChoiceById(long votingId, long choiceId) : Task<IActionResult>
+        + CreateChoice(long votingId, VoteChoiceRequestDto voteChoice) : Task<IActionResult>
+        + DeleteChoice(long votingId, long choiceId) : Task<IActionResult>
+    }
+
+    class "ExternalLoginController" {
+        + ExternalLogin(ExternalLoginProvider provider, string frontend) : IActionResult
+        + ExternalLoginCallbackGoogle() : IActionResult
+        + ExternalLoginCallbackFacebook() : IActionResult
+        + ExternalLoginCallbackSaml(...) : Task<IActionResult>
+        + GetSigninTokensAsync(Guid id, CancellationToken ct = default) : Task<IActionResult>
+    }
+
+    class "GroupController" {
+        + GetAllAsync(CancellationToken ct = default) : Task<IActionResult>
+        + GetById(Guid id, CancellationToken ct = default) : Task<IActionResult>
+        + CreateGroupAsync(CreateGroupRequest request, CancellationToken ct = default) : Task<IActionResult>
+        + DeleteGroupAsync(Guid id, CancellationToken ct = default) : Task<IActionResult>
+        + AddUserToGroup(Guid id, Guid userId, CancellationToken ct = default) : Task<IActionResult>
+        + RemoveUserFromGroup(Guid id, Guid userId, CancellationToken ct = default) : Task<IActionResult>
+    }
+
+    class "HealthController" {
+        + CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default) : Task<HealthCheckResult>
+    }
+
+    class "UserController" {
+        + RegisterAsync(UserRegisterRequestDto request) : Task<IActionResult>
+        + LoginAsync(UserLoginRequestDto request) : Task<IActionResult>
+        + CompleteTwoFactorLoginAsync(TwoFactorVerificationRequestDto request) : Task<IActionResult>
+        + GetAllUsersAsync(string? nameQuery = null) : Task<IActionResult>
+        + GetCurrentUserAsync() : Task<IActionResult>
+        + GetUserById(Guid id) : Task<IActionResult>
+        + ChangePasswordAsync(UserChangePasswordRequestDto dto) : Task<IActionResult>
+        + EnableTwoFactorAsync() : Task<IActionResult>
+        + RequestEmailConfirm() : Task<IActionResult>
+        + ConfirmEmail(UserEmailConfirmRequestDto dto) : Task<IActionResult>
+        + RequestPasswordReset(string email) : Task<IActionResult>
+        + ResetPassword(UserPasswordResetRequestDto dto) : Task<IActionResult>
+        + LogoutAsync() : Task<IActionResult>
+        + PromoteToAdminAsync(Guid userId) : Task<IActionResult>
+        + DemoteToUserAsync(Guid userId) : Task<IActionResult>
+        + RefreshTokenAsync(RefreshTokenDto request) : Task<IActionResult>
+    }
+
+    class "VoteController" {
+        + CastVoteAsync(long choiceId) : Task<IActionResult>
+        + GetMyVotes() : Task<IActionResult>
+    }
+
+    class "VotingController" {
+        + GetVotings() : Task<IActionResult>
+        + GetVotableVotings() : Task<IActionResult>
+        + GetVotedVotings() : Task<IActionResult>
+        + GetVotingById(long id) : Task<IActionResult>
+        + GetVotingResults(long id) : Task<IActionResult>
+        + AddVoting(VotingCreateRequestDto request) : Task<IActionResult>
+        + StartsAtVoting(long id, DateTime startsAt) : Task<IActionResult>
+        + EndAtVoting(long id, DateTime endsAt) : Task<IActionResult>
+        + StartVoting(long id) : Task<IActionResult>
+        + DeleteVoting(long id) : Task<IActionResult>
+        + GetAllVotes(long id) : Task<IActionResult>
+    }
+
+    "ChoiceController" --> "IVotingService"
+    "ChoiceController" --> "IVoteChoiceService"
+
+    "ExternalLoginController" --> "IExternalUserService"
+    "ExternalLoginController" --> "ITokenRequestService"
+
+    "GroupController" --> "IGroupService"
+
+    "UserController" --> "IUserService"
+    "UserController" --> "IEmailService"
+    "UserController" --> "BlazorSettings"
+
+    "VoteController" --> "IUserService"
+    "VoteController" --> "IVoteChoiceService"
+    "VoteController" --> "IVoteService"
+    "VoteController" --> "IVoteNotificationService"
+
+    "VotingController" --> "IVotingService"
+    "VotingController" --> "IVoteService"
+
+    note bottom of "ExternalLoginController"
+        Provider callback endpoints redirect to
+        frontend signin-callback URLs and may
+        exchange a temporary Redis key for tokens.
+    end note
+
+    note bottom of "HealthController"
+        Registered as an IHealthCheck and exposed
+        through app.UseHealthChecks("/api/v1/health").
+    end note
+}
+@enduml

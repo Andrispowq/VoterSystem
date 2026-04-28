@@ -264,11 +264,11 @@
             }
             <p class="mb-1">
                 <i class="bi bi-play-circle me-1"></i>
-                From: @voting.StartsAt.ToLocalTime()
+                From: @voting.StartsAt.ToLocalTime().ToString("g")
             </p>
             <p class="mb-3">
                 <i class="bi bi-stop-circle me-1"></i>
-                Until: @voting.EndsAt.ToLocalTime()
+                Until: @voting.EndsAt.ToLocalTime().ToString("g")
             </p>
 
             <ul class="list-group list-group-flush">

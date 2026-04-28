@@ -21,11 +21,11 @@ else
         <div class="card-body">
             <p>
                 <i class="bi bi-play-circle me-1"></i>
-                From: @_voting.StartsAt.ToLocalTime():g
+                From: @_voting.StartsAt.ToLocalTime().ToString("g")
             </p>
             <p>
                 <i class="bi bi-stop-circle me-1"></i>
-                Until: @_voting.EndsAt.ToLocalTime():g
+                Until: @_voting.EndsAt.ToLocalTime().ToString("g")
             </p>
 
             <EditForm Model="_selectedChoiceId" OnValidSubmit="OnVoteClicked">

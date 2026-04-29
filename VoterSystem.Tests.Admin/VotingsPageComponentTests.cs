@@ -164,13 +164,8 @@ public sealed class VotingsPageTests : IDisposable
 
         var cut = _ctx.RenderComponent<Votings>();
 
-        cut.WaitForAssertion(() =>
-        {
-            var toggleButton = cut.FindAll("button")
-                .First(button => button.TextContent.Contains("Toggle", StringComparison.Ordinal));
-
-            toggleButton.Click();
-        });
+        var toggleButton = cut.WaitForElement("button[title='Turn on/off live results']");
+        toggleButton.Click();
 
         _voteHubService.Verify(service => service.SubscribeToVotingAsync(voting.VotingId), Times.Once);
         cut.WaitForAssertion(() => Assert.Contains("bi-toggle-on", cut.Markup, StringComparison.Ordinal));

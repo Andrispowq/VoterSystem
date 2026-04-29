@@ -1,6 +1,10 @@
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using VoterSystem.Shared.Blazor.Config;
 using VoterSystem.Shared.Blazor.Services;
 using VoterSystem.Web.Admin.Pages;
 
@@ -15,10 +19,24 @@ public class LoginComponentTests : IDisposable
     {
         // Setup mocks and register services
         _authenticationServiceMock
+            .Setup(x => x.TryAutoLoginAsync())
+            .ReturnsAsync(false);
+        _authenticationServiceMock
             .Setup(x => x.GetCurrentlyLoggedInUserAsync())
             .ReturnsAsync("admin");
         
         _context.Services.AddSingleton(_authenticationServiceMock.Object);
+        _context.Services.AddSingleton(new AppConfig
+        {
+            ToastDurationInMillis = 3000,
+            HubBaseUrl = "http://localhost",
+            EnableTestUsers = false
+        });
+        _context.Services.AddSingleton(CreateJsonOptions());
+        _context.Services.AddSingleton(new HttpClient(new SupportedExternalLoginModesHandler())
+        {
+            BaseAddress = new Uri("http://localhost/")
+        });
     }
 
     public void Dispose() => _context.Dispose();
@@ -28,13 +46,13 @@ public class LoginComponentTests : IDisposable
     {
         var cut = _context.RenderComponent<Login>();
 
-        var emailInput = cut.Find("#email");
+        var emailInput = cut.WaitForElement("#email");
         Assert.NotNull(emailInput);
 
-        var passwordInput = cut.Find("input[type='password']");
+        var passwordInput = cut.WaitForElement("input[type='password']");
         Assert.NotNull(passwordInput);
 
-        var loginButton = cut.Find("button[type='submit']");
+        var loginButton = cut.WaitForElement("button[type='submit']");
         Assert.NotNull(loginButton);
     }
 
@@ -42,6 +60,23 @@ public class LoginComponentTests : IDisposable
     public void Login_WhenRendered_ShouldContainLoginText()
     {
         var cut = _context.RenderComponent<Login>();
+        cut.WaitForElement("#email");
         Assert.Contains("Login", cut.Markup, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static JsonSerializerOptions CreateJsonOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        return options;
+    }
+
+    private sealed class SupportedExternalLoginModesHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""["google","facebook","saml"]""")
+            });
     }
 }

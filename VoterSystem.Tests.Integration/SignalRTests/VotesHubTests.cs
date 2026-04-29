@@ -147,7 +147,7 @@ public class VotesHubTests(TestWebAppFactory factory) : TestSignalRObjectFactory
         {
             GroupId = Guid.NewGuid(),
             CreatorUserId = ownerId,
-            Name = $"Group-{Guid.NewGuid():N}",
+            Name = $"Group-{Guid.NewGuid().ToString()[..8]}",
             Description = "SignalR test group"
         };
 

@@ -75,6 +75,7 @@ services:
         WEB_HTTPS: ${WEB_HTTPS}
         ADMIN_HTTP: ${ADMIN_HTTP}
         ADMIN_HTTPS: ${ADMIN_HTTPS}
+        ENABLE_TEST_USERS: ${ENABLE_TEST_USERS:-false}
     container_name: web
     ports:
       - "6901:80"
@@ -101,6 +102,7 @@ services:
         WEB_HTTPS: ${WEB_HTTPS}
         ADMIN_HTTP: ${ADMIN_HTTP}
         ADMIN_HTTPS: ${ADMIN_HTTPS}
+        ENABLE_TEST_USERS: ${ENABLE_TEST_USERS:-false}
     container_name: admin
     ports:
       - "6902:80"

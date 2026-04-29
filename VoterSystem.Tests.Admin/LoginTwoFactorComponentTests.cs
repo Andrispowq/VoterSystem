@@ -1,7 +1,11 @@
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Bunit;
 using Bunit.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using VoterSystem.Shared.Blazor.Config;
 using VoterSystem.Shared.Blazor.Services;
 using VoterSystem.Shared.Blazor.ViewModels;
 using VoterSystem.Shared.Dto;
@@ -26,6 +30,17 @@ public sealed class LoginTwoFactorComponentTests : IDisposable
             .ReturnsAsync(true);
 
         _ctx.Services.AddSingleton(_auth.Object);
+        _ctx.Services.AddSingleton(new AppConfig
+        {
+            ToastDurationInMillis = 3000,
+            HubBaseUrl = "http://localhost",
+            EnableTestUsers = false
+        });
+        _ctx.Services.AddSingleton(CreateJsonOptions());
+        _ctx.Services.AddSingleton(new HttpClient(new SupportedExternalLoginModesHandler())
+        {
+            BaseAddress = new Uri("http://localhost/")
+        });
         _nav = _ctx.Services.GetRequiredService<FakeNavigationManager>();
     }
 
@@ -36,8 +51,8 @@ public sealed class LoginTwoFactorComponentTests : IDisposable
     {
         var cut = _ctx.RenderComponent<Login>();
 
-        cut.Find("#email").Change("admin@example.com");
-        cut.Find("#password").Change("Password1!");
+        cut.WaitForElement("#email").Change("admin@example.com");
+        cut.WaitForElement("#password").Change("Password1!");
         cut.Find("button[type='submit']").Click();
 
         cut.WaitForAssertion(() => Assert.Contains("verification code", cut.Markup, StringComparison.OrdinalIgnoreCase));
@@ -52,5 +67,21 @@ public sealed class LoginTwoFactorComponentTests : IDisposable
                 "123456"), Times.Once);
             Assert.Equal("http://localhost/votings", _nav.Uri);
         });
+    }
+
+    private static JsonSerializerOptions CreateJsonOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        return options;
+    }
+
+    private sealed class SupportedExternalLoginModesHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""["google","facebook","saml"]""")
+            });
     }
 }

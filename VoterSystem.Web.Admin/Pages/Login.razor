@@ -1,5 +1,8 @@
 ﻿@page "/login"
+@using System.Net.Http.Json
+@using System.Text.Json
 @using VoterSystem.Shared.Blazor
+@using VoterSystem.Shared.Blazor.Config
 @using VoterSystem.Shared.Blazor.Services
 @using VoterSystem.Shared.Blazor.ViewModels
 @using VoterSystem.Shared.Dto
@@ -7,6 +10,8 @@
 @inject NavigationManager NavigationManager
 @inject IAuthenticationService AuthenticationService
 @inject HttpClient HttpClient
+@inject AppConfig AppConfig
+@inject JsonSerializerOptions JsonOptions
 
 <div class="my-4 container">
 
@@ -24,22 +29,25 @@
         }
         else
         {
-            <div class="mb-3">
-                @for (var i = 1; i <= 6; ++i)
-                {
-                    var i2 = i;
+            @if (AppConfig.EnableTestUsers)
+            {
+                <div class="mb-3">
+                    @for (var i = 1; i <= 6; ++i)
+                    {
+                        var i2 = i;
+                        <button type="button"
+                                class="btn btn-outline-secondary me-2"
+                                @onclick="() => LoginAsUser(i2)">
+                            Login as user @i
+                        </button>
+                    }
                     <button type="button"
-                            class="btn btn-outline-secondary me-2"
-                            @onclick="() => LoginAsUser(i2)">
-                        Login as user @i
+                            class="btn btn-outline-secondary"
+                            @onclick="LoginAsAdmin">
+                        Login as admin
                     </button>
-                }
-                <button type="button"
-                        class="btn btn-outline-secondary"
-                        @onclick="LoginAsAdmin">
-                    Login as admin
-                </button>
-            </div>
+                </div>
+            }
 
             @if (_pendingTwoFactorUserId is null)
             {
@@ -78,18 +86,21 @@
 
                     <button type="button"
                             class="btn btn-outline-danger me-2"
+                            disabled="@(!IsExternalLoginSupported(ExternalLoginProvider.Google))"
                             @onclick="() => StartExternalLogin(ExternalLoginProvider.Google)">
                         <i class="bi bi-google me-1"></i> Login with Google
                     </button>
 
                     <button type="button"
                             class="btn btn-outline-primary"
+                            disabled="@(!IsExternalLoginSupported(ExternalLoginProvider.Facebook))"
                             @onclick="() => StartExternalLogin(ExternalLoginProvider.Facebook)">
                         <i class="bi bi-facebook me-1"></i> Login with Facebook
                     </button>
 
                     <button type="button"
                             class="btn btn-outline-dark mt-2 mt-sm-0 ms-sm-2"
+                            disabled="@(!IsExternalLoginSupported(ExternalLoginProvider.Saml))"
                             @onclick="() => StartExternalLogin(ExternalLoginProvider.Saml)">
                         <i class="bi bi-shield-lock me-1"></i> Login with SAML
                     </button>
@@ -132,6 +143,7 @@
     private LoginViewModel LoginViewModel { get; set; } = new();
     private bool _tryAutoLogin = true;
     private Guid? _pendingTwoFactorUserId;
+    private readonly HashSet<ExternalLoginProvider> _supportedExternalLoginProviders = [];
     
     protected override async Task OnInitializedAsync()
     {
@@ -149,6 +161,31 @@
         else
         {
             _tryAutoLogin = false;
+            await LoadSupportedExternalLoginModesAsync();
+        }
+    }
+
+    private async Task LoadSupportedExternalLoginModesAsync()
+    {
+        try
+        {
+            var modes = await HttpClient.GetFromJsonAsync<List<ExternalLoginProvider>>(
+                "api/v1/users/supported-external-login-modes",
+                JsonOptions);
+
+            if (modes is null)
+            {
+                return;
+            }
+
+            foreach (var mode in modes)
+            {
+                _supportedExternalLoginProviders.Add(mode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load supported external login modes: {ex.Message}");
         }
     }
 
@@ -218,6 +255,11 @@
 
     private void StartExternalLogin(ExternalLoginProvider provider)
     {
+        if (!IsExternalLoginSupported(provider))
+        {
+            return;
+        }
+
         var baseAddress = HttpClient.BaseAddress?.ToString().TrimEnd('/');
         if (string.IsNullOrEmpty(baseAddress))
         {
@@ -227,4 +269,7 @@
         var url = $"{baseAddress}/api/v1/users/external-login/{provider}?frontend=admin";
         NavigationManager.NavigateTo(url, true);
     }
+
+    private bool IsExternalLoginSupported(ExternalLoginProvider provider) =>
+        _supportedExternalLoginProviders.Contains(provider);
 }

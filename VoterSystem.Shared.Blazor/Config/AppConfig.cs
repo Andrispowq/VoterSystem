@@ -4,4 +4,5 @@ public class AppConfig
 {
     public required long ToastDurationInMillis { get; init; }
     public required string HubBaseUrl { get; init; }
+    public required bool EnableTestUsers { get; init; }
 }

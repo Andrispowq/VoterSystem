@@ -49,7 +49,7 @@ public sealed class VotingsPageTests : IDisposable
         _votingSvc.Setup(s => s.GetVotingsAsync())
             .ReturnsAsync(new VotingsViewModel
             {
-                Votings = new List<VotingDto>()
+                Votings = []
             })
             .Verifiable();
 

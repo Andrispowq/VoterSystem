@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using VoterSystem.DataAccess.Config;
 using VoterSystem.DataAccess.Token;
 using VoterSystem.Shared.Dto;
 using VoterSystem.Shared.Functional;
@@ -16,8 +18,36 @@ namespace VoterSystem.WebAPI.Controllers;
 public class ExternalLoginController(
     IExternalUserService externalUserService,
     ITokenRequestService tokenRequestService,
-    ILogger<ExternalLoginController> logger) : ControllerBase
+    ILogger<ExternalLoginController> logger,
+    IOptions<SamlSettings> options) : ControllerBase
 {
+    [HttpGet("supported-external-login-modes")]
+    [AllowAnonymous]
+    [ProducesResponseType<List<ExternalLoginProvider>>(StatusCodes.Status200OK)]
+    public IActionResult GetSupportedExternalLoginModes()
+    {
+        var modes = new List<ExternalLoginProvider>();
+        
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OAUTH_FACEBOOK_CLIENT_ID")) &&
+            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OAUTH_FACEBOOK_CLIENT_SECRET")))
+        {
+            modes.Add(ExternalLoginProvider.Facebook);
+        }
+
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OAUTH_GOOGLE_CLIENT_ID")) &&
+            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OAUTH_GOOGLE_CLIENT_SECRET")))
+        {
+            modes.Add(ExternalLoginProvider.Google);
+        }
+
+        if (options.Value.Enabled)
+        {
+            modes.Add(ExternalLoginProvider.Saml);
+        }
+
+        return Ok(modes);
+    }
+    
     [HttpGet("external-login/{provider}")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status307TemporaryRedirect)]

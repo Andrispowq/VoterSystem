@@ -3,15 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VoterSystem.DataAccess.Model;
 
-public class AnonymousBallot : ITimestamped, IRoleControlled
+public class AnonymousBallot : IRoleControlled
 {
     [Key]
-    public long AnonymousBallotId { get; init; }
+    public Guid BallotId { get; set; }
     public required long VotingId { get; init; }
     public required long ChoiceId { get; init; }
     [MaxLength(63)]
     public required string VoteTagBase64 { get; init; }
-    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
     
     [ForeignKey("ChoiceId")]
     public virtual VoteChoice VoteChoice { get; set; } = null!;

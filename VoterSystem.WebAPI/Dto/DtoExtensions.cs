@@ -63,7 +63,7 @@ public static class DtoExtensions
     {
         return new BallotDto
         {
-            CreatedAt = vote.CreatedAt,
+            AnonymousBallotId = vote.BallotId,
             VoteChoice = vote.VoteChoice.ToVoteChoiceDto(),
             Voting = vote.Voting.ToVotingDto()
         };

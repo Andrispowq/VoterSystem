@@ -12,8 +12,8 @@ using VoterSystem.DataAccess;
 namespace VoterSystem.DataAccess.Migrations
 {
     [DbContext(typeof(VoterSystemDbContext))]
-    [Migration("20260320101627_AddedSocialLoginStuff")]
-    partial class AddedSocialLoginStuff
+    [Migration("20260429143141_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -133,17 +133,12 @@ namespace VoterSystem.DataAccess.Migrations
 
             modelBuilder.Entity("VoterSystem.DataAccess.Model.AnonymousBallot", b =>
                 {
-                    b.Property<long>("AnonymousBallotId")
+                    b.Property<Guid>("BallotId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("AnonymousBallotId"));
+                        .HasColumnType("uuid");
 
                     b.Property<long>("ChoiceId")
                         .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("VoteTagBase64")
                         .IsRequired()
@@ -153,7 +148,7 @@ namespace VoterSystem.DataAccess.Migrations
                     b.Property<long>("VotingId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("AnonymousBallotId");
+                    b.HasKey("BallotId");
 
                     b.HasIndex("ChoiceId");
 
@@ -209,9 +204,6 @@ namespace VoterSystem.DataAccess.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("GroupId", "UserId");
@@ -561,7 +553,8 @@ namespace VoterSystem.DataAccess.Migrations
 
                     b.HasOne("VoterSystem.DataAccess.Model.Group", "Group")
                         .WithMany("Votings")
-                        .HasForeignKey("GroupId");
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CreatedByUser");
 

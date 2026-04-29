@@ -35,6 +35,7 @@ namespace VoterSystem.DataAccess.Migrations
                     RefreshToken = table.Column<Guid>(type: "uuid", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Role = table.Column<int>(type: "integer", nullable: false),
+                    LoginMode = table.Column<int>(type: "integer", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -190,7 +191,6 @@ namespace VoterSystem.DataAccess.Migrations
                     GroupId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     AddedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DeletedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -243,7 +243,8 @@ namespace VoterSystem.DataAccess.Migrations
                         name: "FK_Votings_Groups_GroupId",
                         column: x => x.GroupId,
                         principalTable: "Groups",
-                        principalColumn: "GroupId");
+                        principalColumn: "GroupId",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -275,7 +276,6 @@ namespace VoterSystem.DataAccess.Migrations
                 {
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     VotingId = table.Column<long>(type: "bigint", nullable: false),
-                    VotingParticipationId = table.Column<long>(type: "bigint", nullable: false),
                     HasVoted = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -299,16 +299,14 @@ namespace VoterSystem.DataAccess.Migrations
                 name: "AnonymousBallots",
                 columns: table => new
                 {
-                    AnonymousBallotId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    BallotId = table.Column<Guid>(type: "uuid", nullable: false),
                     VotingId = table.Column<long>(type: "bigint", nullable: false),
                     ChoiceId = table.Column<long>(type: "bigint", nullable: false),
-                    VoteTagBase64 = table.Column<string>(type: "character varying(63)", maxLength: 63, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    VoteTagBase64 = table.Column<string>(type: "character varying(63)", maxLength: 63, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AnonymousBallots", x => x.AnonymousBallotId);
+                    table.PrimaryKey("PK_AnonymousBallots", x => x.BallotId);
                     table.ForeignKey(
                         name: "FK_AnonymousBallots_VoteChoices_ChoiceId",
                         column: x => x.ChoiceId,

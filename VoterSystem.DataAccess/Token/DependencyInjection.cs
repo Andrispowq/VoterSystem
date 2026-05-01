@@ -67,9 +67,17 @@ public static class DependencyInjection
             {
                 var clientId = Environment.GetEnvironmentVariable("OAUTH_GOOGLE_CLIENT_ID") ??
                                configuration["Authorisation:Google:ClientId"] ?? "dummyId";
+                if (string.IsNullOrEmpty(clientId))
+                {
+                    clientId = "disabled";
+                }
 
                 var clientSecret = Environment.GetEnvironmentVariable("OAUTH_GOOGLE_CLIENT_SECRET") ??
                                    configuration["Authorisation:Google:ClientSecret"] ?? "dummySecret";
+                if (string.IsNullOrEmpty(clientSecret))
+                {
+                    clientSecret = "disabled";
+                }
 
                 opts.ClientId = clientId;
                 opts.ClientSecret = clientSecret;
@@ -90,9 +98,17 @@ public static class DependencyInjection
             {
                 var clientId = Environment.GetEnvironmentVariable("OAUTH_FACEBOOK_CLIENT_ID")
                                ?? configuration["Authorisation:Facebook:ClientId"] ?? "dummyId";
+                if (string.IsNullOrEmpty(clientId))
+                {
+                    clientId = "disabled";
+                }
 
                 var clientSecret = Environment.GetEnvironmentVariable("OAUTH_FACEBOOK_CLIENT_SECRET")
                                    ?? configuration["Authorisation:Facebook:ClientSecret"] ?? "dummySecret";
+                if (string.IsNullOrEmpty(clientSecret))
+                {
+                    clientSecret = "disabled";
+                }
 
                 opts.ClientId = clientId;
                 opts.ClientSecret = clientSecret;

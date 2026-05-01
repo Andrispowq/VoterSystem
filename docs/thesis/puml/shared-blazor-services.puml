@@ -1,4 +1,5 @@
 @startuml
+left to right direction
 ' Shared.Blazor services layer
 skinparam linetype ortho
 skinparam classAttributeIconSize 0

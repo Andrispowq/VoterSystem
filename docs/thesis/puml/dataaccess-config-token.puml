@@ -1,4 +1,5 @@
 @startuml
+left to right direction
 ' DataAccess configuration and token/auth support
 skinparam linetype ortho
 skinparam classAttributeIconSize 0

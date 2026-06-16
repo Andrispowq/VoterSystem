@@ -223,7 +223,7 @@ public class UserController(IUserService userService, IEmailService emailService
         var link = $"{_blazorSettings.AdminPageUrl}/reset-password?email={email}&code={base64}";
         var message = EmailText.GetEmail(userValue.Email!, "password reset", link);
 
-        var result = await emailService.SendEmailAsync(user.Value.Email!, "Email confirmation code", message);
+        var result = await emailService.SendEmailAsync(user.Value.Email!, "Password reset code", message);
         return result.ToHttpResult();
     }
 

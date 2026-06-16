@@ -167,6 +167,8 @@ services:
       SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: ${SAML_SP_ENTITY_ID}/Acs
       SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: ${SAML_SP_ENTITY_ID}/Logout
     profiles: [only-db, prod]
+    restart: 
+      - unless-stopped
     networks:
       - votersystem-internal-network
 
